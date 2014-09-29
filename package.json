@@ -1,0 +1,56 @@
+{
+  "name": "bse-admin",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/bem/bse-admin.git"
+  },
+  "author": "Andrey Kuznetsov <andrey.kuznetsov48@yandex.ua> (http://github.com/tormozz48)",
+  "maintainers": [
+    "Andrey Kuznetsov <andrey.kuznetsov48@yandex.ua> (http://github.com/tormozz48)"
+  ],
+  "contributors": [
+    "Andrey Kuznetsov <andrey.kuznetsov48@yandex.ua> (http://github.com/tormozz48)"
+  ],
+  "engines": {
+    "node": ">= 0.10.0"
+  },
+  "dependencies": {
+    "express": "4.x",
+    "serve-static": "~1.1.0",
+    "body-parser": "1.8.1",
+    "request": "2.42.0",
+    "vow": "~0.4.1",
+    "vow-fs": "~0.3.0",
+    "nconf": "~0.6.8",
+    "lodash": "~2.4.1",
+    "intel": "~0.4.0",
+    "github": "*",
+    "marked": "git://github.com/dab/marked.git",
+    "coa": "~0.4.0",
+    "fs-extra": "~0.8.1",
+    "fstream": "1.0.2",
+    "tar": "1.0.1",
+    "cron": "1.0.1",
+    "rsync": "0.3.0",
+    "semver": "~2.3.0"
+  },
+  "devDependencies": {
+    "jshint": "2.5.5",
+    "jscs": "1.5.9"
+  },
+  "bin": {
+    "ds": "./bin/ds"
+  },
+  "scripts": {
+    "test": "node_modules/.bin/jshint . && node_modules/.bin/jscs -c .jscs.js ."
+  },
+  "readmeFilename": "README.md",
+  "licenses": [
+    {
+      "type": "APACHE",
+      "url": "http://github.com/bem/bem-data-source/raw/master/LICENSE"
+    }
+  ],
+  "private": true
+}
