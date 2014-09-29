@@ -33,7 +33,11 @@
     "tar": "1.0.1",
     "cron": "1.0.1",
     "rsync": "0.3.0",
-    "semver": "~2.3.0"
+    "semver": "~2.3.0",
+    "sha1": "~1.1.0",
+    "semver": "~2.3.0",
+    "js2xmlparser": "*",
+    "yandex-disk": "0.0.6"
   },
   "devDependencies": {
     "jshint": "2.5.5",
@@ -43,6 +47,7 @@
     "ds": "./bin/ds"
   },
   "scripts": {
+    "postinstall": "mkdir model",
     "test": "node_modules/.bin/jshint . && node_modules/.bin/jscs -c .jscs.js ."
   },
   "readmeFilename": "README.md",
