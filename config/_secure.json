@@ -1,3 +1,16 @@
 {
-
+  "github": {
+    "people": "",
+    "private": {
+      "host": "github.yandex-team.ru",
+      "pathPrefix": "/api/v3"
+    },
+    "public": {
+      "host": "api.github.com",
+      "auth": {
+        "type": "oauth",
+        "token": ""
+      }
+    }
+  }
 }
