@@ -26,3 +26,12 @@ node_modules
 
 # Users Environment Variables
 .lock-wscript
+
+.idea
+*.csv
+*.dat
+*.out
+*.gz
+
+npm-debug.log
+config/credentials.json
