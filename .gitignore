@@ -34,4 +34,4 @@ node_modules
 *.gz
 
 npm-debug.log
-config/credentials.json
+config/secure.json
