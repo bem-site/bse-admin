@@ -1,12 +1,14 @@
 var GhApiProvider = require('./provider-gh-api').GhApiProvider,
     FileProvider = require('./provider-file').FileProvider,
     GhHttpsProvider = require('./provider-gh-https').GhHttpsProvider,
-    YaDiskProvider = require('./provider-ya-disk').YaDiskProvider;
+    YaDiskProvider = require('./provider-ya-disk').YaDiskProvider,
+    LevelDBProvider = require('./provider-level-db').LevelDBProvider;
 
 var providerFile,
     providerGhApi,
     providerGhHttps,
-    providerYaDisk;
+    providerYaDisk,
+    providerLevelDB;
 
 module.exports = {
 
@@ -44,6 +46,11 @@ module.exports = {
     getProviderYaDisk: function() {
         providerYaDisk = providerYaDisk || new YaDiskProvider();
         return providerYaDisk;
+    },
+
+    getProviderLevelDB: function() {
+        providerLevelDB = providerLevelDB || new LevelDBProvider();
+        return providerLevelDB;
     }
 };
 
