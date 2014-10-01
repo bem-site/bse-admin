@@ -36,5 +36,6 @@ node_modules
 npm-debug.log
 config/secure.json
 
-model
+db/*
+test/*
 !/src/model
