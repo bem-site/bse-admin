@@ -6,7 +6,8 @@ var util = require('util'),
 
     config = require('./config'),
     logger = require('./logger'),
-    model = require('./model'),
+    updater = require('./updater'),
+    providers = require('./providers'),
     controllers = require('./controllers');
 
 /**
@@ -27,8 +28,8 @@ module.exports = function () {
         .post('/update-model', controllers.updateModel)
         .post('/update-people', controllers.updatePeople)
         .listen(app.get('port'), function () {
-            model.init();
             logger.info(util.format('Express server listening on port %s', app.get('port')), module);
+            updater.init();
         });
     return app;
 };
