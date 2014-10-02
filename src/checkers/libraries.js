@@ -5,6 +5,7 @@ var util = require('util'),
 
     _ = require('lodash'),
     vow = require('vow'),
+    sha = require('sha1'),
 
     logger = require('../logger'),
     config = require('../config'),
@@ -149,15 +150,91 @@ function removeLibVersionDirectories(lib, versions) {
     }));
 }
 
-function downloadFiles(lib, versions) {
+/**
+ * Get sha sum of remote data.json file
+ * @param {String} lib - name of library
+ * @param {Array} versions - array of version names
+ * @returns {*}
+ */
+function getShaOfRemoteDataFile(lib, version) {
+    return providers.getProviderGhApi().load({
+        repository: _.extend({ path: path.join(lib, version) }, repo)
+    }).then(function(result) {
+        result = result.res;
+        result = result.filter(function(item) {
+            return item.name === 'data.json';
+        })[0];
+
+        return result ? result.sha : null;
+    });
+}
+
+/**
+ * Returns sha sum of local data.json file
+ * @param {String} lib - name of library
+ * @param {String} version - name of version
+ * @returns {*}
+ */
+function getShaOfLocalDataFile(lib, version) {
+    return providers.getProviderFile().load({ path: path.join(TEMP_DIR, lib, version, '_data.json') })
+        .then(function(data) {
+            return vow.fulfill(data);
+        })
+        .fail(function() {
+            return vow.fulfill(null);
+        });
+}
+
+function downloadFile(lib, version) {
+    return providers.getProviderGhHttps().loadFromRepoToFile({
+        repository: _.extend({ path: path.join(lib, version, 'data.json') }, repo),
+        file: path.join(TEMP_DIR, lib, version, 'data.json')
+    });
+}
+
+/**
+ * Compare data.json file of versions between local and remote
+ * @param {String} lib - name of version
+ * @param {Array} versions - array of library versions
+ * @returns {*}
+ */
+function compareFiles(lib, versions) {
     if(!lib || !versions.length) {
         return vow.resolve();
     }
     return vow.all(versions.map(function(version) {
-        return providers.getProviderGhHttps().loadFromRepoToFile({
-            repository: _.extend({ path: path.join(lib, version, 'data.json') }, repo),
-            file: path.join(TEMP_DIR, lib, version, 'data.json')
-        });
+        return vow.all([
+                getShaOfLocalDataFile(lib, version),
+                getShaOfRemoteDataFile(lib, version)
+            ])
+            .spread(function(local, remote) {
+                if(!remote || (local && local === remote)) {
+                    return vow.resolve();
+                }
+
+                var promise = vow.resolve();
+                if(!local) {
+                    logger.warn(util.format('Library version %s %s was added', lib, version), module);
+                }
+
+                //compare local and remote file versions
+                if(local && local !== remote) {
+                    logger.warn(util.format('Library version %s %s was changed', lib, version), module);
+                    promise = providers.getProviderFile().remove({
+                        path: path.join(TEMP_DIR, lib, version, 'data.json')
+                    });
+                }
+                return promise
+                    .then(function() {
+                        return downloadFile(lib, version);
+                    })
+                    .then(function() {
+                       providers.getProviderFile().save({
+                           path: path.join(TEMP_DIR, lib, version, '_data.json'),
+                           data: remote
+                       });
+                    });
+            });
     }));
 }
 
@@ -174,7 +251,7 @@ function syncLibVersion(lib) {
                     removeLibVersionDirectories(lib, _.difference(local, remote))
                 ])
                 .then(function() {
-                    return downloadFiles(lib, _.difference(remote, local));
+                    return compareFiles(lib, remote);
                 });
         });
 }

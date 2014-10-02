@@ -106,4 +106,10 @@ exports.FileProvider = function() {
     this.exists = function(options) {
         return vowFs.exists(options.path);
     };
+
+    this.symLink = function(options) {
+        logger.debug(util.format('create symlink %s %s %s',
+            options.sourcePath, options.targetPath, options.type), module);
+        return vowFs.symLink(options.sourcePath, options.targetPath, options.type);
+    };
 };
