@@ -3,7 +3,7 @@
 var vow = require('vow'),
 
     logger = require('../logger'),
-    providers = require('../providers');
+    providers = require('../providers/index');
 
 module.exports = function() {
     logger.info('Check for versions start', module);
