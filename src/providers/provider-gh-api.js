@@ -30,18 +30,15 @@ GhApiProvider.prototype = {
         logger.info('Initialize github API module', module);
 
         var ghConfig = config.get('github'),
-            ghPublic = ghConfig.public,
-            ghPrivate = ghConfig.private;
+            ghPublic = _.extend({ host: 'api.github.com' }, ghConfig.public || {}),
+            ghPrivate = _.extend({ host: 'github.yandex-team.ru', pathPrefix: '/api/v3' }, ghConfig.private || {});
 
         if(ghPublic) {
             this.gitPublic = new api(_.extend(ghPublic, this.common));
 
-            var auth = ghPublic.auth;
-            if(auth && auth.length) {
-                this.gitPublic.authenticate({
-                    type: 'oauth',
-                    token: auth
-                });
+            var token = ghConfig.token;
+            if(token && token.length) {
+                this.gitPublic.authenticate({ type: 'oauth', token: token });
             }else {
                 logger.warn('Github API was not authentificated', module);
             }
@@ -50,7 +47,6 @@ GhApiProvider.prototype = {
         if(ghPrivate) {
             this.gitPrivate = new api(_.extend(ghPrivate, this.common));
         }
-
         return this;
     },
 

@@ -1,6 +1,7 @@
 var util = require('util'),
     path = require('path'),
 
+    _ = require('lodash'),
     Db = require('levelup'),
     vow = require('vow'),
 
@@ -42,6 +43,10 @@ LevelDBProvider.prototype = {
     put: function(key, value) {
         logger.debug(util.format('put: %s %s', key, value), module);
 
+        if(_.isObject(value)) {
+            value = JSON.stringify(value);
+        }
+
         var def = vow.defer();
         this.db.put(key, value, function(err) {
             err ? def.reject(err) : def.resolve();
@@ -59,7 +64,7 @@ LevelDBProvider.prototype = {
 
         var def = vow.defer();
         this.db.get(key, function(err, value) {
-            err ? def.reject(err) : def.resolve(value);
+            err ? def.reject(err) : def.resolve(JSON.parse(value));
         });
         return def.promise();
     },
@@ -80,6 +85,10 @@ LevelDBProvider.prototype = {
     },
 
     batch: function(operations) {
+        if(!operations.length) {
+            return vow.resolve();
+        }
+
         var def = vow.defer();
         this.db.batch(operations, function(err) {
             err ? def.reject(err) : def.resolve();
@@ -101,6 +110,36 @@ LevelDBProvider.prototype = {
      */
     isClosed: function() {
         return this.db.isClosed();
+    },
+
+    /**
+     * Returns array of keys by criteria
+     * @param {Function} criteria function
+     * @returns {*}
+     */
+    getKeysByCriteria: function(criteria) {
+        var def = vow.defer(),
+            result = [];
+        this.db.createReadStream({ keys: true, values: false })
+            .on('data', function (data) {
+                if(criteria(data)) {
+                    result.push(data);
+                }
+            })
+            .on('error', function (err) {
+                def.reject(err);
+            })
+            .on('close', function () {
+                def.resolve(result);
+            })
+            .on('end', function () {
+                def.resolve(result);
+            });
+        return def.promise();
+    },
+
+    getDb: function() {
+        return this.db;
     }
 };
 

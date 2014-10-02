@@ -1,60 +1,38 @@
-var https = require('https'),
-    util = require('util'),
+var util = require('util'),
+    fs = require('fs'),
 
     vow = require('vow'),
+    request = require('request'),
     logger = require('../logger');
 
 exports.GhHttpsProvider = function() {
 
-    this.GITHUB_PATTERN = {
-        PRIVATE: 'https://github.yandex-team.ru/%s/%s/raw/%s/%s',
-        PUBLIC: 'https://raw.githubusercontent.com/%s/%s/%s/%s'
+    this._getUrl = function(type) {
+        return {
+            'public': 'https://raw.githubusercontent.com/%s/%s/%s/%s',
+            'private': 'https://github.yandex-team.ru/%s/%s/raw/%s/%s'
+        }[type];
     };
 
     /**
-     * Returns raw content of file loaded by github https protocol
-     * @param repository - {Object} with fields:
-     * - type {String} type of repository privacy ('public'|'private')
-     * - user {String} name of user or organization which this repository is belong to
-     * - repo {String} name of repository
-     * - ref {String} name of branch
-     * - path {String} relative path from the root of repository
+     * @param options
      * @returns {*}
      */
-    this.load = function (options) {
+    this.loadFromRepoToFile = function(options) {
         var def = vow.defer(),
-            repository = options.repository,
-            url = util.format({
-                'public': this.GITHUB_PATTERN.PUBLIC,
-                'private': this.GITHUB_PATTERN.PRIVATE
-            }[repository.type], repository.user, repository.repo, repository.ref, repository.path);
+            repo = options.repository,
+            file = options.file,
+            url = util.format(this._getUrl(repo.type), repo.user, repo.repo, repo.ref, repo.path);
 
-        logger.debug(util.format('start load data from %s %s %s %s',
-            repository.user, repository.repo, repository.ref, repository.path), module);
-        https.get(url, function (res) {
-            res.setEncoding('utf8');
-
-            var data = '';
-            res.on('data', function (chunk) {
-                data += chunk;
+        request.get(url).pipe(fs.createWriteStream(file))
+            .on('error', function(err) {
+                logger.error(util.format('Error occur while loading from url %s to file %s', url, file), module);
+                def.reject(err);
+            })
+            .on('close', function() {
+                logger.debug(util.format('Success loading from url %s to file %s', url, file), module);
+                def.resolve();
             });
-            res.on('end', function () {
-                var res;
-                try {
-                    logger.debug(util.format('end load data from %s %s %s %s',
-                        repository.user, repository.repo, repository.ref, repository.path), module);
-                    res = JSON.parse(data);
-                    def.resolve(res);
-                } catch (err) {
-                    def.reject(err.message);
-                }
-
-            });
-        }).on('error', function (err) {
-            logger.error(util.format('error load data from %s %s', url, err.message), module);
-            def.reject(err);
-        });
-
         return def.promise();
     };
 };
