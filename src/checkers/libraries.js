@@ -185,6 +185,12 @@ function getShaOfLocalDataFile(lib, version) {
         });
 }
 
+/**
+ * Downloads data.json file for given library and version
+ * @param {String} lib - name of library
+ * @param {String} version - name of version
+ * @returns {*}
+ */
 function downloadFile(lib, version) {
     return providers.getProviderGhHttps().loadFromRepoToFile({
         repository: _.extend({ path: path.join(lib, version, 'data.json') }, repo),
