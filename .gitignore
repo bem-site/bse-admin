@@ -37,5 +37,4 @@ npm-debug.log
 config/secure.json
 
 db/*
-temp
-test/*
+cache
