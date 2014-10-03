@@ -5,13 +5,12 @@ var util = require('util'),
 
     _ = require('lodash'),
     vow = require('vow'),
-    sha = require('sha1'),
 
     logger = require('../logger'),
     config = require('../config'),
     providers = require('../providers/index'),
 
-    TEMP_DIR = path.join(process.cwd(), 'temp'),
+    CACHE_DIR = path.join(process.cwd(), 'cache', 'libraries'),
 
     repo = (function() {
         var isValidConfiguration = true,
@@ -57,7 +56,7 @@ function getRemoteLibraries() {
  * @returns {Array}
  */
 function getLocalLibraries() {
-    return providers.getProviderFile().listDir({ path: TEMP_DIR });
+    return providers.getProviderFile().listDir({ path: CACHE_DIR });
 }
 
 /**
@@ -74,7 +73,7 @@ function getRemoteVersions(lib) {
  * @param {String} lib - name of library
  */
 function getLocalVersions(lib) {
-    return providers.getProviderFile().listDir({ path: path.join(TEMP_DIR, lib) });
+    return providers.getProviderFile().listDir({ path: path.join(CACHE_DIR, lib) });
 }
 
 function filterMapRemote(remote) {
@@ -102,7 +101,7 @@ function addLibDirectories(libs) {
         return vow.resolve();
     }
     return vow.all(libs.map(function(item) {
-        return providers.getProviderFile().makeDir({ path: path.join(TEMP_DIR, item) });
+        return providers.getProviderFile().makeDir({ path: path.join(CACHE_DIR, item) });
     }));
 }
 
@@ -116,7 +115,7 @@ function removeLibDirectories(libs) {
         return vow.resolve();
     }
     return vow.all(libs.map(function(item) {
-        return providers.getProviderFile().removeDir({ path: path.join(TEMP_DIR, item) });
+        return providers.getProviderFile().removeDir({ path: path.join(CACHE_DIR, item) });
     }));
 }
 
@@ -131,7 +130,7 @@ function addLibVersionDirectories(lib, versions) {
         return vow.resolve();
     }
     return vow.all(versions.map(function(item) {
-        return providers.getProviderFile().makeDir({ path: path.join(TEMP_DIR, lib, item) });
+        return providers.getProviderFile().makeDir({ path: path.join(CACHE_DIR, lib, item) });
     }));
 }
 
@@ -146,7 +145,7 @@ function removeLibVersionDirectories(lib, versions) {
         return vow.resolve();
     }
     return vow.all(versions.map(function(item) {
-        return providers.getProviderFile().removeDir({ path: path.join(TEMP_DIR, lib, item) });
+        return providers.getProviderFile().removeDir({ path: path.join(CACHE_DIR, lib, item) });
     }));
 }
 
@@ -176,7 +175,7 @@ function getShaOfRemoteDataFile(lib, version) {
  * @returns {*}
  */
 function getShaOfLocalDataFile(lib, version) {
-    return providers.getProviderFile().load({ path: path.join(TEMP_DIR, lib, version, '_data.json') })
+    return providers.getProviderFile().load({ path: path.join(CACHE_DIR, lib, version, '_data.json') })
         .then(function(data) {
             return vow.fulfill(data);
         })
@@ -194,7 +193,7 @@ function getShaOfLocalDataFile(lib, version) {
 function downloadFile(lib, version) {
     return providers.getProviderGhHttps().loadFromRepoToFile({
         repository: _.extend({ path: path.join(lib, version, 'data.json') }, repo),
-        file: path.join(TEMP_DIR, lib, version, 'data.json')
+        file: path.join(CACHE_DIR, lib, version, 'data.json')
     });
 }
 
@@ -227,7 +226,7 @@ function compareFiles(lib, versions) {
                 if(local && local !== remote) {
                     logger.warn(util.format('Library version %s %s was changed', lib, version), module);
                     promise = providers.getProviderFile().remove({
-                        path: path.join(TEMP_DIR, lib, version, 'data.json')
+                        path: path.join(CACHE_DIR, lib, version, 'data.json')
                     });
                 }
                 return promise
@@ -236,7 +235,7 @@ function compareFiles(lib, versions) {
                     })
                     .then(function() {
                        providers.getProviderFile().save({
-                           path: path.join(TEMP_DIR, lib, version, '_data.json'),
+                           path: path.join(CACHE_DIR, lib, version, '_data.json'),
                            data: remote
                        });
                     });
@@ -270,7 +269,7 @@ module.exports = function() {
     }
 
     return providers.getProviderFile()
-        .makeDir({ path: TEMP_DIR })
+        .makeDir({ path: CACHE_DIR })
         .then(function() {
             return vow.all([getLocalLibraries(), getRemoteLibraries()]);
         })
