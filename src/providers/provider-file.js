@@ -74,6 +74,7 @@ exports.FileProvider = function() {
      * @returns {*}
      */
     this.listDir = function(options) {
+        logger.debug(util.format('read list of directory %s', options.path), module);
         return vowFs.listDir(options.path);
     };
 
@@ -104,7 +105,13 @@ exports.FileProvider = function() {
     };
 
     this.exists = function(options) {
+        logger.debug(util.format('exists %s', options.path), module);
         return vowFs.exists(options.path);
+    };
+
+    this.isFile = function(options) {
+        logger.debug(util.format('is file? %s', options.path), module);
+        return vowFs.isFile(options.path);
     };
 
     this.symLink = function(options) {
