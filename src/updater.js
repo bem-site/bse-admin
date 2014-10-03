@@ -10,11 +10,18 @@ var util = require('util'),
     job;
 
 function execute () {
-    logger.info('-- check for data start --', module);
+    logger.info('---------- check for data start ----------', module);
     return vow.resolve()
         .then(require('./checkers/versions'))
         .then(require('./checkers/people'))
-        .then(require('./checkers/libraries'));
+        .then(require('./checkers/libraries'))
+        .then(require('./checkers/nodes'))
+        .then(function() {
+            logger.info('---------- check for data end ----------', module);
+        })
+        .fail(function(err) {
+            logger.error(util.format('Error was occur while data check %s', err.message), module);
+        });
 }
 
 module.exports = {
