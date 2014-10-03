@@ -41,7 +41,7 @@ LevelDBProvider.prototype = {
      * @returns {*}
      */
     put: function(key, value) {
-        logger.debug(util.format('put: %s %s', key, value), module);
+        logger.verbose(util.format('put: %s %s', key, value), module);
 
         if(_.isObject(value)) {
             value = JSON.stringify(value);
@@ -60,7 +60,7 @@ LevelDBProvider.prototype = {
      * @returns {Object} value of record
      */
     get: function(key) {
-        logger.debug(util.format('get: %s', key), module);
+        logger.verbose(util.format('get: %s', key), module);
 
         var def = vow.defer();
         this.db.get(key, function(err, value) {
@@ -75,7 +75,7 @@ LevelDBProvider.prototype = {
      * @returns {*}
      */
     del: function(key) {
-        logger.debug(util.format('del: %s', key), module);
+        logger.verbose(util.format('del: %s', key), module);
 
         var def = vow.defer();
         this.db.del(key, function(err) {
@@ -136,6 +136,19 @@ LevelDBProvider.prototype = {
                 def.resolve(result);
             });
         return def.promise();
+    },
+
+    removeByKeyPrefix: function(prefix) {
+        logger.verbose(util.format('Remove existed data for prefix %s', prefix), module);
+
+        return this.getKeysByCriteria(function (key) {
+                return key.indexOf(prefix) > -1;
+            })
+            .then(function (keys) {
+                return this.batch(keys.map(function (key) {
+                    return { type: 'del', key: key };
+                }));
+            }, this);
     },
 
     getDb: function() {

@@ -72,7 +72,7 @@ GhApiProvider.prototype = {
     load: function(options) {
         var def = vow.defer(),
             repository = options.repository;
-        logger.debug(util.format('Load data from %s %s %s %s',
+        logger.verbose(util.format('Load data from %s %s %s %s',
             repository.user, repository.repo, repository.ref, repository.path), module);
 
         this.getGit(repository).repos.getContent(repository, function(err, res) {

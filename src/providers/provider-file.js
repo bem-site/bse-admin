@@ -24,7 +24,7 @@ exports.FileProvider = function() {
      * @returns {*}
      */
     this.load = function(options) {
-        logger.debug(util.format('load data from file %s', options.path), module);
+        logger.verbose(util.format('load data from file %s', options.path), module);
         return vowFs.read(options.path, 'utf-8');
     };
 
@@ -36,7 +36,7 @@ exports.FileProvider = function() {
      * @returns {*}
      */
     this.save = function(options) {
-        logger.debug(util.format('save data to file %s', options.path), module);
+        logger.verbose(util.format('save data to file %s', options.path), module);
         var promise = options.archive ?
             gzip(options.data) : vow.resolve(options.data);
         return promise.then(function(data) {
@@ -52,7 +52,7 @@ exports.FileProvider = function() {
      * @returns {*}
      */
     this.copy = function(options) {
-        logger.debug(util.format('copy file from %s to %s', options.source, options.target), module);
+        logger.verbose(util.format('copy file from %s to %s', options.source, options.target), module);
         return vowFs.copy(options.source, options.target);
     };
 
@@ -63,7 +63,7 @@ exports.FileProvider = function() {
      * @returns {*}
      */
     this.makeDir = function(options) {
-        logger.debug(util.format('make directory %s', options.path), module);
+        logger.verbose(util.format('make directory %s', options.path), module);
         return vowFs.makeDir(options.path);
     };
 
@@ -74,7 +74,7 @@ exports.FileProvider = function() {
      * @returns {*}
      */
     this.listDir = function(options) {
-        logger.debug(util.format('read list of directory %s', options.path), module);
+        logger.verbose(util.format('read list of directory %s', options.path), module);
         return vowFs.listDir(options.path);
     };
 
@@ -85,7 +85,7 @@ exports.FileProvider = function() {
      * @returns {*}
      */
     this.removeDir = function(options) {
-        logger.debug(util.format('remove directory from %s', options.path), module);
+        logger.verbose(util.format('remove directory from %s', options.path), module);
         var def = vow.defer();
         fsExtra.remove(options.path, function (err) {
             err ? def.reject(err) : def.resolve();
@@ -100,22 +100,22 @@ exports.FileProvider = function() {
      * @returns {*}
      */
     this.remove = function(options) {
-        logger.debug(util.format('remove file from %s', options.path), module);
+        logger.verbose(util.format('remove file from %s', options.path), module);
         return vowFs.remove(options.path);
     };
 
     this.exists = function(options) {
-        logger.debug(util.format('exists %s', options.path), module);
+        logger.verbose(util.format('exists %s', options.path), module);
         return vowFs.exists(options.path);
     };
 
     this.isFile = function(options) {
-        logger.debug(util.format('is file? %s', options.path), module);
+        logger.verbose(util.format('is file? %s', options.path), module);
         return vowFs.isFile(options.path);
     };
 
     this.symLink = function(options) {
-        logger.debug(util.format('create symlink %s %s %s',
+        logger.verbose(util.format('create symlink %s %s %s',
             options.sourcePath, options.targetPath, options.type), module);
         return vowFs.symLink(options.sourcePath, options.targetPath, options.type);
     };
