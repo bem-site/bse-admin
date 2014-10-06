@@ -1,83 +1,66 @@
-var NodesChange = function() {
+var Changes = function() {
         this.init();
     },
-    PeopleChange = function() {
+    Change = function(type) {
+        this.type = type;
         this.init();
-    },
-    LibrariesChange = function() {
-        this.init();
-    },
-    Changes = function() {
-        this.init();
-    },
-    BaseChange = {
-        _added: undefined,
-        _modified: undefined,
-        _removed: undefined,
-
-        _areAddedItems: function() {
-            return this._added.length;
-        },
-
-        _areModifiedItems: function() {
-            return this._modified.length;
-        },
-
-        _areRemovedItems: function() {
-            return this._removed.length;
-        },
-
-        areModified: function() {
-            return this._areAddedItems() || this._areModifiedItems() || this._areRemovedItems();
-        },
-
-        init: function() {
-            this._added = [];
-            this._modified = [];
-            this._removed = [];
-        },
-
-        addAdded: function(item) {
-            this._added.push(item);
-        },
-
-        addModified: function(item) {
-            this._modified.push(item);
-        },
-
-        addRemoved: function(item) {
-            this._removed.push(item);
-        },
-
-        getType: function() {
-            return 'base';
-        }
     };
 
-NodesChange.prototype = Object.create(BaseChange);
-NodesChange.prototype.getType = function() {
-    return 'nodes';
-};
+Change.prototype = {
+    _added: undefined,
+    _modified: undefined,
+    _removed: undefined,
 
-PeopleChange.prototype = Object.create(BaseChange);
-PeopleChange.prototype.getType = function() {
-    return 'people';
-};
+    _areAddedItems: function() {
+        return this._added.length;
+    },
 
-LibrariesChange.prototype = Object.create(BaseChange);
-PeopleChange.prototype.getType = function() {
-    return 'libraries';
+    _areModifiedItems: function() {
+        return this._modified.length;
+    },
+
+    _areRemovedItems: function() {
+        return this._removed.length;
+    },
+
+    areModified: function() {
+        return this._areAddedItems() || this._areModifiedItems() || this._areRemovedItems();
+    },
+
+    init: function() {
+        this._added = [];
+        this._modified = [];
+        this._removed = [];
+    },
+
+    addAdded: function(item) {
+        this._added.push(item);
+    },
+
+    addModified: function(item) {
+        this._modified.push(item);
+    },
+
+    addRemoved: function(item) {
+        this._removed.push(item);
+    }
 };
 
 Changes.prototype = {
+    _docs: undefined,
     _nodes: undefined,
     _people: undefined,
     _libraries: undefined,
 
     areModified: function() {
-        return this.getNodes().areModified() ||
+        return this.getDocs().areModified() ||
+            this.getNodes().areModified() ||
             this.getPeople().areModified() ||
             this.getLibraries().areModified();
+    },
+
+    getDocs: function() {
+        return this._docs;
     },
 
     getNodes: function() {
@@ -93,9 +76,10 @@ Changes.prototype = {
     },
 
     init: function() {
-        this._nodes = new NodesChange();
-        this._people = new PeopleChange();
-        this._libraries = new LibrariesChange();
+        this._docs = new Change('docs');
+        this._nodes = new Change('nodes');
+        this._people = new Change('people');
+        this._libraries = new Change('libraries');
     }
 };
 
