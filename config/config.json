@@ -1,4 +1,6 @@
 {
+  "defaultLanguage": "en",
+  "languages": ["en", "ru"],
   "logLevel": "debug",
   "server": {
     "port": 3000
