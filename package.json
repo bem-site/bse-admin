@@ -39,7 +39,8 @@
     "tar": "1.0.1",
     "vow": "~0.4.1",
     "vow-fs": "~0.3.0",
-    "yandex-disk": "0.0.6"
+    "yandex-disk": "0.0.6",
+    "colors": "1.0.2"
   },
   "devDependencies": {
     "jshint": "2.5.5",
