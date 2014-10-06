@@ -7,7 +7,6 @@ var util = require('util'),
     config = require('./config'),
     logger = require('./logger'),
     updater = require('./updater'),
-    providers = require('./providers'),
     controllers = require('./controllers');
 
 /**

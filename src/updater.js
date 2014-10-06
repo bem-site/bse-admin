@@ -3,21 +3,24 @@ var util = require('util'),
     vow = require('vow'),
     CronJob = require('cron').CronJob,
 
-    config = require('./config'),
     logger = require('./logger'),
-    providers = require('./providers'),
+    levelDb = require('./level-db'),
+    githubApi = require('./gh-api'),
+    Changes = require('./model/changes'),
 
     job;
 
 function execute () {
-    logger.info('---------- check for data start ----------', module);
+    logger.info('=== check for data start ===', module);
+    var changes = new Changes();
     return vow.resolve()
         .then(require('./checkers/versions'))
-        .then(require('./checkers/people'))
-        .then(require('./checkers/libraries'))
-        .then(require('./checkers/nodes'))
+        .then(require('./checkers/nodes')(changes))
+        .then(require('./checkers/docs')(changes))
+        .then(require('./checkers/people')(changes))
+        .then(require('./checkers/libraries')(changes))
         .then(function() {
-            logger.info('---------- check for data end ----------', module);
+            logger.info('=== check for data end ===', module);
         })
         .fail(function(err) {
             logger.error(util.format('Error was occur while data check %s', err.message), module);
@@ -30,7 +33,10 @@ module.exports = {
      */
     init: function () {
         //initialize or open leveldb database
-        providers.getProviderLevelDB();
+        levelDb.init();
+
+        //initialize and auth for gh API
+        githubApi.init();
 
         job = new CronJob({
             //cronTime: '0 */1 * * * *',

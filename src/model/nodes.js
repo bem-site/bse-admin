@@ -87,6 +87,15 @@ Nodes.prototype._makePlainModel = function() {
     return this;
 };
 
+Nodes.prototype.removeSources = function() {
+    this._data = this._data.map(function(item) {
+        if(item.source) {
+            delete item.source;
+        }
+        return item;
+    });
+};
+
 Nodes.prototype.getAll = function() {
     return this._data;
 };

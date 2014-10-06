@@ -5,10 +5,13 @@ var util = require('util'),
 
     _ = require('lodash'),
     vow = require('vow'),
+    vowFs = require('vow-fs'),
 
     logger = require('../logger'),
     config = require('../config'),
-    providers = require('../providers/index'),
+    githubApi = require('../gh-api'),
+    // levelDb = require('../level-db'),
+    utility = require('../util'),
 
     CACHE_DIR = path.join(process.cwd(), 'cache', 'libraries'),
 
@@ -48,7 +51,7 @@ var util = require('util'),
  * @returns {Object}
  */
 function getRemoteLibraries() {
-    return providers.getProviderGhApi().load({ repository: _.extend({ path: '' }, repo) });
+    return githubApi.load({ repository: _.extend({ path: '' }, repo) });
 }
 
 /**
@@ -56,7 +59,7 @@ function getRemoteLibraries() {
  * @returns {Array}
  */
 function getLocalLibraries() {
-    return providers.getProviderFile().listDir({ path: CACHE_DIR });
+    return vowFs.listDir(CACHE_DIR);
 }
 
 /**
@@ -65,7 +68,7 @@ function getLocalLibraries() {
  * @returns {*}
  */
 function getRemoteVersions(lib) {
-    return providers.getProviderGhApi().load({ repository: _.extend({ path: lib }, repo) });
+    return githubApi.load({ repository: _.extend({ path: lib }, repo) });
 }
 
 /**
@@ -73,7 +76,7 @@ function getRemoteVersions(lib) {
  * @param {String} lib - name of library
  */
 function getLocalVersions(lib) {
-    return providers.getProviderFile().listDir({ path: path.join(CACHE_DIR, lib) });
+    return vowFs.listDir(path.join(CACHE_DIR, lib));
 }
 
 function filterMapRemote(remote) {
@@ -94,28 +97,32 @@ function filterMapRemote(remote) {
 /**
  * Creates library directories on local filesystem
  * @param {Array} libs - array with directory names
+ * @param {LibrariesChange} changes of libraries
  * @returns {*}
  */
-function addLibDirectories(libs) {
+function addLibDirectories(libs, changes) {
     if(!libs.length) {
         return vow.resolve();
     }
     return vow.all(libs.map(function(item) {
-        return providers.getProviderFile().makeDir({ path: path.join(CACHE_DIR, item) });
+        changes.getLibraries().addAdded({ lib: item });
+        return vowFs.makeDir(path.join(CACHE_DIR, item));
     }));
 }
 
 /**
  * Removes library directories from local filesystem
  * @param {Array} libs - array with directory names
+ * @param {LibrariesChange} changes of libraries
  * @returns {*}
  */
-function removeLibDirectories(libs) {
+function removeLibDirectories(libs, changes) {
     if(!libs.length) {
         return vow.resolve();
     }
     return vow.all(libs.map(function(item) {
-        return providers.getProviderFile().removeDir({ path: path.join(CACHE_DIR, item) });
+        changes.getLibraries().addRemoved({ lib: item });
+        return vowFs.removeDir(path.join(CACHE_DIR, item));
     }));
 }
 
@@ -123,14 +130,16 @@ function removeLibDirectories(libs) {
  * Creates library version directories on local filesystem
  * @param {String} lib - name of library
  * @param {Array} versions - array of version names
+ * @param {LibrariesChange} changes of libraries
  * @returns {*}
  */
-function addLibVersionDirectories(lib, versions) {
+function addLibVersionDirectories(lib, versions, changes) {
     if(!lib || !versions.length) {
         return vow.resolve();
     }
     return vow.all(versions.map(function(item) {
-        return providers.getProviderFile().makeDir({ path: path.join(CACHE_DIR, lib, item) });
+        changes.getLibraries().addAdded({ lib: lib, version: item });
+        return vowFs.makeDir(path.join(CACHE_DIR, lib, item));
     }));
 }
 
@@ -138,25 +147,27 @@ function addLibVersionDirectories(lib, versions) {
  * Removes library version directories from local filesystem
  * @param {String} lib - name of library
  * @param {Array} versions - array of version names
+ * @param {LibrariesChange} changes of libraries
  * @returns {*}
  */
-function removeLibVersionDirectories(lib, versions) {
+function removeLibVersionDirectories(lib, versions, changes) {
     if(!lib || !versions.length) {
         return vow.resolve();
     }
     return vow.all(versions.map(function(item) {
-        return providers.getProviderFile().removeDir({ path: path.join(CACHE_DIR, lib, item) });
+        changes.getLibraries().addRemoved({ lib: lib, version: item });
+        return vowFs.removeDir(path.join(CACHE_DIR, lib, item));
     }));
 }
 
 /**
  * Get sha sum of remote data.json file
  * @param {String} lib - name of library
- * @param {Array} versions - array of version names
+ * @param {Array} version - array of version names
  * @returns {*}
  */
 function getShaOfRemoteDataFile(lib, version) {
-    return providers.getProviderGhApi().load({
+    return githubApi.load({
         repository: _.extend({ path: path.join(lib, version) }, repo)
     }).then(function(result) {
         result = result.res;
@@ -175,7 +186,7 @@ function getShaOfRemoteDataFile(lib, version) {
  * @returns {*}
  */
 function getShaOfLocalDataFile(lib, version) {
-    return providers.getProviderFile().load({ path: path.join(CACHE_DIR, lib, version, '_data.json') })
+    return vowFs.read(path.join(CACHE_DIR, lib, version, '_data.json'), 'utf-8')
         .then(function(data) {
             return vow.fulfill(data);
         })
@@ -191,7 +202,7 @@ function getShaOfLocalDataFile(lib, version) {
  * @returns {*}
  */
 function downloadFile(lib, version) {
-    return providers.getProviderGhHttps().loadFromRepoToFile({
+    return utility.loadFromRepoToFile({
         repository: _.extend({ path: path.join(lib, version, 'data.json') }, repo),
         file: path.join(CACHE_DIR, lib, version, 'data.json')
     });
@@ -201,9 +212,10 @@ function downloadFile(lib, version) {
  * Compare data.json file of versions between local and remote
  * @param {String} lib - name of version
  * @param {Array} versions - array of library versions
+ * @param {LibrariesChange} changes of libraries
  * @returns {*}
  */
-function compareFiles(lib, versions) {
+function compareFiles(lib, versions, changes) {
     if(!lib || !versions.length) {
         return vow.resolve();
     }
@@ -225,7 +237,8 @@ function compareFiles(lib, versions) {
                 //compare local and remote file versions
                 if(local && local !== remote) {
                     logger.warn(util.format('Library version %s %s was changed', lib, version), module);
-                    promise = providers.getProviderFile().remove({
+                    changes.getLibraries().addModified({ lib: lib, version: version });
+                    promise = vowFs.remove({
                         path: path.join(CACHE_DIR, lib, version, 'data.json')
                     });
                 }
@@ -234,16 +247,13 @@ function compareFiles(lib, versions) {
                         return downloadFile(lib, version);
                     })
                     .then(function() {
-                       providers.getProviderFile().save({
-                           path: path.join(CACHE_DIR, lib, version, '_data.json'),
-                           data: remote
-                       });
+                       vowFs.write(path.join(CACHE_DIR, lib, version, '_data.json'), remote);
                     });
             });
     }));
 }
 
-function syncLibVersion(lib) {
+function syncLibVersion(lib, changes) {
     return vow.all([getLocalVersions(lib), getRemoteVersions(lib)])
         .spread(function(local, remote) {
             remote = remote.res;
@@ -252,24 +262,32 @@ function syncLibVersion(lib) {
             });
 
             return vow.all([
-                    addLibVersionDirectories(lib, _.difference(remote, local)),
-                    removeLibVersionDirectories(lib, _.difference(local, remote))
+                    addLibVersionDirectories(lib, _.difference(remote, local), changes),
+                    removeLibVersionDirectories(lib, _.difference(local, remote), changes)
                 ])
                 .then(function() {
-                    return compareFiles(lib, remote);
+                    return compareFiles(lib, remote, changes);
                 });
         });
 }
 
-module.exports = function() {
+//function syncWithNodes() {
+//    return levelDb.getValuesByCriteria(function(value) {
+//            return value.lib;
+//        })
+//        .then(function(libNodes) {
+//
+//        });
+//}
+
+module.exports = function(changes) {
     logger.info('Check if libraries data was changed start', module);
 
     if(!repo) {
         return vow.resolve();
     }
 
-    return providers.getProviderFile()
-        .makeDir({ path: CACHE_DIR })
+    return vowFs.makeDir(CACHE_DIR)
         .then(function() {
             return vow.all([getLocalLibraries(), getRemoteLibraries()]);
         })
@@ -277,8 +295,8 @@ module.exports = function() {
             remote = filterMapRemote(remote);
 
             return vow.all([
-                    addLibDirectories(_.difference(remote, local)),
-                    removeLibDirectories(_.difference(local, remote))
+                    addLibDirectories(_.difference(remote, local), changes),
+                    removeLibDirectories(_.difference(local, remote), changes)
                 ])
                 .then(function() {
                     return remote;
@@ -286,8 +304,15 @@ module.exports = function() {
         })
         .then(function(remote) {
             return vow.all(remote.map(function(item) {
-                return syncLibVersion(item);
+                return syncLibVersion(item, changes);
             }));
+        })
+        .then(function() {
+            //if(changes.getLibraries().areModified() || changes.getNodes().areModified()) {
+            //    return syncWithNodes();
+            //} else {
+                return vow.resolve();
+            //}
         })
         .then(function() {
             logger.info('Libraries were synchronized  successfully', module);

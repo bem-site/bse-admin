@@ -1,10 +1,13 @@
 'use strict';
 
-var vow = require('vow'),
+var util = require('util'),
+
+    vow = require('vow'),
 
     logger = require('../logger'),
     config = require('../config'),
-    providers = require('../providers/index'),
+    githubApi = require('../gh-api'),
+    levelDb = require('../level-db'),
 
     KEY = {
         VERSIONS: 'versions',
@@ -35,27 +38,7 @@ var vow = require('vow'),
         return pr;
     })();
 
-/**
- * Remove all records for keys started with people key prefix
- * @returns {*}
- */
-function removeOldPeopleData() {
-    logger.debug('Remove existed people data from local database', module);
-
-    return providers.getProviderLevelDB()
-        .getKeysByCriteria(function(key) {
-            return key.indexOf(KEY.PEOPLE_PREFIX) > -1;
-        })
-        .then(function(keys) {
-            return providers.getProviderLevelDB().batch(keys.map(function(key) {
-                return { type: 'del', key: key };
-            }));
-        });
-}
-
 function updatePeopleData(remote) {
-    logger.warn('People data was changed. Changes will be synchronized with local database', module);
-
     var content = (new Buffer(remote.content, 'base64')).toString();
     try {
         content = JSON.parse(content);
@@ -64,28 +47,31 @@ function updatePeopleData(remote) {
         return vow.resolve();
     }
 
-    return removeOldPeopleData()
+    return levelDb.removeByKeyPrefix(KEY.PEOPLE_PREFIX)
         .then(function() {
             //create and execute batch task for add new people data into database
-            return providers.getProviderLevelDB()
-                .batch(Object.keys(content).map(function(key) {
-                    return { type: 'put', key: KEY.PEOPLE_PREFIX + key, value: JSON.stringify(content[key]) };
+            return levelDb.batch(Object.keys(content).map(function(key) {
+                    return {
+                        type: 'put',
+                        key: KEY.PEOPLE_PREFIX + key,
+                        value: JSON.stringify(content[key])
+                    };
                 }));
         })
         .then(function() {
             //get version object from database and update people sha sum
-            return providers.getProviderLevelDB().get(KEY.VERSIONS).then(function (result) {
+            return levelDb.get(KEY.VERSIONS).then(function (result) {
                 result.people = remote.sha;
                 return result;
             });
         })
         .then(function(updatedVersion) {
             //save updated versions object into database
-            return providers.getProviderLevelDB().put(KEY.VERSIONS, updatedVersion);
+            return levelDb.put(KEY.VERSIONS, updatedVersion);
         });
 }
 
-module.exports = function() {
+module.exports = function(changes) {
     logger.info('Check if people data was changed start', module);
     if(!repo) {
         return vow.resolve();
@@ -96,7 +82,7 @@ module.exports = function() {
      * @returns {Object}
      */
     function loadFromRemote() {
-        return providers.getProviderGhApi().load({ repository: repo }).then(function(result) {
+        return githubApi.load({ repository: repo }).then(function(result) {
             return result.res;
         });
     }
@@ -106,19 +92,31 @@ module.exports = function() {
      * @returns {String}
      */
     function loadFromLocal() {
-        return providers.getProviderLevelDB().get(KEY.VERSIONS).then(function(result) {
+        return levelDb.get(KEY.VERSIONS).then(function(result) {
             return result.people;
         });
     }
 
     return vow.all([loadFromLocal(), loadFromRemote()]).spread(function(local, remote) {
-        var shaLocal = local,
-            shaRemote = remote.sha;
+        var promise = vow.resolve(),
+            shaLocal = local,
+            shaRemote = remote.sha,
+            isDataChanged = shaLocal !== shaRemote;
 
-        //compare local and remote sha keys
-        if(shaLocal === shaRemote) {
-            return vow.resolve();
+        isDataChanged ?
+            logger.warn('People data was changed. Changes will be synchronized with local database', module) :
+            logger.info('People data was not changed from last check', module);
+
+        if(isDataChanged) {
+            promise = updatePeopleData(remote);
         }
-        return updatePeopleData(remote);
+
+        return promise
+            .then(function() {
+                logger.info('People data was checked successfully', module);
+            })
+            .fail(function(err) {
+                logger.error(util.format('People data check failed with error', err), module);
+            });
     });
 };
