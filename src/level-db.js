@@ -115,10 +115,10 @@ module.exports = {
      * @param {Object} config object for set type of data that should be returned
      * @returns {*}
      */
-    getByCriteria: function(criteria, config) {
+    _getByCriteria: function(criteria, config) {
         var def = vow.defer(),
             result = [];
-        db.createReadStream(config || { keys: true, values: true })
+        db.createReadStream(config)
             .on('data', function (data) {
                 if(criteria(data)) {
                     result.push(data);
@@ -142,7 +142,7 @@ module.exports = {
      * @returns {*}
      */
     getKeysByCriteria: function(criteria) {
-        return this.getByCriteria(criteria, { keys: true, values: false });
+        return this._getByCriteria(criteria, { keys: true, values: false });
     },
 
     /**
@@ -151,15 +151,19 @@ module.exports = {
      * @returns {*}
      */
     getValuesByCriteria: function(criteria) {
-        return this.getByCriteria(criteria, { keys: false, values: true });
+        return this._getByCriteria(criteria, { keys: false, values: true });
+    },
+
+    getByCriteria: function(criteria) {
+        return this._getByCriteria(criteria, { keys: true, values: true });
     },
 
     removeByKeyPrefix: function(prefix) {
         logger.verbose(util.format('Remove existed data for prefix %s', prefix), module);
 
         return this.getKeysByCriteria(function (key) {
-            return key.indexOf(prefix) > -1;
-        })
+                return key.indexOf(prefix) > -1;
+            })
             .then(function (keys) {
                 return this.batch(keys.map(function (key) {
                     return { type: 'del', key: key };
