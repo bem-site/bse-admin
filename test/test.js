@@ -1,12 +1,17 @@
-var providers = require('../src/providers');
+var util = require('util'),
+    colors = require('colors'),
+    levelDb = require('../src/level-db');
 
-providers.getProviderLevelDB();
+levelDb.init();
 
 
 setTimeout(function() {
-    providers.getProviderLevelDB().getDb().createReadStream()
+
+    levelDb.getDb().createReadStream()
         .on('data', function (data) {
-            console.log('key: %s value: %s', data.key, JSON.stringify(data.value));
+            console.log(util.format('key: %s', data.key).green);
+            console.log(util.format('value: %s', data.value).cyan)  ;
+
             console.log('\n');
         })
         .on('error', function (err) {
