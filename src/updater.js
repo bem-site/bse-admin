@@ -8,17 +8,30 @@ var util = require('util'),
     githubApi = require('./gh-api'),
     Changes = require('./model/changes'),
 
+    NodesSynchronizer = require('./synchronizers/nodes').NodesSynchronizer,
+    DocsSynchronizer = require('./synchronizers/docs').DocsSynchronizer,
+    PeopleSynchronizer = require('./synchronizers/people').PeopleSynchronizer,
+    LibrariesSynchronizer = require('./synchronizers/libraries').LibrariesSynchronizer,
+
     job;
 
 function execute () {
     logger.info('=== check for data start ===', module);
-    var changes = new Changes();
-    return vow.resolve()
-        .then(require('./checkers/versions'))
-        .then(require('./checkers/nodes')(changes))
-        .then(require('./checkers/docs')(changes))
-        .then(require('./checkers/people')(changes))
-        .then(require('./checkers/libraries')(changes))
+    var changes = new Changes(),
+        nodesSynchronizer = new NodesSynchronizer(),
+        docsSynchronizer = new DocsSynchronizer(),
+        peopleSynchronizer = new PeopleSynchronizer(),
+        librariesSynchronizer = new LibrariesSynchronizer();
+
+    return vow.resolve(changes)
+        .then(nodesSynchronizer.executeFromCron)
+        .then(docsSynchronizer.executeFromCron)
+        .then(peopleSynchronizer.executeFromCron)
+        .then(librariesSynchronizer.executeFromCron)
+        .then(function(changes) {
+            //TODO implement override links , create sitemap.xml file and database snapshot
+            return vow.resolve(changes);
+        })
         .then(function() {
             logger.info('=== check for data end ===', module);
         })
