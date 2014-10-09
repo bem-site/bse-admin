@@ -10,7 +10,8 @@ var util = require('util'),
     logger = require('./logger'),
 
     DB_NAME = 'leveldb',
-    db = null;
+    db = null,
+    isInitialized = false;
 
 module.exports = {
     /**
@@ -18,17 +19,27 @@ module.exports = {
      * @param {Object} options for database initialization
      */
     init: function() {
-        logger.info('Initialize leveldb database', module);
+        var def = vow.defer();
 
+        if(isInitialized) {
+            return vow.resolve();
+        }
+
+        logger.info('Initialize leveldb database', module);
         levelup(path.join('db', DB_NAME), function(err, _db) {
             if(err) {
                 logger.error('Can not connect to leveldb database', module);
                 logger.error(util.format('Error: %s', err.message), module);
+                def.reject();
             } else {
                 logger.info('Database was initialized successfully', module);
                 db = _db;
+
+                isInitialized = true;
+                def.resolve();
             }
         });
+        return def.promise();
     },
 
     /**
@@ -61,7 +72,8 @@ module.exports = {
 
         var def = vow.defer();
         db.get(key, function(err, value) {
-            err ? def.reject(err) : def.resolve(JSON.parse(value));
+            err ? def.reject(err) :
+                def.resolve(_.isObject(value) ? JSON.parse(value) : value);
         });
         return def.promise();
     },
