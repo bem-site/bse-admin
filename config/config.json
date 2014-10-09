@@ -1,5 +1,5 @@
 {
-  "defaultLanguage": "en",
+  "defaultLanguage": "ru",
   "languages": ["en", "ru"],
   "logLevel": "debug",
   "server": {
