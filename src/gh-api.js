@@ -12,11 +12,12 @@ var util = require('util'),
     gitPublic,
     gitPrivate,
     common = {
-    version: "3.0.0",
+        version: "3.0.0",
         protocol: "https",
         timeout: 5000,
         debug: false
-    };
+    },
+    isInitialized = false;
 
 module.exports = {
     /**
@@ -24,6 +25,10 @@ module.exports = {
      * with configured credentials
      */
     init: function() {
+        if(isInitialized) {
+            return vow.resolve();
+        }
+
         logger.info('Initialize github API module', module);
 
         var ghConfig = config.get('github'),
@@ -44,6 +49,9 @@ module.exports = {
         if(ghPrivate) {
             gitPrivate = new Api(_.extend(ghPrivate, common));
         }
+
+        isInitialized = true;
+        return vow.resolve();
     },
 
     /**
