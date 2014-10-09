@@ -1,4 +1,6 @@
 var _ = require('lodash'),
+    deepExtend = require('deep-extend'),
+    susanin = require('susanin'),
     sha = require('sha1');
 
 /**
@@ -193,14 +195,7 @@ BaseNode.prototype = {
 
     },
 
-    /**
-     * Collects routes rules for nodes
-     * @param node {Object} - single node of sitemap model
-     * @param level {Number} - menu deep level
-     */
-    processRoute: function(routes) {
-        this.params = _.extend({}, this.parent.params);
-
+    processRoute: function() {
         if(!this.route) {
             this.route = {
                 name: this.parent.route.name
@@ -218,7 +213,11 @@ BaseNode.prototype = {
             };
         }
 
-        routes.addRoute(this);
+        var fullRoute = deepExtend(this.parent.route, this.route),
+            fullConditions = _.extend(fullRoute.conditions || {}, this.route.conditions);
+
+        this.url = susanin.Route(fullRoute).build(_.omit(fullConditions, 'query_string'));
+        this.route = fullRoute;
 
         this.type = this.type || this.TYPE.SIMPLE;
         return this;
@@ -229,24 +228,26 @@ BaseNode.prototype = {
      * @returns {BaseNode}
      */
     setSearch: function() {
-        var def = this.SITEMAP_XML.DEFAULT;
+        var def = this.SITEMAP_XML.DEFAULT,
+            search = this.search;
 
-        if(!this.search) {
+        if(!search) {
             this.search = def;
             return this;
         }
 
         //validate settled changefreq property
-        if(!this.search.changefreq ||
-            this.SITEMAP_XML.FREQUENCIES.indexOf(this.search.changefreq) === -1) {
-            this.search.changefreq = def.changefreq;
+        if(!search.changefreq ||
+            this.SITEMAP_XML.FREQUENCIES.indexOf(search.changefreq) === -1) {
+            search.changefreq = def.changefreq;
         }
 
         //validate settled priority property
-        if(!this.search.priority || this.search.priority < 0 || this.search.priority > 1) {
-            this.search.priority = def.priority;
+        if(!search.priority || search.priority < 0 || search.priority > 1) {
+            search.priority = def.priority;
         }
 
+        this.search  = search;
         return this;
     }
 };

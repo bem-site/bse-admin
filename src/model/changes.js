@@ -43,6 +43,18 @@ Change.prototype = {
 
     addRemoved: function(item) {
         this._removed.push(item);
+    },
+
+    getAdded: function() {
+        return this._added;
+    },
+
+    getModified: function() {
+        return this._modified;
+    },
+
+    getRemoved: function() {
+        return this._removed;
     }
 };
 

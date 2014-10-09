@@ -1,4 +1,5 @@
-var util = require('util'),
+var _ = require('lodash'),
+    util = require('util'),
     utility = require('../util');
 
 var Meta = function(meta, lang, collected) {

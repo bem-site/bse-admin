@@ -1,16 +1,11 @@
 var logger = require('../logger'),
-
     nodes = require('./nodes/index'),
-    Routes = require('./routes'),
-
     Nodes = function(content) {
-        this._routes = new Routes();
         this._analyze(content)
             ._makePlainModel();
     };
 
 Nodes.prototype = {
-    _routes: undefined,
     _data: undefined
 };
 
@@ -22,12 +17,10 @@ Nodes.prototype = {
 Nodes.prototype._analyze = function (content) {
     logger.info('Analyze model start', module);
 
-    var _this = this;
-
     function traverseTreeNodes(node, parent) {
         node = new nodes.base.BaseNode(node, parent);
         node
-            .processRoute(_this._routes)
+            .processRoute()
             .createBreadcrumbs();
 
         if(node.items) {

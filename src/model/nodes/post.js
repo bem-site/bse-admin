@@ -4,16 +4,15 @@ var utility = require('../../util'),
 /**
  * Subclass of dynamic nodes which describe post of library
  * @param parent - {VersionNode} parent node object
- * @param routes - {Object} application routes hash
  * @param version - {Object} library version object
  * @param doc - {Object} doc object
  * @param id - {String} key of doc
  * @constructor
  */
-var PostNode = function(parent, routes, version, doc, id) {
+var PostNode = function(parent, version, doc, id) {
     this.setTitle(doc)
         .setSource(doc)
-        .processRoute(routes, parent, {
+        .processRoute(parent, {
             conditions: {
                 lib: version.repo,
                 version: version.ref,

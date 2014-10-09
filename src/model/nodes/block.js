@@ -1,23 +1,22 @@
 var util = require('util'),
     sha = require('sha1'),
-
+    vow = require('vow'),
+    levelDb = require('../../level-db'),
     utility = require('../../util'),
     nodes = require('./index');
 
 /**
  * Subclass of dynamic nodes which describe library blocks
  * @param parent - {LevelNode} parent node
- * @param routes - {Object} application routes hash
  * @param version - {Object} version of library
  * @param level - {Object} version of library
  * @param block - {Object} block data
- * @param blocksHash - {Object} blocks data hash
  * @constructor
  */
-var BlockNode = function(parent, routes, version, level, block, blocksHash) {
+var BlockNode = function(parent, version, level, block) {
     this.setTitle(block)
-        .setSource(version, level, block, blocksHash)
-        .processRoute(routes, parent, {
+        .setSource(version, level, block)
+        .processRoute(parent, {
             conditions: {
                 lib: version.repo,
                 version: version.ref.replace(/\//g, '-'),
@@ -48,17 +47,10 @@ BlockNode.prototype.setTitle = function(block) {
  * @param source - {Object} source
  * @returns {BlockNode}
  */
-BlockNode.prototype.setSource = function(version, level, block, blocksHash) {
-    var source = {
-            data: block.data,
-            jsdoc: block.jsdoc
-        },
-        shaKey = sha(JSON.stringify(source));
-
-    blocksHash[shaKey] = source;
-
+BlockNode.prototype.setSource = function(version, level, block) {
     this.source = {
-        key: shaKey,
+        data: block.data,
+        jsdoc: block.jsdoc,
         enb: version.enb,
         prefix: version.enb ?
             util.format('/__example/%s/%s', version.repo, version.ref) :
@@ -84,6 +76,21 @@ BlockNode.prototype.setView = function() {
 BlockNode.prototype.setClass = function() {
     this.class = 'block';
     return this;
+};
+
+BlockNode.prototype.saveToDb = function() {
+    var dataStr = JSON.stringify(this.source.data),
+        jsdocStr = JSON.stringify(this.source.jsdoc),
+        dataKey = util.format('blocks:data:%s', sha(dataStr)),
+        jsdocKey = util.format('blocks:jsdoc:%s', sha(jsdocStr));
+    return vow.all([
+        levelDb.put(dataKey, dataStr),
+        levelDb.put(jsdocKey, jsdocStr)
+    ]).then(function() {
+        this.source.data = dataKey;
+        this.source.jsdoc = jsdocKey;
+        return nodes.dynamic.DynamicNode.prototype.saveToDb.apply(this);
+    }, this);
 };
 
 exports.BlockNode = BlockNode;

@@ -1,5 +1,8 @@
-var _ = require('lodash'),
+var util = require('util'),
+    _ = require('lodash'),
     susanin = require('susanin'),
+    deepExtend = require('deep-extend'),
+    levelDb = require('../../level-db'),
     BaseNode = require('./base').BaseNode;
 
 /**
@@ -83,20 +86,18 @@ DynamicNode.prototype.setClass = function() {
  * @param params - {Object} route params of node
  * @returns {DynamicNode}
  */
-DynamicNode.prototype.processRoute = function(routes, parent, params) {
-    var baseRoute = parent.getBaseRoute(),
-        conditions = routes[baseRoute.name].conditions;
+DynamicNode.prototype.processRoute = function(parent, params) {
+    var fullRoute = deepExtend(parent.route, params),
+        fullConditions = _.extend(fullRoute.conditions || {}, params);
 
-    routes[baseRoute.name].conditions = Object.keys(params.conditions).reduce(function(prev, key) {
-        prev[key] = prev[key] || [];
-        prev[key] = prev[key].concat(params.conditions[key]);
-        return prev;
-    }, conditions || {});
-
-    this.route = _.extend({}, { name: baseRoute.name }, params);
-    this.url = susanin.Route(routes[baseRoute.name]).build(params.conditions);
-
+    this.url = susanin.Route(fullRoute).build(_.omit(fullConditions, 'query_string'));
+    this.route = fullRoute;
     return this;
+};
+
+DynamicNode.prototype.saveToDb = function() {
+    this.parent = this.parent.id;
+    return levelDb.put(util.format('nodes:%s:%s', this.id, this.parent), this);
 };
 
 exports.DynamicNode = DynamicNode;

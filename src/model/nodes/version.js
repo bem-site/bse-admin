@@ -1,30 +1,33 @@
-var utility = require('../../util'),
+var vow = require('vow'),
+    utility = require('../../util'),
     nodes = require('./index');
 
 /**
  * Subclass of dynamic nodes which describe single version of library
  * @param parent - {BaseNode} parent node
- * @param routes - {Object} application routes hash
  * @param version - {Object} version of library
- * @param search - {Object} search model
- * @param blocksHash - {Object} blocks data hash
- * @param index - {Number}
  * @constructor
  */
-var VersionNode = function(parent, routes, version, search, blocksHash, index) {
+var VersionNode = function(parent, version) {
     this.setTitle(version)
         .setSource(version)
-        .processRoute(routes, parent, {
+        .processRoute(parent, {
             conditions: {
                 lib: version.repo,
                 version: version.ref.replace(/\//g, '-')
             }
         })
         .init(parent)
-        .addItems(routes, version, search, blocksHash, index);
+        .addItems(version);
 };
 
 VersionNode.prototype = Object.create(nodes.dynamic.DynamicNode.prototype);
+
+VersionNode.prototype.TITLES = {
+    CHANGELOG: { en: 'Changelog', ru: 'История изменений'},
+    MIGRATION: { en: 'Migration', ru: 'Миграция'},
+    NOTES: { en: 'Release Notes', ru: 'Замечания к релизу' }
+};
 
 /**
  * Sets title for node
@@ -74,33 +77,23 @@ VersionNode.prototype.setClass = function() {
 
 /**
  * Adds items for node
- * @param routes - {Object} application routes hash
  * @param version - {Object} version of library
- * @param search - {Object} search model
- * @param blocksHash - {Object} blocks data hash
  * @returns {VersionNode}
  */
-VersionNode.prototype.addItems = function(routes, version, search, blocksHash, index) {
-    var sl = search.libraries[version.repo];
-
-    //TODO fix this.source.ru.content !
-    sl = sl || new nodes.search.Library(version.repo);
-    sl.addVersion(new nodes.search.Version(version.ref, this.url, this.source.ru.content, !index));
-    search.libraries[version.repo] = sl;
-
-    this.items = this.items || [];
+VersionNode.prototype.addItems = function(version) {
+    this.items = [];
 
     var docs = version.docs || {
         changelog: {
-            title: { en: 'Changelog', ru: 'История изменений'},
+            title: this.TITLES.CHANGELOG,
             content: version.changelog
         },
         migration: {
-            title: { en: 'Migration', ru: 'Миграция' },
+            title: this.TITLES.MIGRATION,
             content: version.migration
         },
         notes: {
-            title: { en: 'Release Notes', ru: 'Замечания к релизу' },
+            title: this.TITLES.NOTES,
             content: version.notes
         }
     };
@@ -115,16 +108,17 @@ VersionNode.prototype.addItems = function(routes, version, search, blocksHash, i
             if(!docs[item] || !docs[item].content) {
                 return;
             }
-            this.items.push(new nodes.post.PostNode(this, routes, version, docs[item], item));
+            this.items.push(nodes.post.PostNode(this, version, docs[item], item));
         }, this);
 
+    //TODO implement it
     //add custom nodes to library version
-    if(version.custom) {
-        version.custom.forEach(function(item) {
-            item.url += '#';
-            this.items.push(new nodes.base.BaseNode(item, this));
-        }, this);
-    }
+    //if(version.custom) {
+    //    version.custom.forEach(function(item) {
+    //        item.url += '#';
+    //        this.items.push(new nodes.base.BaseNode(item, this));
+    //    }, this);
+    //}
 
     var levels = version.levels;
     if(!levels) {
@@ -137,11 +131,20 @@ VersionNode.prototype.addItems = function(routes, version, search, blocksHash, i
 
         //verify existed blocks for level
         if(level.blocks) {
-            this.items.push(new nodes.level.LevelNode(this, routes, version, level, search, blocksHash));
+            this.items.push(new nodes.level.LevelNode(this, version, level));
         }
     }, this);
 
     return this;
+};
+
+VersionNode.prototype.saveToDb = function() {
+    return vow.all(this.items.map(function(item) {
+            return item.saveToDb();
+        })).then(function() {
+            delete this.items;
+            return nodes.dynamic.DynamicNode.prototype.saveToDb.apply(this);
+        }, this);
 };
 
 exports.VersionNode = VersionNode;

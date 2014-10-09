@@ -1,25 +1,17 @@
-var _ = require('lodash'),
-
+var vow = require('vow'),
     utility = require('../../util'),
     nodes = require('./index');
 
 /**
  * Subclass of dynamic nodes which describe library block levels
  * @param parent - {VersionNode} parent node
- * @param routes - {Object} application routes hash
  * @param version - {Object} version object
  * @param level - {Object} level object
- * @param search - {Object} search model
- * @param blocksHash - {Object} blocks data hash
  * @constructor
  */
-var LevelNode = function(parent, routes, version, level, search, blocksHash) {
-    //add library block level to library search item
-    _.find(search.libraries, function(item) { return version.repo === item.name; })
-        .getVersion(version.ref).addLevel(new nodes.search.Level(level.name));
-
+var LevelNode = function(parent, version, level) {
     this.setTitle(level)
-        .processRoute(routes, parent, {
+        .processRoute(parent, {
             conditions: {
                 lib: version.repo,
                 version: version.ref.replace(/\//g, '-'),
@@ -27,7 +19,7 @@ var LevelNode = function(parent, routes, version, level, search, blocksHash) {
             }
         })
         .init(parent)
-        .addItems(routes, version, level, search, blocksHash);
+        .addItems(version, level);
 };
 
 LevelNode.prototype = Object.create(nodes.dynamic.DynamicNode.prototype);
@@ -66,14 +58,11 @@ LevelNode.prototype.setClass = function() {
 
 /**
  * Add block nodes as items to level
- * @param routes - {Object} application routes hash
  * @param version - {Object} version object
  * @param level - {Object} level object
- * @param search - {Object} search model
- * @param blocksHash - {Object} blocks data hash
  */
-LevelNode.prototype.addItems = function(routes, version, level, search, blocksHash) {
-    this.items = this.items || [];
+LevelNode.prototype.addItems = function(version, level) {
+    this.items = [];
 
     var blocks = level.blocks;
     if(!blocks) {
@@ -81,22 +70,18 @@ LevelNode.prototype.addItems = function(routes, version, level, search, blocksHa
     }
 
     blocks.forEach(function(block) {
-
-        //add library block to library search item
-        _.find(search.libraries, function(item) { return version.repo === item.name; })
-            .getVersion(version.ref).getLevel(level.name).addBlock(block.name);
-
-        //create node
-        var node = new nodes.block.BlockNode(this, routes, version, level, block, blocksHash);
-
-        search.blocks.push(
-            new nodes.search.Block(block.name, node.url, version.repo,
-                version.ref, level.name, block.data, block.jsdoc));
-
-        this.items.push(node);
+        this.items.push(new nodes.block.BlockNode(this, version, level, block));
     }, this);
-
     return this;
+};
+
+LevelNode.prototype.saveToDb = function() {
+    return vow.all(this.items.map(function(item) {
+        return item.saveToDb();
+    })).then(function() {
+        delete this.items;
+        return nodes.dynamic.DynamicNode.prototype.saveToDb.apply(this);
+    }, this);
 };
 
 exports.LevelNode = LevelNode;
