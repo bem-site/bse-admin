@@ -2,6 +2,7 @@ var util = require('util'),
     fs = require('fs'),
     zlib = require('zlib'),
 
+    _ = require('lodash'),
     vow = require('vow'),
     md = require('marked'),
     request = require('request'),
