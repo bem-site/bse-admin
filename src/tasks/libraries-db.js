@@ -11,7 +11,7 @@ var util = require('util'),
     nodes = require('../model/nodes/index.js');
 
 function loadVersionFile(target, lib, version) {
-    return vowFs.read(path.join(target.CACHE_DIR, lib, version, 'data.json'), 'utf-8')
+    return vowFs.read(path.join(target.LIBRARIES_FILE_PATH, lib, version, 'data.json'), 'utf-8')
         .then(function(content) {
             try {
                 return JSON.parse(content);
@@ -30,7 +30,6 @@ function loadLibraryNodeFromDb(target, lib) {
             if(key.indexOf(target.KEY.NODE_PREFIX) < 0) {
                 return false;
             }
-
             return value.lib === lib;
         });
 }
@@ -75,30 +74,29 @@ function addLibraryVersionNodesToDb(target, lib, version) {
     });
 }
 
+//TODO implement better db - file cache synchronization
 module.exports = function(target) {
     var versionsForRemove = target.getChanges().getLibraries().getRemoved()
             .concat(target.getChanges().getLibraries().getModified())
             .filter(function(item) {
                 return item.version;
+            })
+            .map(function(item) {
+                return removeLibraryVersionNodesFromDb(target, item.lib, item.version);
             }),
         versionsForAdd = target.getChanges().getLibraries().getAdded()
             .concat(target.getChanges().getLibraries().getModified())
             .filter(function(item) {
                 return item.version;
-            }),
-        promiseRemove = function() {
-            return vow.all(versionsForRemove.map(function(item) {
-                return removeLibraryVersionNodesFromDb(target, item.lib, item.version);
-            }));
-        },
-        promiseAdd = function() {
-            return vow.all(versionsForAdd.map(function(item) {
+            })
+            .map(function(item) {
                 return addLibraryVersionNodesToDb(target, item.lib, item.version);
-            }));
-        };
+            });
 
-    return promiseRemove()
-        .then(promiseAdd)
+    return vow.all(versionsForRemove)
+        .then(function() {
+            return vow.all(versionsForAdd);
+        })
         .then(function() {
             logger.info('Libraries were synchronized  successfully with database', module);
             return vow.resolve(target);

@@ -57,7 +57,7 @@ function getRemoteLibraries() {
  * @returns {Array}
  */
 function getLocalLibraries(target) {
-    return vowFs.listDir(target.CACHE_DIR);
+    return vowFs.listDir(target.LIBRARIES_FILE_PATH);
 }
 
 /**
@@ -75,7 +75,7 @@ function getRemoteVersions(lib) {
  * @param {String} lib - name of library
  */
 function getLocalVersions(target, lib) {
-    return vowFs.listDir(path.join(target.CACHE_DIR, lib));
+    return vowFs.listDir(path.join(target.LIBRARIES_FILE_PATH, lib));
 }
 
 function filterMapRemote(remote) {
@@ -105,7 +105,7 @@ function addLibDirectories(target, libs) {
     }
     return vow.all(libs.map(function(item) {
         target.getChanges().getLibraries().addAdded({ lib: item });
-        return vowFs.makeDir(path.join(target.CACHE_DIR, item));
+        return vowFs.makeDir(path.join(target.LIBRARIES_FILE_PATH, item));
     }));
 }
 
@@ -121,7 +121,7 @@ function removeLibDirectories(target, libs) {
     }
     return vow.all(libs.map(function(item) {
         target.getChanges().getLibraries().addRemoved({ lib: item });
-        return vowFs.removeDir(path.join(target.CACHE_DIR, item));
+        return vowFs.removeDir(path.join(target.LIBRARIES_FILE_PATH, item));
     }));
 }
 
@@ -138,7 +138,7 @@ function addLibVersionDirectories(target, lib, versions) {
     }
     return vow.all(versions.map(function(item) {
         target.getChanges().getLibraries().addAdded({ lib: lib, version: item });
-        return vowFs.makeDir(path.join(target.CACHE_DIR, lib, item));
+        return vowFs.makeDir(path.join(target.LIBRARIES_FILE_PATH, lib, item));
     }));
 }
 
@@ -155,7 +155,7 @@ function removeLibVersionDirectories(target, lib, versions) {
     }
     return vow.all(versions.map(function(item) {
         target.getChanges().getLibraries().addRemoved({ lib: lib, version: item });
-        return vowFs.removeDir(path.join(target.CACHE_DIR, lib, item));
+        return vowFs.removeDir(path.join(target.LIBRARIES_FILE_PATH, lib, item));
     }));
 }
 
@@ -186,7 +186,7 @@ function getShaOfRemoteDataFile(lib, version) {
  * @returns {*}
  */
 function getShaOfLocalDataFile(target, lib, version) {
-    return vowFs.read(path.join(target.CACHE_DIR, lib, version, '_data.json'), 'utf-8')
+    return vowFs.read(path.join(target.LIBRARIES_FILE_PATH, lib, version, '_data.json'), 'utf-8')
         .then(function(data) {
             return vow.fulfill(data);
         })
@@ -205,7 +205,7 @@ function getShaOfLocalDataFile(target, lib, version) {
 function downloadFile(target, lib, version) {
     return utility.loadFromRepoToFile({
         repository: _.extend({ path: path.join(lib, version, 'data.json') }, repo),
-        file: path.join(target.CACHE_DIR, lib, version, 'data.json')
+        file: path.join(target.LIBRARIES_FILE_PATH, lib, version, 'data.json')
     });
 }
 
@@ -239,14 +239,14 @@ function compareFiles(target, lib, versions) {
                 if(local && local !== remote) {
                     logger.warn(util.format('Library version %s %s was changed', lib, version), module);
                     target.getChanges().getLibraries().addModified({ lib: lib, version: version });
-                    promise = vowFs.remove(path.join(target.CACHE_DIR, lib, version, 'data.json'));
+                    promise = vowFs.remove(path.join(target.LIBRARIES_FILE_PATH, lib, version, 'data.json'));
                 }
                 return promise
                     .then(function() {
                         return downloadFile(target, lib, version);
                     })
                     .then(function() {
-                        vowFs.write(path.join(target.CACHE_DIR, lib, version, '_data.json'), remote);
+                        vowFs.write(path.join(target.LIBRARIES_FILE_PATH, lib, version, '_data.json'), remote);
                     });
             });
     }));
@@ -282,7 +282,7 @@ module.exports = function(target) {
         return vow.resolve();
     }
 
-    return vowFs.makeDir(target.CACHE_DIR)
+    return vowFs.makeDir(target.LIBRARIES_FILE_PATH)
         .then(function() {
             return vow.all([getLocalLibraries(target), getRemoteLibraries()]);
         })

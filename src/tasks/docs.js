@@ -164,7 +164,7 @@ function syncDoc(target, record) {
  */
 function syncDocs(target, records) {
     return vow.allResolved(records.map(function(item) {
-        return syncDoc(item, target);
+        return syncDoc(target, item);
     }));
 }
 

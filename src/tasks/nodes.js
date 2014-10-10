@@ -156,13 +156,13 @@ function processNewModel(target, content) {
         return vow.reject(err);
     }
 
-    return separateSource(nodes)
+    return separateSource(target, nodes)
         .then(function() {
             return removeOldNodesData(target);
         })
         .then(function() {
             return levelDb.batch(nodes.getAll().map(function(node) {
-                var key = util.format('%s%s:%s', target, target.KEY.NODE_PREFIX, node.id, node.parent);
+                var key = util.format('%s%s:%s', target.KEY.NODE_PREFIX, node.id, node.parent);
                 return { type: 'put', key: key, value: node };
             }));
         });
