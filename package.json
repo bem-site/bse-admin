@@ -51,7 +51,6 @@
     "ds": "./bin/ds"
   },
   "scripts": {
-    "postinstall": "mkdir -p db",
     "test": "node_modules/.bin/jshint . && node_modules/.bin/jscs -c .jscs.js ."
   },
   "readmeFilename": "README.md",
