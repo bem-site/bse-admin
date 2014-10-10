@@ -79,13 +79,11 @@ BlockNode.prototype.setClass = function() {
 };
 
 BlockNode.prototype.saveToDb = function() {
-    var dataStr = JSON.stringify(this.source.data),
-        jsdocStr = JSON.stringify(this.source.jsdoc),
-        dataKey = util.format('blocks:data:%s', sha(dataStr)),
-        jsdocKey = util.format('blocks:jsdoc:%s', sha(jsdocStr));
+    var dataKey = util.format('blocks:data:%s', sha(JSON.stringify(this.source.data))),
+        jsdocKey = util.format('blocks:jsdoc:%s', sha(JSON.stringify(this.source.jsdoc)));
     return vow.all([
-        levelDb.put(dataKey, dataStr),
-        levelDb.put(jsdocKey, jsdocStr)
+        levelDb.put(dataKey, this.source.data),
+        levelDb.put(jsdocKey, this.source.jsdoc)
     ]).then(function() {
         this.source.data = dataKey;
         this.source.jsdoc = jsdocKey;
