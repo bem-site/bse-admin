@@ -19,14 +19,18 @@ module.exports = {
      * @param {Object} options for database initialization
      */
     init: function() {
-        var def = vow.defer();
+        var def = vow.defer(),
+            options = {
+                keyEncoding: 'utf-8',
+                valueEncoding: 'json'
+            };
 
         if(isInitialized) {
             return vow.resolve();
         }
 
         logger.info('Initialize leveldb database', module);
-        levelup(path.join('db', DB_NAME), function(err, _db) {
+        levelup(path.join('db', DB_NAME), options, function(err, _db) {
             if(err) {
                 logger.error('Can not connect to leveldb database', module);
                 logger.error(util.format('Error: %s', err.message), module);
@@ -51,10 +55,6 @@ module.exports = {
     put: function(key, value) {
         logger.verbose(util.format('put: %s %s', key, value), module);
 
-        if(_.isObject(value)) {
-            value = JSON.stringify(value);
-        }
-
         var def = vow.defer();
         db.put(key, value, function(err) {
             err ? def.reject(err) : def.resolve();
@@ -73,7 +73,7 @@ module.exports = {
         var def = vow.defer();
         db.get(key, function(err, value) {
             err ? def.reject(err) :
-                def.resolve(_.isObject(value) ? JSON.parse(value) : value);
+                def.resolve(value);
         });
         return def.promise();
     },
