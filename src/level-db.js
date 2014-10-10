@@ -3,13 +3,30 @@
 var util = require('util'),
     path = require('path'),
 
-    _ = require('lodash'),
     levelup = require('levelup'),
+    _ = require('lodash'),
     vow = require('vow'),
+    vowFs = require('vow-fs'),
 
     logger = require('./logger'),
 
     DB_NAME = 'leveldb',
+    DB_OPTIONS = {
+        keyEncoding: 'utf-8',
+        valueEncoding: {
+            encode : JSON.stringify,
+            decode : function (val) {
+                try {
+                    return JSON.parse(val);
+                } catch (err) {
+                    return val;
+                }
+            },
+            buffer: false,
+            type : 'custom'
+        }
+    },
+
     db = null,
     isInitialized = false;
 
@@ -19,31 +36,28 @@ module.exports = {
      * @param {Object} options for database initialization
      */
     init: function() {
-        var def = vow.defer(),
-            options = {
-                keyEncoding: 'utf-8',
-                valueEncoding: 'json'
-            };
+        var def = vow.defer();
 
         if(isInitialized) {
             return vow.resolve();
         }
 
         logger.info('Initialize leveldb database', module);
-        levelup(path.join('db', DB_NAME), options, function(err, _db) {
-            if(err) {
-                logger.error('Can not connect to leveldb database', module);
-                logger.error(util.format('Error: %s', err.message), module);
-                def.reject();
-            } else {
-                logger.info('Database was initialized successfully', module);
-                db = _db;
-
-                isInitialized = true;
-                def.resolve();
-            }
-        });
-        return def.promise();
+        return vowFs
+            .makeDir(path.join(process.cwd(), 'db'))
+            .then(function() {
+                try {
+                    db = levelup(path.join('db', DB_NAME));
+                    logger.info('Database was initialized successfully', module);
+                    isInitialized = true;
+                    def.resolve();
+                } catch (err) {
+                    var message = util.format('Can not connect to leveldb database. Error: %s', err.message);
+                    logger.error(message, module);
+                    def.reject(message);
+                }
+                return def.promise();
+            });
     },
 
     /**
@@ -56,7 +70,7 @@ module.exports = {
         logger.verbose(util.format('put: %s %s', key, value), module);
 
         var def = vow.defer();
-        db.put(key, value, function(err) {
+        db.put(key, value, DB_OPTIONS, function(err) {
             err ? def.reject(err) : def.resolve();
         });
         return def.promise();
@@ -71,7 +85,7 @@ module.exports = {
         logger.verbose(util.format('get: %s', key), module);
 
         var def = vow.defer();
-        db.get(key, function(err, value) {
+        db.get(key, DB_OPTIONS, function(err, value) {
             err ? def.reject(err) :
                 def.resolve(value);
         });
@@ -99,7 +113,7 @@ module.exports = {
         }
 
         var def = vow.defer();
-        db.batch(operations, function(err) {
+        db.batch(operations, DB_OPTIONS, function(err) {
             err ? def.reject(err) : def.resolve();
         });
         return def.promise();
@@ -130,7 +144,7 @@ module.exports = {
     _getByCriteria: function(criteria, config) {
         var def = vow.defer(),
             result = [];
-        db.createReadStream(config)
+        db.createReadStream(_.extend(DB_OPTIONS, config))
             .on('data', function (data) {
                 if(criteria(data)) {
                     result.push(data);
@@ -181,6 +195,19 @@ module.exports = {
                     return { type: 'del', key: key };
                 }));
             }, this);
+    },
+
+    copy: function(snapshotPath) {
+        var def = vow.defer(),
+            snapshotDb = levelup(path.join(snapshotPath, DB_NAME), DB_OPTIONS);
+        db.createReadStream().pipe(snapshotDb.createWriteStream())
+            .on('error', function (err) {
+                def.reject(err);
+            })
+            .on('close', function () {
+                def.resolve();
+            });
+        return def.promise();
     },
 
     getDb: function() {
