@@ -1,5 +1,5 @@
 var logger = require('../logger'),
-    NodesSynchronizer = require('../synchronizers/nodes').NodesSynchronizer;
+    TargetNodes = require('../targets/nodes').TargetNodes;
 
 module.exports = function () {
     return this
@@ -7,6 +7,6 @@ module.exports = function () {
         .helpful()
         .act(function () {
             logger.info('Try to synchronize documentation', module);
-            return (new NodesSynchronizer()).executeFromCommand();
+            return (new TargetNodes()).execute();
         });
 };

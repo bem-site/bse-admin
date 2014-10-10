@@ -22,7 +22,6 @@ function command() {
         .cmd().name('server').apply(require('./commands/server')).end()
         .cmd().name('sync-docs').apply(require('./commands/sync-docs')).end()
         .cmd().name('sync-nodes').apply(require('./commands/sync-nodes')).end()
-        .cmd().name('sync-people').apply(require('./commands/sync-people')).end()
         .cmd().name('sync-libraries').apply(require('./commands/sync-libraries')).end()
         .completable();
 }

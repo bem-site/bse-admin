@@ -1,5 +1,5 @@
 var logger = require('../logger'),
-    DocsSynchronizer = require('../synchronizers/docs').DocsSynchronizer;
+    TargetDocs = require('../targets/docs').TargetDocs;
 
 module.exports = function () {
     return this
@@ -7,6 +7,6 @@ module.exports = function () {
         .helpful()
         .act(function () {
             logger.info('Try to synchronize documentation', module);
-            return (new DocsSynchronizer()).executeFromCommand();
+            return (new TargetDocs()).execute();
         });
 };

@@ -1,5 +1,5 @@
 var logger = require('../logger'),
-    LibrariesSynchronizer = require('../synchronizers/libraries').LibrariesSynchronizer;
+    TargetLibraries = require('../targets/libraries').TargetLibraries;
 
 module.exports = function () {
     return this
@@ -10,8 +10,16 @@ module.exports = function () {
             .short('nc').long('no-cache')
             .flag()
             .end()
+        .opt()
+            .name('lib').title('Name of library')
+            .short('r').long('library')
+            .end()
+        .opt()
+            .name('version').title('Name of library version')
+            .short('v').long('version')
+            .end()
         .act(function (opts) {
             logger.info('Try to synchronize libraries', module);
-            return (new LibrariesSynchronizer()).executeFromCommand(opts);
+            return (new TargetLibraries(opts)).execute();
         });
 };
