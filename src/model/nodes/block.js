@@ -1,6 +1,5 @@
 var util = require('util'),
     sha = require('sha1'),
-    vow = require('vow'),
     levelDb = require('../../level-db'),
     utility = require('../../util'),
     nodes = require('./index');
@@ -80,14 +79,21 @@ BlockNode.prototype.setClass = function() {
 
 BlockNode.prototype.saveToDb = function() {
     var dataKey = util.format('blocks:data:%s', sha(JSON.stringify(this.source.data))),
-        jsdocKey = util.format('blocks:jsdoc:%s', sha(JSON.stringify(this.source.jsdoc)));
-    return vow.all([
-        levelDb.put(dataKey, this.source.data),
-        levelDb.put(jsdocKey, this.source.jsdoc)
-    ]).then(function() {
+        jsdocKey = util.format('blocks:jsdoc:%s', sha(JSON.stringify(this.source.jsdoc))),
+        batchOperations = [];
+
+    if(this.source.data) {
+        batchOperations.push({ type: 'put', key: dataKey, value: this.source.data});
+    }
+
+    if(this.source.jsdoc) {
+        batchOperations.push({ type: 'put', key: jsdocKey, value: this.source.jsdoc});
+    }
+
+    return levelDb.batch(batchOperations).then(function() {
         this.source.data = dataKey;
         this.source.jsdoc = jsdocKey;
-        return nodes.dynamic.DynamicNode.prototype.saveToDb.apply(this);
+        return this.prepareToSaveToDb();
     }, this);
 };
 

@@ -1,7 +1,10 @@
 var util = require('util'),
+
     _ = require('lodash'),
+    vow = require('vow'),
     susanin = require('susanin'),
     deepExtend = require('deep-extend'),
+
     levelDb = require('../../level-db'),
     BaseNode = require('./base').BaseNode;
 
@@ -95,9 +98,18 @@ DynamicNode.prototype.processRoute = function(parent, params) {
     return this;
 };
 
+DynamicNode.prototype.generateKey = function() {
+    return util.format('nodes:%s:%s', this.id, this.parent);
+};
+
 DynamicNode.prototype.saveToDb = function() {
     this.parent = this.parent.id;
-    return levelDb.put(util.format('nodes:%s:%s', this.id, this.parent), this);
+    return levelDb.put(this.generateKey(), this);
+};
+
+DynamicNode.prototype.prepareToSaveToDb = function() {
+    this.parent = this.parent.id;
+    return vow.resolve({ type: 'put', key: this.generateKey(), value: this });
 };
 
 exports.DynamicNode = DynamicNode;

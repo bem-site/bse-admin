@@ -1,4 +1,5 @@
 var vow = require('vow'),
+    levelDb = require('../../level-db'),
     utility = require('../../util'),
     nodes = require('./index');
 
@@ -76,12 +77,15 @@ LevelNode.prototype.addItems = function(version, level) {
 };
 
 LevelNode.prototype.saveToDb = function() {
-    return vow.all(this.items.map(function(item) {
-        return item.saveToDb();
-    })).then(function() {
-        delete this.items;
-        return nodes.dynamic.DynamicNode.prototype.saveToDb.apply(this);
-    }, this);
+    return vow
+        .all(this.items.map(function(item) {
+            return item.saveToDb();
+        }))
+        .then(levelDb.batch)
+        .then(function() {
+            delete this.items;
+            return nodes.dynamic.DynamicNode.prototype.saveToDb.apply(this);
+        }, this);
 };
 
 exports.LevelNode = LevelNode;
