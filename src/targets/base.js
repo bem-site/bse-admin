@@ -1,11 +1,14 @@
 'use strict';
 
-var Changes = require('../model/changes'),
+var path = require('path'),
+    Changes = require('../model/changes'),
     TargetBase = function(options) {
         this.init(options);
     };
 
 TargetBase.prototype = {
+    CACHE_DIR: path.join(process.cwd(), 'cache'),
+    SNAPSHOTS_DIR: path.join(process.cwd(), 'db', 'snapshots'),
     KEY: {
         NODE_PREFIX: 'nodes:',
         DOCS_PREFIX: 'docs:',
@@ -21,6 +24,10 @@ TargetBase.prototype = {
     init: function(options) {
         this.options = options || {};
         this.changes = new Changes();
+    },
+
+    getName: function() {
+        return 'BASE';
     },
 
     addTask: function(task) {

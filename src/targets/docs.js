@@ -1,4 +1,4 @@
-var TargetBase = require('./base'),
+var TargetBase = require('./base').TargetBase,
     TargetDocs = function(options) {
         this.init(options);
     };
@@ -11,12 +11,17 @@ TargetDocs.prototype.init = function(options) {
         require('../tasks/people'),
         require('../tasks/override-links'),
         require('../tasks/sitemap-xml'),
-        require('../tasks/snapshot')
+        require('../tasks/snapshot'),
+        require('../tasks/finalize')
     ].forEach(function(task) {
         this.addTask(task);
     }, this);
 
     TargetBase.prototype.init.call(this, options);
+};
+
+TargetDocs.prototype.getName = function() {
+    return 'DOCS SYNCHRONIZATION';
 };
 
 exports.TargetDocs = TargetDocs;
