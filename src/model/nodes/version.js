@@ -108,7 +108,7 @@ VersionNode.prototype.addItems = function(version) {
             if(!docs[item] || !docs[item].content) {
                 return;
             }
-            this.items.push(nodes.post.PostNode(this, version, docs[item], item));
+            this.items.push(new nodes.post.PostNode(this, version, docs[item], item));
         }, this);
 
     //TODO implement it
