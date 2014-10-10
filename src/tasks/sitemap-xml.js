@@ -33,19 +33,20 @@ module.exports = function(target) {
             return value.hidden && _.isString(value.url) && !/^(https?:)?\/\//.test(value.url);
         })
         .then(function(records) {
-            records = records.map(function(record) {
-                return _.pick(record.value, 'url', 'hidden', 'search');
-            });
-            var map = records.reduce(function(prev, item) {
-                Object.keys(hosts).forEach(function(lang) {
-                    if(!item.hidden[lang]) {
-                        prev.push(_.extend({ loc: hosts[lang] + item.url }, item.search));
-                    }
-                });
-                return prev;
-            }, []);
+            records = records
+                .map(function(record) {
+                    return _.pick(record.value, 'url', 'hidden', 'search');
+                })
+                .reduce(function(prev, item) {
+                    Object.keys(hosts).forEach(function(lang) {
+                        if(!item.hidden[lang]) {
+                            prev.push(_.extend({ loc: hosts[lang] + item.url }, item.search));
+                        }
+                    });
+                    return prev;
+                }, []);
 
-            return levelDb.put('sitemapXml', js2xml('urlset', { url: map }));
+            return levelDb.put('sitemapXml', js2xml('urlset', { url: records }));
         })
         .then(function() {
             logger.info('Successfully create sitemap.xml file', module);
