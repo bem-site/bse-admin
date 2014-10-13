@@ -9,10 +9,18 @@ setTimeout(function() {
 
     levelDb.getDb().createReadStream()
         .on('data', function (data) {
-            console.log(util.format('key: %s', data.key).green);
-            console.log(util.format('value: %s', data.value).cyan)  ;
+            var key = data.key,
+                value = data.value;
 
-            console.log('\n');
+            //var criteria = value && value.source && value.source.data &&
+                //value.source.data.indexOf('2be88ca4242c76e8253ac62474851065032d6833') > -1;
+            //var criteria = key.indexOf('nodes:') > -1;
+            var criteria = key.indexOf('docs:') > -1;
+            if(criteria) {
+                console.log(util.format('key: %s', key).green);
+                console.log(util.format('value: %s',(JSON.parse(value)).url).cyan);
+                console.log('\n');
+            }
         })
         .on('error', function (err) {
             console.error('error stream' + err.message);
