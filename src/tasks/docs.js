@@ -92,9 +92,8 @@ function checkForBranch(value) {
 
             return githubApi.getDefaultBranch({ repository: repository })
                 .then(function(branch) {
-                    repository.ref = branch;
                     repository.prose = util.format('http://prose.io/#%s/%s/edit/%s/%s',
-                        repository.user, repository.repo, repository.ref, repository.path);
+                        repository.user, repository.repo, branch, repository.path);
 
                     value.repo = repository;
                     return vow.resolve(value);
@@ -114,30 +113,30 @@ function syncDoc(target, record) {
     return getRemoteData(value)
         .then(function(md) {
             var result = md.res,
-                remoteSha,
-                localSha;
+                remoteEtag,
+                localEtag;
 
-            if (!result || !result.sha || !result.content) {
+            if (!result || !result.content) {
                 return onError(md, value.content);
             }
 
-            remoteSha = result.sha;
-            localSha = value.sha;
-
-            if (localSha === remoteSha) {
+            remoteEtag = result.meta.etag;
+            localEtag = value.etag;
+            
+            if (localEtag === remoteEtag) {
                 return vow.resolve();
             }
 
-            if (!localSha) {
+            if (!localEtag) {
                 logger.debug(util.format('New document was added: %s', getTitle(value)), module);
-                target.getChanges().getDocs().addAdded({ url: value.content });
+                target.getChanges().getDocs().addAdded({ title: getTitle(value), url: value.content });
             } else {
                 logger.debug(util.format('Document was modified: %s', getTitle(value)), module);
                 target.getChanges().getDocs().addModified({ title: getTitle(value), url: value.url });
             }
 
             try {
-                value.sha = result.sha;
+                value.etag = result.meta.etag;
                 value.url = value.content;
                 value.content = utility.mdToHtml(
                     (new Buffer(result.content, 'base64')).toString(), { renderer: renderer.getRenderer() });
