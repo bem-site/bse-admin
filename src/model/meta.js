@@ -112,6 +112,18 @@ Meta.prototype = {
     generateProseUrl: function() {
         var r = this.repo;
         return util.format('http://prose.io/#%s/%s/edit/%s/%s', r.user, r.repo, r.ref, r.path);
+    },
+
+    isDifferentFromDb: function(dbRecord) {
+        dbRecord = dbRecord.value;
+
+        return !dbRecord ||
+        !_.isEqual(this.title, dbRecord.title) ||
+        !_.isEqual(this.createDate, dbRecord.createDate) ||
+        !_.isEqual(this.authors, dbRecord.authors) ||
+        !_.isEqual(this.translators, dbRecord.translators) ||
+        !_.isEqual(this.tags, dbRecord.tags) ||
+        !_.isEqual(this.content, dbRecord.url);
     }
 };
 
