@@ -60,12 +60,14 @@ Change.prototype = {
 
 Changes.prototype = {
     _docs: undefined,
+    _meta: undefined,
     _nodes: undefined,
     _people: undefined,
     _libraries: undefined,
 
     areModified: function() {
         return this.getDocs().areModified() ||
+            this.getMeta().areModified() ||
             this.getNodes().areModified() ||
             this.getPeople().areModified() ||
             this.getLibraries().areModified();
@@ -73,6 +75,10 @@ Changes.prototype = {
 
     getDocs: function() {
         return this._docs;
+    },
+
+    getMeta: function() {
+        return this._meta;
     },
 
     getNodes: function() {
@@ -89,6 +95,7 @@ Changes.prototype = {
 
     init: function() {
         this._docs = new Change('docs');
+        this._meta = new Change('meta');
         this._nodes = new Change('nodes');
         this._people = new Change('people');
         this._libraries = new Change('libraries');
