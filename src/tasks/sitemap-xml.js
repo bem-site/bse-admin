@@ -12,16 +12,21 @@ module.exports = function(target) {
     logger.info('Start to build "sitemap.xml" file', module);
     var hosts = config.get('hosts') || {};
 
+    // check if any changes were collected during current synchronization
+    // otherwise we should skip this task
     if(!target.getChanges().areModified()) {
         logger.warn('No changes were made during this synchronization. This step will be skipped', module);
         return vow.resolve(target);
     }
 
+    // check if any hosts were configured in application configuration file
+    // otherwise we should skip this task
     if(!Object.keys(hosts).length) {
         logger.warn('No hosts were configured for creating sitemap.xml file. This step will be skipped', module);
         return vow.resolve(target);
     }
 
+    // get all nodes from db that have inner urls
     return levelDb
         .getByCriteria(function(record) {
             var key = record.key,
@@ -33,6 +38,9 @@ module.exports = function(target) {
             return value.hidden && _.isString(value.url) && !/^(https?:)?\/\//.test(value.url);
         })
         .then(function(records) {
+
+            // convert data set to sitemap format
+            // left only data fields that are needed for sitemap.xml file
             records = records
                 .map(function(record) {
                     return _.pick(record.value, 'url', 'hidden', 'search');
@@ -46,6 +54,7 @@ module.exports = function(target) {
                     return prev;
                 }, []);
 
+            //convert json model to xml format
             return levelDb.put('sitemapXml', js2xml('urlset', { url: records }));
         })
         .then(function() {
