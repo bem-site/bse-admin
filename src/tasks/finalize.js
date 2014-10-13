@@ -5,4 +5,4 @@ var util = require('util'),
 module.exports = function(target) {
     logger.info(util.format('FINAL: ||| %s ||| HAS BEEN FINISHED SUCCESSFULLY', target.getName()), module);
     return vow.resolve(target);
-}
+};
