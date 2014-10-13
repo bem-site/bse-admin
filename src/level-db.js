@@ -184,6 +184,12 @@ module.exports = {
         return this._getByCriteria(criteria, { keys: true, values: true });
     },
 
+    getByKeyPrefix: function(prefix) {
+        return this.getByCriteria(function(record) {
+            return record.key.indexOf(prefix) > -1;
+        });
+    },
+
     removeByKeyPrefix: function(prefix) {
         logger.verbose(util.format('Remove existed data for prefix %s', prefix), module);
 
