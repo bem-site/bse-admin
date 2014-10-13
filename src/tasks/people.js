@@ -48,7 +48,7 @@ function loadFromRemote() {
  * @returns {Object|String}
  */
 function loadFromLocal(target) {
-    return levelDb.get(target.KEY.VERSIONS).fail(function() {
+    return levelDb.get(target.KEY.VERSIONS_PEOPLE).fail(function() {
         return null;
     });
 }
