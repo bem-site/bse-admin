@@ -48,7 +48,7 @@
     "jscs": "1.5.9"
   },
   "bin": {
-    "ds": "./bin/ds"
+    "bse": "./bin/bse"
   },
   "scripts": {
     "test": "node_modules/.bin/jshint . && node_modules/.bin/jscs -c .jscs.js ."
