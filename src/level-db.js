@@ -86,8 +86,13 @@ module.exports = {
 
         var def = vow.defer();
         db.get(key, DB_OPTIONS, function(err, value) {
-            err ? def.reject(err) :
-                def.resolve(value);
+            if(err) {
+                if('NotFoundError' === err.type) {
+                    return def.resolve();
+                }
+                def.reject();
+            }
+            def.resolve(value);
         });
         return def.promise();
     },
