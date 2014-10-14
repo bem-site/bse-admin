@@ -105,6 +105,10 @@ DynamicNode.prototype.processRoute = function(parent, params) {
         }
     });
 
+    if(!baseRoute.pattern) {
+        console.log('!');
+    }
+
     this.url = susanin.Route(baseRoute).build(params.conditions);
     this.route = _.extend({}, { name: baseRoute.name, pattern: baseRoute.pattern }, params);
     return this;
