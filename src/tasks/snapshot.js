@@ -7,6 +7,10 @@ var util = require('util'),
     levelDb = require('../level-db'),
     logger = require('../logger');
 
+/**
+ * Generates name of snapshot
+ * @returns {String}
+ */
 function getSnapshotName() {
     var date = new Date();
     return util.format('%s:%s:%s-%s:%s:%s',
