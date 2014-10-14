@@ -122,7 +122,7 @@ function syncDoc(target, record) {
 
             remoteEtag = result.meta.etag;
             localEtag = value.etag;
-            
+
             if (localEtag === remoteEtag) {
                 return vow.resolve();
             }

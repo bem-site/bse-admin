@@ -8,7 +8,7 @@ var vow = require('vow'),
  * @param version - {Object} version of library
  * @constructor
  */
-var VersionNode = function(parent, version) {
+var VersionNode = function(parent, version, cacheVersion) {
     this.setTitle(version)
         .setSource(version)
         .processRoute(parent, {
@@ -19,6 +19,8 @@ var VersionNode = function(parent, version) {
         })
         .init(parent)
         .addItems(version);
+
+    this.cacheVersion = cacheVersion;
 };
 
 VersionNode.prototype = Object.create(nodes.dynamic.DynamicNode.prototype);

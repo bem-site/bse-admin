@@ -213,11 +213,29 @@ BaseNode.prototype = {
             };
         }
 
-        var fullRoute = deepExtend(this.parent.route, this.route),
+        var fullRoute = deepExtend(Object.create(this.parent.route), this.route),
             fullConditions = _.extend(fullRoute.conditions || {}, this.route.conditions);
 
         this.url = susanin.Route(fullRoute).build(_.omit(fullConditions, 'query_string'));
         this.route = fullRoute;
+
+        //var baseRoute = Object.create(this.parent.route);
+        //Object.keys(this.route).forEach(function(paramsKey) {
+        //    if(paramsKey === 'conditions') {
+        //        baseRoute.conditions = baseRoute.conditions || {};
+        //        Object.keys(baseRoute.conditions).forEach(function(conditionsKey) {
+        //            var brc = baseRoute.conditions[conditionsKey];
+        //            brc = brc || [];
+        //            if(!_.isArray(brc)) {
+        //                brc = [brc];
+        //            }
+        //            baseRoute.conditions[conditionsKey] = _.uniq(brc.concat([this.route.conditions[conditionsKey]]));
+        //        }, this);
+        //    }
+        //}, this);
+        //
+        //this.url = susanin.Route(baseRoute).build(this.route.conditions);
+        //this.route = baseRoute;
 
         this.type = this.type || this.TYPE.SIMPLE;
         return this;

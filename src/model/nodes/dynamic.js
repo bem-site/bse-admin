@@ -90,23 +90,47 @@ DynamicNode.prototype.setClass = function() {
  * @returns {DynamicNode}
  */
 DynamicNode.prototype.processRoute = function(parent, params) {
-    var fullRoute = deepExtend(parent.route, params),
-        fullConditions = _.extend(fullRoute.conditions || {}, params);
+    var baseRoute = parent.route;
+    Object.keys(params).forEach(function(paramsKey) {
+        if(paramsKey === 'conditions') {
+            baseRoute.conditions = baseRoute.conditions || {};
+            Object.keys(params[paramsKey]).forEach(function(conditionsKey) {
+                var brc = baseRoute.conditions[conditionsKey];
+                brc = brc || [];
+                if(!_.isArray(brc)) {
+                    brc = [brc];
+                }
+                baseRoute.conditions[conditionsKey] = params.conditions[conditionsKey];
+            });
+        }
+    });
 
-    this.url = susanin.Route(fullRoute).build(_.omit(fullConditions, 'query_string'));
-    this.route = fullRoute;
+    this.url = susanin.Route(baseRoute).build(params.conditions);
+    this.route = _.extend({}, { name: baseRoute.name, pattern: baseRoute.pattern }, params);
     return this;
 };
 
+/**
+ * Generates string key for database record
+ * @returns {String}
+ */
 DynamicNode.prototype.generateKey = function() {
     return util.format('nodes:%s:%s', this.id, this.parent);
 };
 
+/**
+ * Saves record in database
+ * @returns {*}
+ */
 DynamicNode.prototype.saveToDb = function() {
     this.parent = this.parent.id;
     return levelDb.put(this.generateKey(), this);
 };
 
+/**
+ * Returns operation object for database batch operation
+ * @returns {*}
+ */
 DynamicNode.prototype.prepareToSaveToDb = function() {
     this.parent = this.parent.id;
     return vow.resolve({ type: 'put', key: this.generateKey(), value: this });
