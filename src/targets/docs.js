@@ -9,6 +9,8 @@ TargetDocs.prototype.init = function(options) {
         require('../tasks/init'),
         require('../tasks/docs'),
         require('../tasks/people'),
+        require('../tasks/dynamic-people'),
+        require('../tasks/dynamic-tags'),
         require('../tasks/override-links'),
         require('../tasks/sitemap-xml'),
         require('../tasks/snapshot'),

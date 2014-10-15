@@ -14,6 +14,8 @@ TargetNodesDev.prototype.init = function(options) {
         require('../tasks/nodes'),
         require('../tasks/docs'),
         require('../tasks/people'),
+        require('../tasks/dynamic-people'),
+        require('../tasks/dynamic-tags'),
         require('../tasks/libraries-cache'),
         require('../tasks/libraries-files'),
         require('../tasks/libraries-db'),

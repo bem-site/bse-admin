@@ -14,7 +14,10 @@ TargetBase.prototype = {
         DOCS_PREFIX: 'docs:',
         PEOPLE_PREFIX: 'people:',
         VERSIONS_PEOPLE: 'versions:people',
-        BLOCKS_PREFIX: 'blocks:'
+        BLOCKS_PREFIX: 'blocks:',
+        AUTHORS: 'authors',
+        TRANSLATORS: 'translators',
+        TAGS: 'tags'
     },
 
     tasks: [],
