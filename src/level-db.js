@@ -189,6 +189,14 @@ module.exports = {
         return this._getByCriteria(criteria, { keys: true, values: true });
     },
 
+    removeByCriteria: function(criteria) {
+        return this.getByCriteria(criteria).then(function(records) {
+            return this.batch(records.map(function (record) {
+                return { type: 'del', key: record.key };
+            }));
+        }, this);
+    },
+
     getByKeyPrefix: function(prefix) {
         return this.getByCriteria(function(record) {
             return record.key.indexOf(prefix) > -1;
