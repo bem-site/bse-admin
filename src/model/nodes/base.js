@@ -197,9 +197,7 @@ BaseNode.prototype = {
 
     processRoute: function() {
         if(!this.route) {
-            this.route = {
-                name: this.parent.route.name
-            };
+            this.route = this.parent.route;
             this.type = this.type || (this.url ? this.TYPE.SIMPLE : this.TYPE.GROUP);
             return this;
         }
