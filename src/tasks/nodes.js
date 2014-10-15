@@ -136,9 +136,9 @@ function separateSource(target, nodes) {
                 tags: {}
             });
         return vow.all([
-            levelDb.put('authors', collected.authors),
-            levelDb.put('translators', collected.translators),
-            levelDb.put('tags', collected.tags),
+            levelDb.put(target.KEY.AUTHORS, collected.authors),
+            levelDb.put(target.KEY.TRANSLATORS, collected.translators),
+            levelDb.put(target.KEY.TAGS, collected.tags),
             findDifferences(target, nodesWithSource)
         ]);
 }
