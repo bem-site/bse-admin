@@ -178,8 +178,6 @@ function processModel(target) {
                             return { type: 'put', key: key, value: node };
                         }));
                     });
-
-                    //TODO remove model file from cache folder after processing
             });
     });
 }

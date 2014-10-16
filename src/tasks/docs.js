@@ -18,7 +18,7 @@ var util = require('util'),
  */
 function getDocsFromDb(target) {
     return levelDb.getByCriteria(function(record) {
-        return record.key.indexOf(target.KEY.DOCS_PREFIX) > -1;
+        return record.key.indexOf(target.KEY.DOCS_PREFIX) > -1 && record.value.repo;
     });
 }
 

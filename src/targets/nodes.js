@@ -49,6 +49,7 @@ TargetNodes.prototype._getTasksProd = function() {
     return [
         require('../tasks/init'),
         require('../tasks/nodes'),
+        require('../tasks/rm-model'),
         require('../tasks/docs'),
         require('../tasks/people'),
         require('../tasks/dynamic-people'),
