@@ -15,10 +15,11 @@ setTimeout(function() {
             //var criteria = value && value.source && value.source.data &&
                 //value.source.data.indexOf('2be88ca4242c76e8253ac62474851065032d6833') > -1;
             //var criteria = key.indexOf('nodes:') > -1;
-            var criteria = key.indexOf('docs:') > -1;
+            //var criteria = key.indexOf('docs:') > -1;
+            var criteria = key.indexOf('urls:') > -1;
             if(criteria) {
                 console.log(util.format('key: %s', key).green);
-                console.log(util.format('value: %s',(JSON.parse(value)).url).cyan);
+                console.log(util.format('value: %s',(JSON.parse(value))).cyan);
                 console.log('\n');
             }
         })
