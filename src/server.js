@@ -22,13 +22,10 @@ module.exports = function () {
             next();
         })
         .get('/', controllers.index)
-        .post('/testing/:version', controllers.testing)
-        .post('/production/:version', controllers.production)
-        .post('/update-model', controllers.updateModel)
-        .post('/update-people', controllers.updatePeople)
+        .get('/ping/:environment', controllers.ping)
+        .get('/data/:environment', controllers.data)
         .listen(app.get('port'), function () {
             logger.info(util.format('Express server listening on port %s', app.get('port')), module);
-            updater.init();
         });
     return app;
 };
