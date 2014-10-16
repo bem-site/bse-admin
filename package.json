@@ -41,7 +41,9 @@
     "vow-fs": "~0.3.0",
     "yandex-disk": "0.0.6",
     "colors": "1.0.2",
-    "deep-extend": "~0.2.10"
+    "deep-extend": "~0.2.10",
+    "fstream": "1.0.2",
+    "tar": "1.0.1"
   },
   "devDependencies": {
     "jshint": "2.5.5",
