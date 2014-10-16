@@ -304,6 +304,12 @@ function collectUrls(target) {
 
 module.exports = function(target) {
     logger.info('Start overriding links', module);
+
+    if(!target.getChanges().areModified()) {
+        logger.warn('No changes were made during this synchronization. This step will be skipped', module);
+        return vow.resolve(target);
+    }
+
     var languages = utility.getLanguages();
     return vow.all([
         levelDb.getByKeyPrefix(target.KEY.NODE_PREFIX),
