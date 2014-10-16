@@ -1,4 +1,5 @@
 var util = require('util'),
+    path = require('path'),
     fs = require('fs'),
     zlib = require('zlib'),
 
@@ -27,9 +28,9 @@ exports.gzip = function(content) {
     return def.promise();
 };
 
-exports.removeDir = function(path) {
+exports.removeDir = function(p) {
     var def = vow.defer();
-    fsExtra.remove(path, function (err) {
+    fsExtra.remove(p, function (err) {
         err ? def.reject(err) : def.resolve();
     });
     return def.promise();
@@ -110,4 +111,12 @@ exports.dateToMilliseconds = function(dateStr) {
     });
 
     return date.valueOf();
+};
+
+exports.realpath = function(p) {
+    var def = vow.defer();
+    fs.realpath(p, function (err, resolvedPath) {
+        err ? def.reject(err) : def.resolve(resolvedPath);
+    });
+    return def.promise();
 };
