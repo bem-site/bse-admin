@@ -174,7 +174,7 @@ function processModel(target) {
                     })
                     .then(function() {
                         return levelDb.batch(nodes.getAll().map(function(node) {
-                            var key = util.format('%s%s:%s', target.KEY.NODE_PREFIX, node.id, node.parent);
+                            var key = util.format('%s%s', target.KEY.NODE_PREFIX, node.id);
                             return { type: 'put', key: key, value: node };
                         }));
                     });

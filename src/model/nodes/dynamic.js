@@ -115,7 +115,7 @@ DynamicNode.prototype.processRoute = function(parent, params) {
  * @returns {String}
  */
 DynamicNode.prototype.generateKey = function() {
-    return util.format('nodes:%s:%s', this.id, this.parent);
+    return util.format('nodes:%s', this.id);
 };
 
 /**

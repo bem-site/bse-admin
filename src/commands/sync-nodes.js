@@ -1,6 +1,5 @@
 var logger = require('../logger'),
-    TargetNodes = require('../targets/nodes').TargetNodes,
-    TargetNodesDev = require('../targets/nodes-dev').TargetNodesDev;
+    TargetNodes = require('../targets/nodes').TargetNodes;
 
 module.exports = function () {
     return this
@@ -13,10 +12,6 @@ module.exports = function () {
         .end()
         .act(function (opts) {
             logger.info('Try to synchronize documentation', module);
-            if(opts.dev) {
-                return (new TargetNodesDev()).execute();
-            } else {
-                return (new TargetNodes()).execute();
-            }
+            return (new TargetNodes(opts)).execute();
         });
 };
