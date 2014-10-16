@@ -15,8 +15,8 @@ module.exports = function(target) {
             }
             return vow.resolve(target);
         })
-        .fail(function() {
+        .fail(function(err) {
             logger.error('Error occur while removing model file', module);
-            return vow.reject(target);
+            return vow.reject(err);
         });
 };
