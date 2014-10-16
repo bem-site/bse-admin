@@ -53,6 +53,7 @@
     "bse": "./bin/bse"
   },
   "scripts": {
+    "start": "node bin/bse server",
     "test": "node_modules/.bin/jshint . && node_modules/.bin/jscs -c .jscs.js ."
   },
   "readmeFilename": "README.md",
