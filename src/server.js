@@ -24,6 +24,7 @@ module.exports = function () {
         .get('/', controllers.index)
         .get('/ping/:environment', controllers.ping)
         .get('/data/:environment', controllers.data)
+        .get('/set/:environment/:version', controllers.set)
         .listen(app.get('port'), function () {
             logger.info(util.format('Express server listening on port %s', app.get('port')), module);
         });

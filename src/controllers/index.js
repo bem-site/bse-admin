@@ -61,7 +61,11 @@ exports.index = function(req, res) {
                     productionPath = productionPath.split('/').pop();
 
                     result.versions = snapshots.map(function(item) {
-                        var _item = { date: item };
+                        var _item = {
+                            date: item,
+                            testingUrl: util.format('set/testing/%s', item),
+                            productionUrl: util.format('set/production/%s', item)
+                        };
 
                         if(item === testingPath) {
                             _item.testing = true;
@@ -79,5 +83,7 @@ exports.index = function(req, res) {
     });
 };
 
+exports.set = require('./set');
 exports.ping = require('./ping');
 exports.data = require('./data');
+
