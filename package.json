@@ -43,7 +43,8 @@
     "colors": "1.0.2",
     "deep-extend": "~0.2.10",
     "fstream": "1.0.2",
-    "tar": "1.0.1"
+    "tar": "1.0.1",
+    "luster": "~0.2.6"
   },
   "devDependencies": {
     "jshint": "2.5.5",
@@ -54,6 +55,7 @@
   },
   "scripts": {
     "start": "node bin/bse server",
+    "cluster": "node src/cluster.js",
     "test": "node_modules/.bin/jshint . && node_modules/.bin/jscs -c .jscs.js ."
   },
   "readmeFilename": "README.md",
