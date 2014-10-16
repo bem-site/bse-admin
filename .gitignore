@@ -34,7 +34,7 @@ node_modules
 *.gz
 
 npm-debug.log
-config/secure.json
+configs/secure.json
 
 db/*
 cache
