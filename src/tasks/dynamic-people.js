@@ -72,7 +72,7 @@ module.exports = function(target) {
     logger.info('Start to create dynamic nodes for people', module);
 
     if(!target.getChanges().getMeta().areModified()) {
-        logger.info('Meta information was not modified. This step will be skipped', module);
+        logger.warn('Meta information was not modified. This step will be skipped', module);
         return vow.resolve(target);
     }
 
