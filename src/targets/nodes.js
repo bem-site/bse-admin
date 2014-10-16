@@ -39,6 +39,7 @@ TargetNodes.prototype._getTasksDev = function() {
         require('../tasks/libraries-cache'),
         require('../tasks/libraries-files'),
         require('../tasks/libraries-db'),
+        require('../tasks/urls-map'),
         require('../tasks/override-links'),
         require('../tasks/sitemap-xml'),
         require('../tasks/finalize')
@@ -56,6 +57,7 @@ TargetNodes.prototype._getTasksProd = function() {
         require('../tasks/dynamic-tags'),
         require('../tasks/libraries-files'),
         require('../tasks/libraries-db'),
+        require('../tasks/urls-map'),
         require('../tasks/override-links'),
         require('../tasks/sitemap-xml'),
         require('../tasks/snapshot'),

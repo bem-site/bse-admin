@@ -12,6 +12,7 @@ TargetLibraries.prototype.init = function(options) {
         require('../tasks/libraries-cache'),
         require('../tasks/libraries-files'),
         require('../tasks/libraries-db'),
+        require('../tasks/urls-map'),
         require('../tasks/override-links'),
         require('../tasks/sitemap-xml'),
         require('../tasks/snapshot'),
