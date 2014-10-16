@@ -1,9 +1,10 @@
 var luster = require('luster'),
-    config = require('./config');
+    config = require('./config'),
+    updater = require('./updater');
 
-//if (luster.isMaster) {
-    //TODO implement updater launch here
-//}
+if (luster.isMaster) {
+    updater.init();
+}
 
 luster.configure({
     app : 'worker.js',

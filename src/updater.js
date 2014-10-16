@@ -1,43 +1,46 @@
-var util = require('util'),
-
-    vow = require('vow'),
-    CronJob = require('cron').CronJob,
+var CronJob = require('cron').CronJob,
 
     logger = require('./logger'),
-    levelDb = require('./level-db'),
-    githubApi = require('./gh-api'),
-    Changes = require('./model/changes'),
+    TargetNodes = require('./targets/nodes').TargetNodes,
 
-    //NodesSynchronizer = require('./synchronizers/nodes').NodesSynchronizer,
-    //DocsSynchronizer = require('./synchronizers/docs').DocsSynchronizer,
-    //PeopleSynchronizer = require('./synchronizers/people').PeopleSynchronizer,
-    //LibrariesSynchronizer = require('./synchronizers/libraries').LibrariesSynchronizer,
+    job,
+    state,
 
-    job;
+    STATE = {
+        IDLE: 0,
+        ACTIVE: 1
+    };
+
+function setIdle() {
+    state = STATE.IDLE;
+}
+
+function setActive() {
+    state = STATE.ACTIVE;
+}
+
+function isActive() {
+    return state === STATE.ACTIVE;
+}
 
 function execute () {
-    logger.info('=== check for data start ===', module);
-    //var changes = new Changes(),
-    //    nodesSynchronizer = new NodesSynchronizer(),
-    //    docsSynchronizer = new DocsSynchronizer(),
-    //    peopleSynchronizer = new PeopleSynchronizer(),
-    //    librariesSynchronizer = new LibrariesSynchronizer();
-    //
-    //return vow.resolve(changes)
-    //    .then(nodesSynchronizer.executeFromCron)
-    //    .then(docsSynchronizer.executeFromCron)
-    //    .then(peopleSynchronizer.executeFromCron)
-    //    .then(librariesSynchronizer.executeFromCron)
-    //    .then(function(changes) {
-    //        //TODO implement override links , create sitemap.xml file and database snapshot
-    //        return vow.resolve(changes);
-    //    })
-    //    .then(function() {
-    //        logger.info('=== check for data end ===', module);
-    //    })
-    //    .fail(function(err) {
-    //        logger.error(util.format('Error was occur while data check %s', err.message), module);
-    //    });
+    logger.info('=== CRON CHECK FOR DATA START ===', module);
+
+    if(isActive()) {
+        logger.warn('Previous synchronization process was not completed yet', module);
+        return;
+    }
+
+    setActive();
+    return (new TargetNodes({})).execute()
+        .then(function() {
+            setIdle();
+            logger.info('=== CRON CHECK FOR DATA END ===', module);
+        })
+        .fail(function() {
+            setIdle();
+            logger.error('=== CRON CHECK FOR DATA ERROR ===', module);
+        });
 }
 
 module.exports = {
@@ -45,15 +48,9 @@ module.exports = {
      * Initialize cron job for commit and push tasks perform
      */
     init: function () {
-        //initialize or open leveldb database
-        levelDb.init();
-
-        //initialize and auth for gh API
-        githubApi.init();
-
+        state = STATE.IDLE;
         job = new CronJob({
-            //cronTime: '0 */1 * * * *',
-            cronTime: '*/30 * * * * *',
+            cronTime: '0 */1 * * * *',
             onTick: execute,
             start: true
         });
