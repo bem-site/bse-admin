@@ -3,9 +3,12 @@
 var util = require('util'),
     path = require('path'),
 
+    _ = require('lodash'),
     vow = require('vow'),
     vowFs = require('vow-fs'),
+
     logger = require('../logger'),
+    template = require('../template'),
     utility = require('../util'),
 
     DB_PATH = path.join(process.cwd(), 'db'),
@@ -77,7 +80,17 @@ exports.index = function(req, res) {
                         return _item;
                     });
 
-                    res.status(200).json(result);
+                    return result;
+                })
+                .then(function(result) {
+                    return template.run(
+                        _.extend({ block: 'page', view: 'index' }, { data: result }), req)
+                })
+                .then(function (html) {
+                    res.status(200).end(html);
+                })
+                .fail(function (err) {
+                    res.status(500).end(err);
                 });
         });
     });
