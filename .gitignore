@@ -38,3 +38,8 @@ configs/secure.json
 
 db/*
 cache
+
+libs
+.enb/tmp
+src/*.bundles/*/*.*
+!src/*.bundles/*/*.bemdecl.js
