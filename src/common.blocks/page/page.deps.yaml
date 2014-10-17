@@ -1,0 +1,6 @@
+- elems:
+  - css
+  - js
+
+- block: header
+- block: content

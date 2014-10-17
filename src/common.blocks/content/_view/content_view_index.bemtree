@@ -1,0 +1,8 @@
+block('content').mod('view', 'index')(
+    content()(function() {
+        var data = this.ctx.data;
+        return [
+
+        ];
+    })
+);
