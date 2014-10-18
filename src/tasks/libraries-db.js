@@ -18,15 +18,15 @@ var util = require('util'),
  */
 function getLibraryNodesFromDb(target) {
     return levelDb
-        .getByCriteria(function(record) {
+        .getByCriteria(function (record) {
             var key = record.key,
                 value = record.value;
 
-            if(key.indexOf(target.KEY.NODE_PREFIX) < 0) {
+            if (key.indexOf(target.KEY.NODE_PREFIX) < 0) {
                 return false;
             }
 
-            //criteria - is existed field lib
+            // criteria - is existed field lib
             return value.lib;
         });
 }
@@ -49,11 +49,11 @@ function getLibraryVersionsFromCache(target, value) {
  */
 function getLibraryVersionNodesFromDb(target, lib) {
     return levelDb
-        .getByCriteria(function(record) {
+        .getByCriteria(function (record) {
             var key = record.key,
                 value = record.value;
 
-            if(key.indexOf(target.KEY.NODE_PREFIX) < 0) {
+            if (key.indexOf(target.KEY.NODE_PREFIX) < 0) {
                 return false;
             }
 
@@ -69,19 +69,19 @@ function getLibraryVersionNodesFromDb(target, lib) {
  */
 function getPreviousStateMap(target) {
     var result = {};
-    return vowFs.listDir(target.LIBRARIES_FILE_PATH).then(function(libraries) {
-        return vow.all(libraries.map(function(lib) {
-            return vowFs.listDir(path.join(target.LIBRARIES_FILE_PATH, lib)).then(function(versions) {
-                return vow.all(versions.map(function(version) {
+    return vowFs.listDir(target.LIBRARIES_FILE_PATH).then(function (libraries) {
+        return vow.all(libraries.map(function (lib) {
+            return vowFs.listDir(path.join(target.LIBRARIES_FILE_PATH, lib)).then(function (versions) {
+                return vow.all(versions.map(function (version) {
                     return vowFs.read(path.join(target.LIBRARIES_FILE_PATH, lib, version, '_data.json'), 'utf-8')
-                        .then(function(content) {
+                        .then(function (content) {
                             result[lib] = result[lib] || {};
                             result[lib][version] = content;
                         });
                 }));
             });
         }));
-    }).then(function() {
+    }).then(function () {
         return result;
     });
 }
@@ -89,25 +89,25 @@ function getPreviousStateMap(target) {
 function removeLibraryVersionNodesFromDb(target, lib, version) {
     logger.debug(util.format('remove lib: %s version: %s from db', lib, version), module);
     return levelDb
-        .getByCriteria(function(record) {
+        .getByCriteria(function (record) {
             var key = record.key,
                 value = record.value,
                 route;
 
-            if(key.indexOf(target.KEY.NODE_PREFIX) < 0) {
+            if (key.indexOf(target.KEY.NODE_PREFIX) < 0) {
                 return false;
             }
 
             route = value.route;
-            if(!route || !route.conditions) {
+            if (!route || !route.conditions) {
                 return false;
             }
 
             return route.conditions.lib === lib && !value.lib &&
                 (version ? route.conditions.version === version : true);
         })
-        .then(function(result) {
-            return levelDb.batch(result.map(function(record) {
+        .then(function (result) {
+            return levelDb.batch(result.map(function (record) {
                 return { type: 'del', key: record.key };
             }));
         });
@@ -122,7 +122,7 @@ function removeLibraryVersionNodesFromDb(target, lib, version) {
  */
 function loadVersionFile(target, lib, version) {
     return vowFs.read(path.join(target.LIBRARIES_FILE_PATH, lib, version, 'data.json'), 'utf-8')
-        .then(function(content) {
+        .then(function (content) {
             try {
                 return JSON.parse(content);
             } catch (err) {
@@ -139,11 +139,10 @@ function syncLibraryVersions(target, record) {
             getLibraryVersionNodesFromDb(target, value),
             getPreviousStateMap(target)
         ])
-        .spread(function(newVersions, oldVersions, stateMap) {
-
+        .spread(function (newVersions, oldVersions, stateMap) {
             // hide library if there no  versions for it
-            if(!newVersions.length) {
-                util.getLanguages().forEach(function(lang) {
+            if (!newVersions.length) {
+                util.getLanguages().forEach(function (lang) {
                     value.hidden[lang] = true;
                 });
                 return vow.all([
@@ -156,8 +155,8 @@ function syncLibraryVersions(target, record) {
                 modified = [],
                 removed = [];
 
-            newVersions.forEach(function(cacheVersion) {
-                var dbRecord = _.find(oldVersions, function(record) {
+            newVersions.forEach(function (cacheVersion) {
+                var dbRecord = _.find(oldVersions, function (record) {
                     var route = record.value.route,
                         conditions = route.conditions,
                         dbVersion = conditions.version;
@@ -165,16 +164,16 @@ function syncLibraryVersions(target, record) {
                     return cacheVersion === dbVersion;
                 });
 
-                if(!dbRecord) {
+                if (!dbRecord) {
                     added.push(cacheVersion);
-                } else if(stateMap[value.lib] &&
+                } else if (stateMap[value.lib] &&
                     stateMap[value.lib][cacheVersion] !== dbRecord.value.cacheVersion) {
                     modified.push(cacheVersion);
                 }
             });
 
-            oldVersions.forEach(function(record) {
-                var cacheRecord = _.find(newVersions, function(cacheVersion) {
+            oldVersions.forEach(function (record) {
+                var cacheRecord = _.find(newVersions, function (cacheVersion) {
                     var route = record.value.route,
                         conditions = route.conditions,
                         dbVersion = conditions.version;
@@ -182,30 +181,32 @@ function syncLibraryVersions(target, record) {
                     return cacheVersion === dbVersion;
                 });
 
-                if(!cacheRecord) {
+                if (!cacheRecord) {
                     removed.push(record);
                 }
             });
 
-            added = added.map(function(item) {
+            added = added.map(function (item) {
                 logger.debug(util.format('add lib: %s version: %s to db', value.lib, item), module);
-                return loadVersionFile(target, value.lib, item).then(function(versionData) {
+                return loadVersionFile(target, value.lib, item).then(function (versionData) {
                     return (new nodes.version.VersionNode(value, versionData, stateMap[value.lib][item])).saveToDb();
                 });
             });
 
-            modified = modified.map(function(item) {
+            modified = modified.map(function (item) {
                 logger.debug(util.format('modify lib: %s version: %s into db', value.lib, item), module);
                 return removeLibraryVersionNodesFromDb(target, value.lib, item)
-                    .then(function() {
-                        return loadVersionFile(target, value.lib, item).then(function(versionData) {
-                            return (new nodes.version.VersionNode(value, versionData, stateMap[value.lib][item])).saveToDb();
+                    .then(function () {
+                        return loadVersionFile(target, value.lib, item).then(function (versionData) {
+                            return (new nodes.version.VersionNode(
+                                value, versionData, stateMap[value.lib][item])).saveToDb();
                         });
                     });
             });
 
-            removed = removed.map(function(item) {
-                logger.debug(util.format('remove lib: %s version: %s from db', value.lib, item.value.route.conditions.version), module);
+            removed = removed.map(function (item) {
+                logger.debug(util.format('remove lib: %s version: %s from db',
+                    value.lib, item.value.route.conditions.version), module);
                 return removeLibraryVersionNodesFromDb(target, value.lib, item);
             });
 
@@ -213,19 +214,20 @@ function syncLibraryVersions(target, record) {
         });
 }
 
-module.exports = function(target) {
+module.exports = function (target) {
     return getLibraryNodesFromDb(target)
-        .then(function(records) {
-            return vow.all(records.map(function(record) {
+        .then(function (records) {
+            return vow.all(records.map(function (record) {
                 return syncLibraryVersions(target, record);
             }));
         })
-        .then(function() {
+        .then(function () {
             logger.info('Libraries were synchronized  successfully with database', module);
             return vow.resolve(target);
         })
-        .fail(function(err) {
-            logger.error(util.format('Libraries synchronization with database failed with error %s', err.message), module);
+        .fail(function (err) {
+            logger.error(
+                util.format('Libraries synchronization with database failed with error %s', err.message), module);
             return vow.reject(err);
         });
 };

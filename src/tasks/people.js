@@ -9,9 +9,9 @@ var util = require('util'),
     githubApi = require('../gh-api'),
     levelDb = require('../level-db'),
 
-    repo = (function() {
+    repo = (function () {
         var pr = config.get('github:people');
-        if(!pr) {
+        if (!pr) {
             logger.warn('Path to people data file has not been set in application configuration', module);
             return null;
         }
@@ -38,7 +38,7 @@ var util = require('util'),
  * @returns {Object}
  */
 function loadFromRemote() {
-    return githubApi.load({ repository: repo }).then(function(result) {
+    return githubApi.load({ repository: repo }).then(function (result) {
         return result.res;
     });
 }
@@ -48,7 +48,7 @@ function loadFromRemote() {
  * @returns {Object|String}
  */
 function loadFromLocal(target) {
-    return levelDb.get(target.KEY.VERSIONS_PEOPLE).fail(function() {
+    return levelDb.get(target.KEY.VERSIONS_PEOPLE).fail(function () {
         return null;
     });
 }
@@ -63,9 +63,9 @@ function updatePeopleData(target, remote) {
     }
 
     return levelDb.removeByKeyPrefix(target.KEY.PEOPLE_PREFIX)
-        .then(function() {
-            //create and execute batch task for add new people data into database
-            return levelDb.batch(Object.keys(content).map(function(key) {
+        .then(function () {
+            // create and execute batch task for add new people data into database
+            return levelDb.batch(Object.keys(content).map(function (key) {
                     return {
                         type: 'put',
                         key: target.KEY.PEOPLE_PREFIX + key,
@@ -73,20 +73,20 @@ function updatePeopleData(target, remote) {
                     };
                 }));
         })
-        .then(function() {
-            //save updated versions object into database
+        .then(function () {
+            // save updated versions object into database
             return levelDb.put(target.KEY.VERSIONS_PEOPLE, remote.sha);
         });
 }
 
-module.exports = function(target) {
+module.exports = function (target) {
     logger.info('Check if people data was changed start', module);
-    if(!repo) {
+    if (!repo) {
         logger.warn('People configuration was not recognized. People synchronization will be skipped', module);
         return vow.resolve(target);
     }
 
-    return vow.all([loadFromLocal(target), loadFromRemote()]).spread(function(local, remote) {
+    return vow.all([loadFromLocal(target), loadFromRemote()]).spread(function (local, remote) {
         var promise = vow.resolve(),
             isDataChanged = local !== remote.sha;
 
@@ -94,16 +94,16 @@ module.exports = function(target) {
             logger.warn('People data was changed. Changes will be synchronized with local database', module) :
             logger.info('People data was not changed from last check', module);
 
-        if(isDataChanged) {
+        if (isDataChanged) {
             promise = updatePeopleData(target, remote);
         }
 
         return promise
-            .then(function() {
+            .then(function () {
                 logger.info('People data was synchronized successfully', module);
                 return vow.resolve(target);
             })
-            .fail(function(err) {
+            .fail(function (err) {
                 logger.error(util.format('People data synchronization failed with error', err), module);
                 return vow.reject(err);
             });

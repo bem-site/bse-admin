@@ -3,19 +3,19 @@ var util = require('util'),
     vowFs = require('vow-fs'),
     logger = require('../logger');
 
-module.exports = function(target) {
+module.exports = function (target) {
     logger.info('Start to remove model.json file', module);
     return vowFs.exists(target.MODEL_FILE_PATH)
-        .then(function(exists) {
+        .then(function (exists) {
             return exists ? vowFs.remove(target.MODEL_FILE_PATH) : vow.resolve({ removed: true });
         })
-        .then(function(res) {
-            if(!res || !res.removed) {
+        .then(function (res) {
+            if (!res || !res.removed) {
                 logger.info(util.format('Model file was successfully removed from %s', target.MODEL_FILE_PATH), module);
             }
             return vow.resolve(target);
         })
-        .fail(function(err) {
+        .fail(function (err) {
             logger.error('Error occur while removing model file', module);
             return vow.reject(err);
         });

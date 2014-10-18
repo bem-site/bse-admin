@@ -14,12 +14,12 @@ var util = require('util'),
  */
 function removePeopleNodes(target, key) {
     return levelDb
-        .getByCriteria(function(record) {
+        .getByCriteria(function (record) {
             return record.value.dynamic === key;
         })
-        .then(function(dynamicRecords) {
-            return vow.all(dynamicRecords.map(function(dynamicRecord) {
-                return levelDb.removeByCriteria(function(record) {
+        .then(function (dynamicRecords) {
+            return vow.all(dynamicRecords.map(function (dynamicRecord) {
+                return levelDb.removeByCriteria(function (record) {
                     return record.value.parent === dynamicRecord.value.id;
                 });
             }));
@@ -38,58 +38,58 @@ function addPeopleNodes(target, key) {
         }[key];
 
     return vow.all([
-            levelDb.getByCriteria(function(record) {
+            levelDb.getByCriteria(function (record) {
                 return record.value.dynamic === key;
             }),
             levelDb.get(dbPeopleKey),
             levelDb.getByKeyPrefix(target.KEY.PEOPLE_PREFIX)
         ])
-        .spread(function(dynamicRecords, peopleKeys, peopleData) {
-            peopleData = peopleData.reduce(function(prev, record) {
+        .spread(function (dynamicRecords, peopleKeys, peopleData) {
+            peopleData = peopleData.reduce(function (prev, record) {
                 prev[record.key.split(':')[1]] = record.value;
                 return prev;
             }, {});
 
-            if(!dynamicRecords.length) {
+            if (!dynamicRecords.length) {
                 logger.warn(util.format('No records for dynamic key %s were found in db', key), module);
                 return vow.resolve();
             }
 
-            if(!peopleKeys.length) {
+            if (!peopleKeys.length) {
                 logger.warn('No people were collected', module);
                 return vow.resolve();
             }
 
-            return vow.all(dynamicRecords.map(function(dynamicRecord) {
-                return vow.all(peopleKeys.map(function(person) {
+            return vow.all(dynamicRecords.map(function (dynamicRecord) {
+                return vow.all(peopleKeys.map(function (person) {
                     return (new nodes.person.PersonNode(dynamicRecord.value, person, peopleData[person])).saveToDb();
                 }));
             }));
         });
 }
 
-module.exports = function(target) {
+module.exports = function (target) {
     logger.info('Start to create dynamic nodes for people', module);
 
-    if(!target.getChanges().getMeta().areModified()) {
+    if (!target.getChanges().getMeta().areModified()) {
         logger.warn('Meta information was not modified. This step will be skipped', module);
         return vow.resolve(target);
     }
 
     var peopleKeys = ['authors', 'translators'];
-    return vow.all(peopleKeys.map(function(key) {
+    return vow.all(peopleKeys.map(function (key) {
             return removePeopleNodes(target, key);
         }))
-        .then(function() {
-            return vow.all(peopleKeys.map(function(key) {
+        .then(function () {
+            return vow.all(peopleKeys.map(function (key) {
                 return addPeopleNodes(target, key);
             }));
         })
-        .then(function() {
+        .then(function () {
             logger.info('Successfully create dynamic nodes for people', module);
             return vow.resolve(target);
         })
-        .fail(function(err) {
+        .fail(function (err) {
             logger.error(util.format('Creation of dynamic nodes for people failed with error %s', err.message), module);
             return vow.reject(err);
         });

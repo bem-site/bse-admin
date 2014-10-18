@@ -23,10 +23,10 @@ function getSnapshotName() {
     );
 }
 
-module.exports = function(target) {
+module.exports = function (target) {
     logger.info('Start to create database snapshot', module);
 
-    if(!target.getChanges().areModified()) {
+    if (!target.getChanges().areModified()) {
         logger.warn('No changes were made during this synchronization. This step will be skipped', module);
         return vow.resolve(target);
     }
@@ -34,21 +34,21 @@ module.exports = function(target) {
     var snapshotName = getSnapshotName(),
         snapshotPath = path.join(target.SNAPSHOTS_DIR, snapshotName);
     return vowFs.makeDir(snapshotPath)
-        .then(function() {
+        .then(function () {
             return levelDb.copy(snapshotPath);
         })
-        .then(function() {
+        .then(function () {
             var meta = {
                 date: snapshotName,
                 changes: target.getChanges()
             };
             return vowFs.write(path.join(snapshotPath, 'data.json'), JSON.stringify(meta, null, 4));
         })
-        .then(function() {
+        .then(function () {
             logger.info(util.format('Database snapshot %s has been created successfully', snapshotName), module);
             return vow.resolve(target);
         })
-        .fail(function(err) {
+        .fail(function (err) {
             logger.error(util.format('Database snapshot creation failed with error', err.message), module);
             return vow.reject(err);
         });

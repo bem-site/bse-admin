@@ -14,12 +14,12 @@ var util = require('util'),
 
 /**
  * Analyze meta information for node
- * @param collected - {Object} hash of collected data
- * @param node - {BaseNode} node
+ * @param {Object} collected - hash of collected data
+ * @param {BaseNode} node
  * @returns {Object} collected
  */
 function analyzeMeta(collected, node) {
-    if(!_.isObject(node.source)) {
+    if (!_.isObject(node.source)) {
         return collected;
     }
 
@@ -43,7 +43,6 @@ function analyzeMeta(collected, node) {
     return collected;
 }
 
-
 function findDifferences(target, nodes) {
     // get array of data.source[lang] objects
     // also add nodeId and lang fields
@@ -60,33 +59,35 @@ function findDifferences(target, nodes) {
 
     // get existed database records
     return levelDb.getByKeyPrefix(target.KEY.DOCS_PREFIX)
-        .then(function(oldRecords) {
+        .then(function (oldRecords) {
             var putBatchOperations = newRecords
-                    .filter(function(item) {
-
+                    .filter(function (item) {
                         // try to find corresponded database record for current item
                         var isDifferentFromDb = false,
-                            dbRecord = _.find(oldRecords, function(record) {
+                            dbRecord = _.find(oldRecords, function (record) {
                                 return record.key === util.format('%s%s:%s',
                                         target.KEY.DOCS_PREFIX, item.nodeId, item.lang);
                             });
 
                         // case when record is new and not presented in yet
-                        if(!dbRecord) {
+                        if (!dbRecord) {
                             target.getChanges().getMeta().addAdded({ title: item.title, url: item.content });
                             return true;
                         }
 
                         // case when record was modified (meta information was changed manually)
                         isDifferentFromDb = item.isDifferentFromDb(dbRecord);
-                        if(isDifferentFromDb) {
-                            target.getChanges().getMeta().addModified({ title: item.title, url: item.url || item.content });
+                        if (isDifferentFromDb) {
+                            target.getChanges().getMeta().addModified({
+                                title: item.title,
+                                url: item.url || item.content
+                            });
                             return true;
                         }
 
                         return false;
                     })
-                    .map(function(item) {
+                    .map(function (item) {
                         return {
                             type: 'put',
                             key: util.format('%s%s:%s', target.KEY.DOCS_PREFIX, item.nodeId, item.lang),
@@ -97,13 +98,13 @@ function findDifferences(target, nodes) {
                 // try to find database records that already were excluded from new records set
                 // create set of batch operations for remove records from database
                 delBatchOperations = oldRecords
-                    .filter(function(record) {
-                        var newRecord = _.find(newRecords, function(item) {
+                    .filter(function (record) {
+                        var newRecord = _.find(newRecords, function (item) {
                             return record.key === util.format('%s%s:%s',
                                     target.KEY.DOCS_PREFIX, item.nodeId, item.lang);
                         });
 
-                        if(!newRecord) {
+                        if (!newRecord) {
                             var v = record.value;
                             target.getChanges().getMeta().addRemoved({ title: v.title, url: v.url || v.content });
                             return true;
@@ -111,7 +112,7 @@ function findDifferences(target, nodes) {
 
                         return false;
                     })
-                    .map(function(record) {
+                    .map(function (record) {
                         return {
                             type: 'del',
                             key: record.key
@@ -125,10 +126,10 @@ function findDifferences(target, nodes) {
 }
 
 function separateSource(target, nodes) {
-    var nodesWithSource = nodes.getAll().filter(function(item) {
+    var nodesWithSource = nodes.getAll().filter(function (item) {
             return item.source;
         }),
-        collected = nodesWithSource.reduce(function(prev, item) {
+        collected = nodesWithSource.reduce(function (prev, item) {
                 return analyzeMeta(prev, item);
             }, {
                 authors: [],
@@ -144,18 +145,17 @@ function separateSource(target, nodes) {
 }
 
 function processModel(target) {
-
     // It is normal case when file is not exist. Because it temporary
     // and should be removed after processing
-    return vowFs.exists(target.MODEL_FILE_PATH).then(function(exists) {
-        if(!exists) {
+    return vowFs.exists(target.MODEL_FILE_PATH).then(function (exists) {
+        if (!exists) {
             logger.warn('No new model file were found. This step will be skipped', module);
             return vow.resolve(target);
         }
 
         return vowFs
             .read(target.MODEL_FILE_PATH, 'utf-8')
-            .then(function(content) {
+            .then(function (content) {
                 var nodes,
                     error;
 
@@ -168,12 +168,12 @@ function processModel(target) {
                 }
 
                 return separateSource(target, nodes)
-                    .then(function() {
+                    .then(function () {
                         nodes.removeSources();
                         return levelDb.removeByKeyPrefix(target.KEY.NODE_PREFIX);
                     })
-                    .then(function() {
-                        return levelDb.batch(nodes.getAll().map(function(node) {
+                    .then(function () {
+                        return levelDb.batch(nodes.getAll().map(function (node) {
                             var key = util.format('%s%s', target.KEY.NODE_PREFIX, node.id);
                             return { type: 'put', key: key, value: node };
                         }));
@@ -182,14 +182,14 @@ function processModel(target) {
     });
 }
 
-module.exports = function(target) {
+module.exports = function (target) {
     logger.info('Check if model data was changed start', module);
     return processModel(target)
-        .then(function() {
+        .then(function () {
             logger.info('Nodes were synchronized  successfully', module);
             return vow.resolve(target);
         })
-        .fail(function(err) {
+        .fail(function (err) {
             logger.error(err, module);
             return vow.reject(err);
         });

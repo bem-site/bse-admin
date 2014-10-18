@@ -5,10 +5,10 @@ var util = require('util'),
     logger = require('../logger'),
     utility = require('../util');
 
-module.exports = function(target) {
+module.exports = function (target) {
     var options = target.getOptions();
 
-    if(!options.noCache) {
+    if (!options.noCache) {
         return vow.resolve();
     }
 
@@ -21,11 +21,11 @@ module.exports = function(target) {
     }
 
     return utility.removeDir(p)
-        .then(function() {
+        .then(function () {
             logger.info('Libraries cache was cleaned successfully', module);
             return vow.resolve(target);
         })
-        .fail(function(err) {
+        .fail(function (err) {
             logger.error(util.format('Libraries cache clean failed with error %s', err.message), module);
             return vow.reject(err);
         });

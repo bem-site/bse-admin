@@ -1,14 +1,13 @@
 var util = require('util'),
-    path = require('path'),
 
     _ = require('lodash'),
     vow = require('vow'),
 
     levelDb = require('../level-db'),
     utility = require('../util'),
-    logger = require('../logger');
+    logger = require('../logger'),
 
-var REGEXP = {
+    REGEXP = {
     HREF: /<a\s+(?:[^>]*?\s+)?href="([^"]*)"/g,
     RELATIVE: {
         DOC: /^\.?\/?([\w|-]+)\.?[md|html|ru\.md|en\.md]?/,
@@ -92,12 +91,12 @@ function fixGithubLinks(str) {
  * @returns {*}
  */
 function buildFullGithubLinkForDocs(str, node, lang, treeOrBlob) {
-    //var sourceFoLang = node.source[lang];
-    //if(sourceFoLang && sourceFoLang.repo) {
+    // var sourceFoLang = node.source[lang];
+    // if (sourceFoLang && sourceFoLang.repo) {
     //    var repo = sourceFoLang.repo;
     //    return 'https://' + path.join(repo.host, repo.user, repo.repo, treeOrBlob, repo.ref,
     //            str.indexOf('.') === 0 ? path.dirname(repo.path) : '', str.replace(/^\//, ''));
-    //}
+    // }
     return str;
 }
 
@@ -111,21 +110,21 @@ function recognizeRelativeLinkForLibraryDocs(str, node) {
     var conditions, lib, version, match;
 
     conditions = node.route.conditions;
-    if(!conditions) {
+    if (!conditions) {
         return [str];
     }
 
     lib = conditions.lib;
     version = conditions.version;
 
-    if(!lib || !version) {
+    if (!lib || !version) {
         return [str];
     }
 
-    //common.blocks/button/button.ru.md
+    // common.blocks/button/button.ru.md
     match = str.match(REGEXP.RELATIVE.BLOCKS);
-    if(match) {
-        return ['desktop', 'touch-pad', 'touch-phone'].reduce(function(prev, item) {
+    if (match) {
+        return ['desktop', 'touch-pad', 'touch-phone'].reduce(function (prev, item) {
             prev.push(util.format('/libs/%s/%s/%s/%s', lib, version, item, match[2]));
             return prev;
         }, []);
@@ -133,7 +132,7 @@ function recognizeRelativeLinkForLibraryDocs(str, node) {
 
     // ./changelog
     match = str.match(REGEXP.RELATIVE.DOC);
-    if(match) {
+    if (match) {
         match[1] = match[1].toLowerCase();
         return match[1] === 'readme' ?
             [util.format('/libs/%s/%s', lib, version)] :
@@ -142,7 +141,7 @@ function recognizeRelativeLinkForLibraryDocs(str, node) {
 
     // 3.1.0-changelog.md
     match = str.match(REGEXP.RELATIVE.VERSION_DOC);
-    if(match) {
+    if (match) {
         return [util.format('/libs/%s/v%s/%s', lib, match[1], match[2])];
     }
     return [str];
@@ -158,10 +157,10 @@ function recognizeRelativeBlockLinkOnSameLevel(str, node) {
     var conditions = node.route.conditions,
         lib = conditions.lib,
         version = conditions.version,
-        level = conditions.level;
+        level = conditions.level,
+        match = str.match(REGEXP.RELATIVE.BLOCK);
 
-    var match = str.match(REGEXP.RELATIVE.BLOCK);
-    if(match) {
+    if (match) {
         return util.format('/libs/%s/%s/%s/%s', lib, version, level, match[1]);
     }
     return str;
@@ -176,10 +175,10 @@ function recognizeRelativeBlockLinkOnSameLevel(str, node) {
 function recognizeRelativeBlockLinkOnDifferentLevels(str, node) {
     var conditions = node.route.conditions,
         lib = conditions.lib,
-        version = conditions.version;
+        version = conditions.version,
+        match = str.match(REGEXP.RELATIVE.LEVEL);
 
-    var match = str.match(REGEXP.RELATIVE.LEVEL);
-    if(match) {
+    if (match) {
         return util.format('/libs/%s/%s/%s/%s', lib, version, match[1], match[2]);
     }
     return str;
@@ -197,14 +196,13 @@ function overrideLinks(content, node, urlHash, lang) {
     }
 
     return content.replace(REGEXP.HREF, function (str, href) {
-
-        //decode html entities
+        // decode html entities
         href = href.replace(/&#(x?)([0-9a-fA-F]+);?/g, function (str, bs, match) {
             return String.fromCharCode(parseInt(match, bs === 'x' ? 16 : 10));
         });
 
-        var nativeHref = href,
-            existedLinks = _.values(urlHash);
+        var existedLinks = _.values(urlHash);
+            // nativeHref = href;
 
         if (isMailTo(href) || isAnchor(href)) {
             return buildHref(href);
@@ -214,7 +212,7 @@ function overrideLinks(content, node, urlHash, lang) {
         href = fixBrokenLinkWithBracket(href);
         href = fixGithubLinks(href);
 
-        var hrefArr = href.split('#'), //extrude anchor from link
+        var hrefArr = href.split('#'), // extrude anchor from link
             anchor = hrefArr[1],
             links = [],
             replaced;
@@ -225,7 +223,7 @@ function overrideLinks(content, node, urlHash, lang) {
             return buildHref(href + (anchor ? '#' + anchor : ''));
         }
 
-        //try to recognize
+        // try to recognize
         if (isAbsolute(href)) {
             links.push(href.replace(/\/tree\//, '/blob/'));
             links.push(href.replace(/\/blob\//, '/tree/'));
@@ -233,27 +231,27 @@ function overrideLinks(content, node, urlHash, lang) {
             links.push(buildFullGithubLinkForDocs(href, node, lang, 'tree'));
             links.push(buildFullGithubLinkForDocs(href, node, lang, 'blob'));
             links = links.concat(recognizeRelativeLinkForLibraryDocs(href, node));
-            if(node.source && node.source.data) {
+            if (node.source && node.source.data) {
                 links.push(recognizeRelativeBlockLinkOnSameLevel(href, node));
                 links.push(recognizeRelativeBlockLinkOnDifferentLevels(href, node));
             }
         }
 
-        //remove links that are the same as original
+        // remove links that are the same as original
         links = links.filter(function (item) {
             return item !== href;
         });
 
-        links.some(function(item) {
-            if(urlHash[item]) {
+        links.some(function (item) {
+            if (urlHash[item]) {
                 replaced = urlHash[item];
                 return true;
             }
-            if(urlHash[item + '/README.md']) {
+            if (urlHash[item + '/README.md']) {
                 replaced = urlHash[item + '/README.md'];
                 return true;
             }
-            if(existedLinks.indexOf(item) > -1) {
+            if (existedLinks.indexOf(item) > -1) {
                 replaced = item;
                 return true;
             }
@@ -264,16 +262,16 @@ function overrideLinks(content, node, urlHash, lang) {
             href = replaced;
         }
         href += (anchor ? '#' + anchor : '');
-        //if(nativeHref.match(/^.\//)) {
+        // if (nativeHref.match(/^.\//)) {
         //    logger.debug(util.format('native: %s replaced: %s', nativeHref, href), module);
-        //}
+        // }
         return buildHref(href);
     });
 }
 
 function collectUrls(target) {
     function getDocByNodeId(arr, id, lang) {
-        return _.find(arr, function(item) {
+        return _.find(arr, function (item) {
             return item.key === util.format('%s%s:%s', target.KEY.DOCS_PREFIX, id, lang);
         });
     }
@@ -281,13 +279,13 @@ function collectUrls(target) {
     return vow.all([
         levelDb.getByKeyPrefix(target.KEY.NODE_PREFIX),
         levelDb.getByKeyPrefix(target.KEY.DOCS_PREFIX)
-    ]).spread(function(nodeRecords, docRecords) {
-        return nodeRecords.reduce(function(prev, nodeRecord) {
+    ]).spread(function (nodeRecords, docRecords) {
+        return nodeRecords.reduce(function (prev, nodeRecord) {
             var nodeValue = nodeRecord.value,
                 doc;
 
-            utility.getLanguages().forEach(function(lang) {
-                if(!nodeValue.hidden[lang]) {
+            utility.getLanguages().forEach(function (lang) {
+                if (!nodeValue.hidden[lang]) {
                     doc = getDocByNodeId(docRecords, nodeValue.id, lang);
                     if (doc) {
                         prev[doc.value.url] = nodeValue.url;
@@ -301,11 +299,10 @@ function collectUrls(target) {
     });
 }
 
-
-module.exports = function(target) {
+module.exports = function (target) {
     logger.info('Start overriding links', module);
 
-    if(!target.getChanges().areModified()) {
+    if (!target.getChanges().areModified()) {
         logger.warn('No changes were made during this synchronization. This step will be skipped', module);
         return vow.resolve(target);
     }
@@ -314,28 +311,27 @@ module.exports = function(target) {
     return vow.all([
         levelDb.getByKeyPrefix(target.KEY.NODE_PREFIX),
         collectUrls(target)
-    ]).spread(function(nodeRecords, urlsHash) {
-        return vow.all(nodeRecords.map(function(nodeRecord) {
-            var nodeKey = nodeRecord.key,
-                nodeValue = nodeRecord.value;
+    ]).spread(function (nodeRecords, urlsHash) {
+        return vow.all(nodeRecords.map(function (nodeRecord) {
+            var nodeValue = nodeRecord.value;
 
-            if(nodeValue.source && nodeValue.source.data) {
-                return levelDb.get(nodeValue.source.data).then(function(blockValue) {
-                    if(!blockValue) {
+            if (nodeValue.source && nodeValue.source.data) {
+                return levelDb.get(nodeValue.source.data).then(function (blockValue) {
+                    if (!blockValue) {
                         return vow.resolve();
                     }
 
-                    languages.forEach(function(lang) {
+                    languages.forEach(function (lang) {
                         var description = blockValue[lang] ? blockValue[lang].description : blockValue.description;
-                        if(!description) {
-                            //logger.warn('there no description in block data for key %s', source.key);
+                        if (!description) {
+                            // logger.warn('there no description in block data for key %s', source.key);
                             return;
                         }
 
-                        if(_.isArray(description)) {
-                            //old bem-sets format
+                        if (_.isArray(description)) {
+                            // old bem-sets format
                             description.forEach(function (item, index) {
-                                if(blockValue[lang]) {
+                                if (blockValue[lang]) {
                                     blockValue[lang].description[index].content =
                                         overrideLinks(item.content || '', nodeValue, urlsHash, lang);
                                 } else {
@@ -344,7 +340,7 @@ module.exports = function(target) {
                                 }
                             });
                         }else {
-                            if(blockValue[lang]) {
+                            if (blockValue[lang]) {
                                 blockValue[lang].description =
                                     overrideLinks(description, nodeValue, urlsHash, lang);
                             } else {
@@ -361,8 +357,8 @@ module.exports = function(target) {
             return vow.all(languages.map(function (lang) {
                 var docKey = util.format('%s%s:%s', target.KEY.DOCS_PREFIX, nodeValue.id, lang);
                 return levelDb.get(docKey)
-                    .then(function(docValue) {
-                        if(!docValue || !docValue.content) {
+                    .then(function (docValue) {
+                        if (!docValue || !docValue.content) {
                             return vow.resolve();
                         }
                         docValue.content = overrideLinks(docValue.content, nodeValue, urlsHash, lang);
@@ -371,5 +367,4 @@ module.exports = function(target) {
             }));
         }));
     });
-
 };

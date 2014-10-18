@@ -17,7 +17,7 @@ var util = require('util'),
  * @returns {*}
  */
 function getDocsFromDb(target) {
-    return levelDb.getByCriteria(function(record) {
+    return levelDb.getByCriteria(function (record) {
         return record.key.indexOf(target.KEY.DOCS_PREFIX) > -1 && record.value.repo;
     });
 }
@@ -56,15 +56,15 @@ function getTitle(value) {
  */
 function setUpdateDate(value) {
     var repository = value.repo;
-    if(!value.repo) {
+    if (!value.repo) {
         return vow.resolve(value);
     }
 
     return githubApi.getCommits({
             repository: _.extend(repository, { sha: repository.ref })
         })
-        .then(function(res) {
-            if(!res || !res[0]) {
+        .then(function (res) {
+            if (!res || !res[0]) {
                 logger.warn(util.format('can not get commits for %s %s %s %s',
                     repository.user, repository.repo, repository.ref, repository.path), module);
                 return vow.resolve(value);
@@ -78,20 +78,20 @@ function setUpdateDate(value) {
 function checkForBranch(value) {
     var repository = value.repo;
 
-    if(!repository) {
+    if (!repository) {
         return vow.resolve(value);
     }
 
     return githubApi.isBranchExists({
             repository: _.extend(repository, { branch: repository.ref })
         })
-        .then(function(exists) {
-            if(exists) {
+        .then(function (exists) {
+            if (exists) {
                 return vow.resolve(value);
             }
 
             return githubApi.getDefaultBranch({ repository: repository })
-                .then(function(branch) {
+                .then(function (branch) {
                     repository.prose = util.format('http://prose.io/#%s/%s/edit/%s/%s',
                         repository.user, repository.repo, branch, repository.path);
 
@@ -111,7 +111,7 @@ function syncDoc(target, record) {
     var key = record.key,
         value = record.value;
     return getRemoteData(value)
-        .then(function(md) {
+        .then(function (md) {
             var result = md.res,
                 remoteEtag,
                 localEtag;
@@ -140,17 +140,17 @@ function syncDoc(target, record) {
                 value.url = value.content;
                 value.content = utility.mdToHtml(
                     (new Buffer(result.content, 'base64')).toString(), { renderer: renderer.getRenderer() });
-            } catch(err) {
+            } catch (err) {
                 return onError(md);
             }
 
             return setUpdateDate(value)
                 .then(checkForBranch)
-                .then(function(value) {
+                .then(function (value) {
                     return levelDb.put(key, value);
                 });
         })
-        .fail(function() {
+        .fail(function () {
             return onError(record.content);
         });
 }
@@ -162,21 +162,21 @@ function syncDoc(target, record) {
  * @returns {*}
  */
 function syncDocs(target, records) {
-    return vow.allResolved(records.map(function(item) {
+    return vow.allResolved(records.map(function (item) {
         return syncDoc(target, item);
     }));
 }
 
-module.exports = function(target) {
+module.exports = function (target) {
     return getDocsFromDb(target)
-        .then(function(records) {
+        .then(function (records) {
             return syncDocs(target, records);
         })
-        .then(function() {
+        .then(function () {
             logger.info('Docs were synchronized successfully', module);
             return vow.resolve(target);
         })
-        .fail(function(err) {
+        .fail(function (err) {
             logger.error(util.format('Docs synchronization failed with error %s', err.message), module);
             return vow.reject(err);
         });
