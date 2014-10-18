@@ -11,7 +11,7 @@ var util = require('util'),
 
     DB_PATH = path.join(process.cwd(), 'db');
 
-module.exports = function(req, res) {
+module.exports = function (req, res) {
     var environment = req.params.environment || 'testing';
     logger.info(util.format('data controller action %s with params: %s', req.path, environment), module);
 
