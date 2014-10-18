@@ -1,6 +1,6 @@
 var path = require('path'),
     TargetBase = require('./base').TargetBase,
-    TargetNodes = function(options) {
+    TargetNodes = function (options) {
         this.init(options);
     };
 
@@ -10,24 +10,24 @@ TargetNodes.prototype.MODEL_FILE_PATH = path.join(TargetNodes.prototype.CACHE_DI
 TargetNodes.prototype.MODEL_JSPATH = path.join(process.cwd(), 'model', 'index.js');
 TargetNodes.prototype.LIBRARIES_FILE_PATH = path.join(TargetNodes.prototype.CACHE_DIR, 'libraries');
 
-TargetNodes.prototype.init = function(options) {
+TargetNodes.prototype.init = function (options) {
     var tasks = this._getTasksProd();
-    if(options.dev) {
+    if (options.dev) {
         tasks = this._getTasksDev();
     }
 
-    tasks.forEach(function(task) {
+    tasks.forEach(function (task) {
         this.addTask(task);
     }, this);
 
     TargetBase.prototype.init.call(this, options);
 };
 
-TargetNodes.prototype.getName = function() {
+TargetNodes.prototype.getName = function () {
     return 'NODES SYNCHRONIZATION';
 };
 
-TargetNodes.prototype._getTasksDev = function() {
+TargetNodes.prototype._getTasksDev = function () {
     return [
         require('../tasks/init'),
         require('../tasks/get-jsmodel'),
@@ -46,7 +46,7 @@ TargetNodes.prototype._getTasksDev = function() {
     ];
 };
 
-TargetNodes.prototype._getTasksProd = function() {
+TargetNodes.prototype._getTasksProd = function () {
     return [
         require('../tasks/init'),
         require('../tasks/nodes'),

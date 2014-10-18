@@ -41,7 +41,7 @@ exports.init = function (o) {
  */
 exports.run = function (ctx, req) {
     var build = rebuild;
-    //var build = vow.resolve();
+    // var build = vow.resolve();
 
     return build(_.values(targets))
         .then(function () {

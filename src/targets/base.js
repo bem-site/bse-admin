@@ -2,7 +2,7 @@
 
 var path = require('path'),
     Changes = require('../model/changes'),
-    TargetBase = function(options) {
+    TargetBase = function (options) {
         this.init(options);
     };
 
@@ -26,33 +26,33 @@ TargetBase.prototype = {
     options: undefined,
     changes: undefined,
 
-    init: function(options) {
+    init: function (options) {
         this.options = options || {};
         this.changes = new Changes();
     },
 
-    getName: function() {
+    getName: function () {
         return 'BASE';
     },
 
-    addTask: function(task) {
+    addTask: function (task) {
         this.tasks.push(task);
         return this;
     },
 
-    getTasks: function() {
+    getTasks: function () {
         return this.tasks;
     },
 
-    getChanges: function() {
+    getChanges: function () {
         return this.changes;
     },
 
-    getOptions: function() {
+    getOptions: function () {
         return this.options;
     },
 
-    execute: function() {
+    execute: function () {
         var _this = this,
             initial = this.getTasks().shift();
         return this.getTasks().reduce(function (prev, item) {

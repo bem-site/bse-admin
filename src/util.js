@@ -1,5 +1,4 @@
 var util = require('util'),
-    path = require('path'),
     fs = require('fs'),
     zlib = require('zlib'),
 
@@ -16,19 +15,19 @@ var util = require('util'),
  * Returns array of available languages
  * @returns {Array}
  */
-exports.getLanguages = function() {
+exports.getLanguages = function () {
     return config.get('languages') || [config.get('defaultLanguage') || 'en'];
 };
 
-exports.gzip = function(content) {
+exports.gzip = function (content) {
     var def = vow.defer();
-    zlib.gzip(new Buffer(content, 'utf-8'), function(err, result) {
+    zlib.gzip(new Buffer(content, 'utf-8'), function (err, result) {
         err ? def.reject(err) : def.resolve(result);
     });
     return def.promise();
 };
 
-exports.removeDir = function(p) {
+exports.removeDir = function (p) {
     var def = vow.defer();
     fsExtra.remove(p, function (err) {
         err ? def.reject(err) : def.resolve();
@@ -37,14 +36,15 @@ exports.removeDir = function(p) {
 };
 
 /**
- * @param options
+ * Loads data from gh to file on local filesystem via https request
+ * @param {Object} options
  * @returns {*}
  */
-exports.loadFromRepoToFile = function(options) {
+exports.loadFromRepoToFile = function (options) {
     var def = vow.defer(),
         repo = options.repository,
         file = options.file,
-        getUrl = function(type) {
+        getUrl = function (type) {
             return {
                 'public': 'https://raw.githubusercontent.com/%s/%s/%s/%s',
                 'private': 'https://github.yandex-team.ru/%s/%s/raw/%s/%s'
@@ -53,11 +53,11 @@ exports.loadFromRepoToFile = function(options) {
         url = util.format(getUrl(repo.type), repo.user, repo.repo, repo.ref, repo.path);
 
     request.get(url).pipe(fs.createWriteStream(file))
-        .on('error', function(err) {
+        .on('error', function (err) {
             logger.error(util.format('Error occur while loading from url %s to file %s', url, file), module);
             def.reject(err);
         })
-        .on('close', function() {
+        .on('close', function () {
             logger.debug(util.format('Success loading from url %s to file %s', url, file), module);
             def.resolve();
         });
@@ -66,11 +66,11 @@ exports.loadFromRepoToFile = function(options) {
 
 /**
  * Compile *.md files to html with marked module
- * @param content - {String} content of *.md file
- * @param conf - {Object} configuration object
+ * @param {String} content of *.md file
+ * @param {Object} conf - configuration object
  * @returns {String} html string
  */
-exports.mdToHtml = function(content, conf) {
+exports.mdToHtml = function (content, conf) {
     return md(content, _.extend({
         gfm: true,
         pedantic: false,
@@ -83,13 +83,13 @@ exports.mdToHtml = function(content, conf) {
  * @param  {String} dateStr - staring date in dd-mm-yyy format
  * @return {Number} date in milliseconds
  */
-exports.dateToMilliseconds = function(dateStr) {
+exports.dateToMilliseconds = function (dateStr) {
     var re = /[^\w]+|_+/,
         date = new Date(),
         dateParse = dateStr.split(re),
         dateMaskFrom = 'dd-mm-yyyy'.split(re);
 
-    dateMaskFrom.forEach(function(elem, indx) {
+    dateMaskFrom.forEach(function (elem, indx) {
         switch (elem) {
             case 'dd':
                 date.setDate(dateParse[indx]);
@@ -99,7 +99,7 @@ exports.dateToMilliseconds = function(dateStr) {
                 break;
             default:
                 if (dateParse[indx].length === 2) {
-                    if(date.getFullYear() % 100 >= dateParse[indx]) {
+                    if (date.getFullYear() % 100 >= dateParse[indx]) {
                         date.setFullYear('20' + dateParse[indx]);
                     }else {
                         date.setFullYear('19' + dateParse[indx]);
@@ -113,7 +113,7 @@ exports.dateToMilliseconds = function(dateStr) {
     return date.valueOf();
 };
 
-exports.realpath = function(p) {
+exports.realpath = function (p) {
     var def = vow.defer();
     fs.realpath(p, function (err, resolvedPath) {
         err ? def.reject(err) : def.resolve(resolvedPath);

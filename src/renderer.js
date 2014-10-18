@@ -1,22 +1,21 @@
-var md = require('marked');
-
-var renderer;
+var md = require('marked'),
+    renderer;
 
 function createRenderer() {
     renderer = new md.Renderer();
 
     /**
      * Fix marked issue with cyrillic symbols replacing
-     * @param text - {String} test of header
-     * @param level - {Number} index of header
-     * @param raw
-     * @param options - {Object} options
+     * @param {String} text - text of header
+     * @param {Number} level - index of header
+     * @param {String} raw
+     * @param {Object} options object
      * @returns {String} - result header string
      */
     renderer.heading = function(text, level, raw, options) {
         var specials = null;
         /* jshint ignore:start */
-        specials = ['-','[',']','/','{','}','(',')','*','+','?','.','\\','^','$','|','\ ','\'','\"'];
+        specials = ['-', '[', ']', '/', '{', '}', '(', ')', '*', '+', '?', '.', '\\', '^', '$', '|', '\ ', '\'', '\"'];
         /* jshint ignore:end */
 
         options = options || {};
@@ -28,7 +27,7 @@ function createRenderer() {
     };
 
     // Fix(hidden) post scroll, when it contains wide table
-    renderer.table = function(header, body) {
+    renderer.table = function (header, body) {
         return '<div class="table-container">' +
             '<table>\n' +
             '<thead>\n' +
@@ -42,7 +41,7 @@ function createRenderer() {
     };
 
     // Add container for inline html tables
-    renderer.html = function(source) {
+    renderer.html = function (source) {
         var newHtml = source.replace(/<table>/, '<div class="table-container"><table>');
         return newHtml.replace(/<\/table>/, '</table></div>');
     };
@@ -50,7 +49,6 @@ function createRenderer() {
     return renderer;
 }
 
-exports.getRenderer = function() {
+exports.getRenderer = function () {
     return renderer || createRenderer();
 };
-

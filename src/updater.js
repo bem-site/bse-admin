@@ -26,18 +26,18 @@ function isActive() {
 function execute () {
     logger.info('=== CRON CHECK FOR DATA START ===', module);
 
-    if(isActive()) {
+    if (isActive()) {
         logger.warn('Previous synchronization process was not completed yet', module);
         return;
     }
 
     setActive();
     return (new TargetNodes({})).execute()
-        .then(function() {
+        .then(function () {
             setIdle();
             logger.info('=== CRON CHECK FOR DATA END ===', module);
         })
-        .fail(function() {
+        .fail(function () {
             setIdle();
             logger.error('=== CRON CHECK FOR DATA ERROR ===', module);
         });

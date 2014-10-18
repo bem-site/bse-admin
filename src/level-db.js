@@ -14,8 +14,8 @@ var util = require('util'),
     DB_OPTIONS = {
         keyEncoding: 'utf-8',
         valueEncoding: {
-            encode : JSON.stringify,
-            decode : function (val) {
+            encode: JSON.stringify,
+            decode: function (val) {
                 try {
                     return JSON.parse(val);
                 } catch (err) {
@@ -23,7 +23,7 @@ var util = require('util'),
                 }
             },
             buffer: false,
-            type : 'custom'
+            type: 'custom'
         }
     },
 
@@ -35,7 +35,7 @@ module.exports = {
      * Initialize database
      * @param {Object} options for database initialization
      */
-    init: function() {
+    init: function () {
         var def = vow.defer();
 
         if(isInitialized) {
@@ -45,7 +45,7 @@ module.exports = {
         logger.info('Initialize leveldb database', module);
         return vowFs
             .makeDir(path.join(process.cwd(), 'db'))
-            .then(function() {
+            .then(function () {
                 try {
                     db = levelup(path.join('db', DB_NAME));
                     logger.info('Database was initialized successfully', module);
@@ -66,11 +66,11 @@ module.exports = {
      * @param {Object} value of record
      * @returns {*}
      */
-    put: function(key, value) {
+    put: function (key, value) {
         logger.verbose(util.format('put: %s %s', key, value), module);
 
         var def = vow.defer();
-        db.put(key, value, DB_OPTIONS, function(err) {
+        db.put(key, value, DB_OPTIONS, function (err) {
             err ? def.reject(err) : def.resolve();
         });
         return def.promise();
@@ -81,13 +81,13 @@ module.exports = {
      * @param {String} key of record
      * @returns {Object} value of record
      */
-    get: function(key) {
+    get: function (key) {
         logger.verbose(util.format('get: %s', key), module);
 
         var def = vow.defer();
-        db.get(key, DB_OPTIONS, function(err, value) {
-            if(err) {
-                if('NotFoundError' === err.type) {
+        db.get(key, DB_OPTIONS, function (err, value) {
+            if (err) {
+                if (err.type === 'NotFoundError') {
                     return def.resolve();
                 }
                 def.reject();
@@ -102,23 +102,23 @@ module.exports = {
      * @param {String} key of record
      * @returns {*}
      */
-    del: function(key) {
+    del: function (key) {
         logger.verbose(util.format('del: %s', key), module);
 
         var def = vow.defer();
-        db.del(key, function(err) {
+        db.del(key, function (err) {
             err ? def.reject(err) : def.resolve();
         });
         return def.promise();
     },
 
-    batch: function(operations) {
-        if(!operations.length) {
+    batch: function (operations) {
+        if (!operations.length) {
             return vow.resolve();
         }
 
         var def = vow.defer();
-        db.batch(operations, DB_OPTIONS, function(err) {
+        db.batch(operations, DB_OPTIONS, function (err) {
             err ? def.reject(err) : def.resolve();
         });
         return def.promise();
@@ -128,7 +128,7 @@ module.exports = {
      * Returns true if database is in open state
      * @returns {*|boolean}
      */
-    isOpen: function() {
+    isOpen: function () {
         return db.isOpen();
     },
 
@@ -136,7 +136,7 @@ module.exports = {
      * Returns true if database is in closed state
      * @returns {*|boolean}
      */
-    isClosed: function() {
+    isClosed: function () {
         return db.isClosed();
     },
 
@@ -146,12 +146,12 @@ module.exports = {
      * @param {Object} config object for set type of data that should be returned
      * @returns {*}
      */
-    _getByCriteria: function(criteria, config) {
+    _getByCriteria: function (criteria, config) {
         var def = vow.defer(),
             result = [];
         db.createReadStream(_.extend(DB_OPTIONS, config))
             .on('data', function (data) {
-                if(criteria(data)) {
+                if (criteria(data)) {
                     result.push(data);
                 }
             })
@@ -172,7 +172,7 @@ module.exports = {
      * @param {Function} criteria function
      * @returns {*}
      */
-    getKeysByCriteria: function(criteria) {
+    getKeysByCriteria: function (criteria) {
         return this._getByCriteria(criteria, { keys: true, values: false });
     },
 
@@ -181,29 +181,29 @@ module.exports = {
      * @param {Function} criteria function
      * @returns {*}
      */
-    getValuesByCriteria: function(criteria) {
+    getValuesByCriteria: function (criteria) {
         return this._getByCriteria(criteria, { keys: false, values: true });
     },
 
-    getByCriteria: function(criteria) {
+    getByCriteria: function (criteria) {
         return this._getByCriteria(criteria, { keys: true, values: true });
     },
 
-    removeByCriteria: function(criteria) {
-        return this.getByCriteria(criteria).then(function(records) {
+    removeByCriteria: function (criteria) {
+        return this.getByCriteria(criteria).then(function (records) {
             return this.batch(records.map(function (record) {
                 return { type: 'del', key: record.key };
             }));
         }, this);
     },
 
-    getByKeyPrefix: function(prefix) {
-        return this.getByCriteria(function(record) {
+    getByKeyPrefix: function (prefix) {
+        return this.getByCriteria(function (record) {
             return record.key.indexOf(prefix) > -1;
         });
     },
 
-    removeByKeyPrefix: function(prefix) {
+    removeByKeyPrefix: function (prefix) {
         logger.verbose(util.format('Remove existed data for prefix %s', prefix), module);
 
         return this.getKeysByCriteria(function (key) {
@@ -216,7 +216,7 @@ module.exports = {
             }, this);
     },
 
-    copy: function(snapshotPath) {
+    copy: function (snapshotPath) {
         var def = vow.defer(),
             snapshotDb = levelup(path.join(snapshotPath, DB_NAME), DB_OPTIONS);
         db.createReadStream().pipe(snapshotDb.createWriteStream())
@@ -229,7 +229,7 @@ module.exports = {
         return def.promise();
     },
 
-    getDb: function() {
+    getDb: function () {
         return db;
     }
 };
