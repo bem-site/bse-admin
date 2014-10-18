@@ -1,0 +1,10 @@
+block('snapshot').elem('icon').content()(function() {
+   return {
+      block : 'image',
+      url : 'src/common.blocks/snapshot/__icon/database.svg',
+      width : 100,
+      height : 100,
+      alt : 'BEM',
+      title : 'Find us on bem.info'
+   };
+});

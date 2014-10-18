@@ -1,0 +1,49 @@
+block('snapshot').elem('panel').content()(function() {
+    var content = this.ctx.content,
+        isTestingDisabled = false,
+        isProductionDisabled = false,
+        isRemoveDisabled = false;
+
+    isTestingDisabled = content.testing || content.production,
+    isProductionDisabled = !content.testing || content.production,
+    isRemoveDisabled = isTestingDisabled;
+
+    return [
+        {
+            block : 'button',
+            url : '#',
+            mods : { theme : 'normal', size : 'l', type : 'link' },
+            icon : {
+                block : 'icon',
+                url : 'src/common.blocks/snapshot/__panel/news.svg'
+            }
+        },
+        {
+            block : 'button',
+            url : content.testingUrl,
+            mods : { theme : 'normal', size : 'l', type : 'link', disabled: isTestingDisabled },
+            icon : {
+                block : 'icon',
+                url : 'src/common.blocks/snapshot/__panel/lab.svg'
+            }
+        },
+        {
+            block : 'button',
+            url : content.productionUrl,
+            mods : { theme : 'normal', size : 'l', type : 'link', disabled: isProductionDisabled },
+            icon : {
+                block : 'icon',
+                url : 'src/common.blocks/snapshot/__panel/world.svg'
+            }
+        },
+        {
+            block : 'button',
+            url : '#',
+            mods : { theme : 'normal', size : 'l', type : 'link', disabled: isRemoveDisabled },
+            icon : {
+                block : 'icon',
+                url : 'src/common.blocks/snapshot/__panel/trash.svg'
+            }
+        }
+    ]
+});

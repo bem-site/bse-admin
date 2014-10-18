@@ -1,0 +1,30 @@
+block('snapshot').match(this.ctx.testing && !this.ctx.mods.environment).def()(function() {
+    this.ctx.mods = { environment: 'testing' };
+    return applyNext();
+});
+
+block('snapshot').match(this.ctx.production && !this.ctx.mods.environment).def()(function() {
+    this.ctx.mods = { environment: 'production' };
+    return applyNext();
+});
+
+block('snapshot').match(this.ctx.testing && this.ctx.production).def()(function() {
+    this.ctx.mods = { environment: 'production' };
+    return applyNext();
+});
+
+block('snapshot').content()(function() {
+    return [
+        {
+            elem: 'title',
+            content: this.ctx.date
+        },
+        {
+            elem: 'icon'
+        },
+        {
+            elem: 'panel',
+            content: this.ctx
+        }
+    ]
+});
