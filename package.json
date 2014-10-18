@@ -63,7 +63,7 @@
     "make": "bower i && enb make --no-cache && cp configs/_secure.json configs/secure.json",
     "start": "node bin/bse server",
     "cluster": "node src/cluster.js",
-    "test": "node_modules/.bin/jshint . && node_modules/.bin/jscs -c .jscs.js ."
+    "test": "node_modules/.bin/jshint . && node_modules/.bin/jscs -c .jscsrc ."
   },
   "readmeFilename": "README.md",
   "licenses": [
