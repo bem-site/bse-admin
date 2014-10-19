@@ -38,7 +38,7 @@ block('snapshot').elem('panel').content()(function() {
         },
         {
             block : 'button',
-            url : '#',
+            url : content.removeUrl,
             mods : { theme : 'normal', size : 'l', type : 'link', disabled: isRemoveDisabled },
             icon : {
                 block : 'icon',

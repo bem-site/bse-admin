@@ -103,3 +103,4 @@ exports.index = function (req, res) {
 exports.set = require('./set');
 exports.ping = require('./ping');
 exports.data = require('./data');
+exports.delete = require('./remove');
