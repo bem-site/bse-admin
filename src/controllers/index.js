@@ -39,22 +39,18 @@ function getOrCreateSymlinks(environment) {
         });
 }
 
-exports.index = function (req, res) {
-    logger.info(util.format('index controller action %s', req.path), module);
+function getData() {
     var result = { versions: [] };
 
     return vowFs.exists(SNAPSHOTS_PATH).then(function (exists) {
         if (!exists) {
-            res.status(200).json(result);
-            return;
+            return result;
         }
 
         return vowFs.listDir(SNAPSHOTS_PATH).then(function (snapshots) {
             if (!snapshots.length) {
-                res.status(200).json(result);
-                return;
+                return result;
             }
-
             return vow.all([
                     getOrCreateSymlinks('testing'),
                     getOrCreateSymlinks('production')
@@ -63,37 +59,45 @@ exports.index = function (req, res) {
                     testingPath = testingPath.split('/').pop();
                     productionPath = productionPath.split('/').pop();
 
-                    result.versions = snapshots.map(function (item) {
-                        var _item = {
-                            date: item,
-                            testingUrl: util.format('set/testing/%s', item),
-                            productionUrl: util.format('set/production/%s', item)
-                        };
-
-                        if (item === testingPath) {
-                            _item.testing = true;
-                        }
-
-                        if (item === productionPath) {
-                            _item.production = true;
-                        }
-                        return _item;
-                    });
+                    result.versions = snapshots
+                        .sort(function (a, b) {
+                            var re = /(\d{1,2}):(\d{1,2}):(\d{1,4})-(\d{1,2}):(\d{1,2}):(\d{1,2})/;
+                            a = a.match(re);
+                            b = b.match(re);
+                            a = new Date(a[3], a[2] - 1, a[1], a[4], a[5], a[6], 0);
+                            b = new Date(b[3], b[2] - 1, b[1], b[4], b[5], b[6], 0);
+                            return b.getTime() - a.getTime();
+                        })
+                        .map(function (item) {
+                            return {
+                                date: item,
+                                testingUrl: util.format('/set/testing/%s', item),
+                                productionUrl: util.format('/set/production/%s', item),
+                                removeUrl: util.format('/remove/%s', item),
+                                testing: item === testingPath,
+                                production: item === productionPath
+                            };
+                        });
 
                     return result;
-                })
-                .then(function (result) {
-                    return template.run(
-                        _.extend({ block: 'page', view: 'index' }, { data: result }), req);
-                })
-                .then(function (html) {
-                    res.status(200).end(html);
-                })
-                .fail(function (err) {
-                    res.status(500).end(err);
                 });
         });
     });
+}
+
+exports.index = function (req, res) {
+    logger.info(util.format('index controller action %s', req.path), module);
+
+    return getData()
+        .then(function (result) {
+            return template.run(_.extend({ block: 'page', view: 'index' }, { data: result }), req);
+        })
+        .then(function (html) {
+            res.status(200).end(html);
+        })
+        .fail(function (err) {
+            res.status(500).end(err);
+        });
 };
 
 exports.set = require('./set');
