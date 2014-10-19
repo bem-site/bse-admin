@@ -2,39 +2,39 @@ var util = require('util'),
     sha = require('sha1'),
     levelDb = require('../../level-db'),
     utility = require('../../util'),
-    nodes = require('./index');
+    nodes = require('./index'),
 
-/**
- * Subclass of dynamic nodes which describe library blocks
- * @param parent - {LevelNode} parent node
- * @param version - {Object} version of library
- * @param level - {Object} version of library
- * @param block - {Object} block data
- * @constructor
- */
-var BlockNode = function(parent, version, level, block) {
-    this.setTitle(block)
-        .setSource(version, level, block)
-        .processRoute(parent, {
-            conditions: {
-                lib: version.repo,
-                version: version.ref.replace(/\//g, '-'),
-                level: level.name,
-                block: block.name
-            }
-        })
-        .init(parent);
-};
+  /**
+   * Subclass of dynamic nodes which describe library blocks
+   * @param {LevelNode} parent node
+   * @param {Object} version of library
+   * @param {Object} level of library blocks
+   * @param {Object} block data
+   * @constructor
+   */
+    BlockNode = function (parent, version, level, block) {
+        this.setTitle(block)
+            .setSource(version, level, block)
+            .processRoute(parent, {
+                conditions: {
+                    lib: version.repo,
+                    version: version.ref.replace(/\//g, '-'),
+                    level: level.name,
+                    block: block.name
+                }
+            })
+            .init(parent);
+    };
 
 BlockNode.prototype = Object.create(nodes.dynamic.DynamicNode.prototype);
 
 /**
  * Sets title for node
- * @param block - {Object} block
+ * @param {Object} block
  * @returns {BlockNode}
  */
-BlockNode.prototype.setTitle = function(block) {
-    this.title = utility.getLanguages().reduce(function(prev, lang) {
+BlockNode.prototype.setTitle = function (block) {
+    this.title = utility.getLanguages().reduce(function (prev, lang) {
         prev[lang] = block.name;
         return prev;
     }, {});
@@ -43,10 +43,12 @@ BlockNode.prototype.setTitle = function(block) {
 
 /**
  * Sets source for node
- * @param source - {Object} source
+ * @param {Object} version of library
+ * @param {Object} level of library blocks
+ * @param {Object} block data
  * @returns {BlockNode}
  */
-BlockNode.prototype.setSource = function(version, level, block) {
+BlockNode.prototype.setSource = function (version, level, block) {
     this.source = {
         data: block.data,
         jsdoc: block.jsdoc,
@@ -63,7 +65,7 @@ BlockNode.prototype.setSource = function(version, level, block) {
  * Sets view for node
  * @returns {BlockNode}
  */
-BlockNode.prototype.setView = function() {
+BlockNode.prototype.setView = function () {
     this.view = this.VIEW.BLOCK;
     return this;
 };
@@ -72,25 +74,25 @@ BlockNode.prototype.setView = function() {
  * Sets class for node
  * @returns {BlockNode}
  */
-BlockNode.prototype.setClass = function() {
+BlockNode.prototype.setClass = function () {
     this.class = 'block';
     return this;
 };
 
-BlockNode.prototype.saveToDb = function() {
+BlockNode.prototype.saveToDb = function () {
     var dataKey = util.format('blocks:data:%s', sha(JSON.stringify(this.source.data))),
         jsdocKey = util.format('blocks:jsdoc:%s', sha(JSON.stringify(this.source.jsdoc))),
         batchOperations = [];
 
-    if(this.source.data) {
-        batchOperations.push({ type: 'put', key: dataKey, value: this.source.data});
+    if (this.source.data) {
+        batchOperations.push({ type: 'put', key: dataKey, value: this.source.data });
     }
 
-    if(this.source.jsdoc) {
-        batchOperations.push({ type: 'put', key: jsdocKey, value: this.source.jsdoc});
+    if (this.source.jsdoc) {
+        batchOperations.push({ type: 'put', key: jsdocKey, value: this.source.jsdoc });
     }
 
-    return levelDb.batch(batchOperations).then(function() {
+    return levelDb.batch(batchOperations).then(function () {
         this.source.data = dataKey;
         this.source.jsdoc = jsdocKey;
         return this.prepareToSaveToDb();

@@ -1,7 +1,7 @@
-var Changes = function() {
+var Changes = function () {
         this.init();
     },
-    Change = function(type) {
+    Change = function (type) {
         this.type = type;
         this.init();
     };
@@ -11,49 +11,49 @@ Change.prototype = {
     _modified: undefined,
     _removed: undefined,
 
-    _areAddedItems: function() {
+    _areAddedItems: function () {
         return this._added.length;
     },
 
-    _areModifiedItems: function() {
+    _areModifiedItems: function () {
         return this._modified.length;
     },
 
-    _areRemovedItems: function() {
+    _areRemovedItems: function () {
         return this._removed.length;
     },
 
-    areModified: function() {
+    areModified: function () {
         return this._areAddedItems() || this._areModifiedItems() || this._areRemovedItems();
     },
 
-    init: function() {
+    init: function () {
         this._added = [];
         this._modified = [];
         this._removed = [];
     },
 
-    addAdded: function(item) {
+    addAdded: function (item) {
         this._added.push(item);
     },
 
-    addModified: function(item) {
+    addModified: function (item) {
         this._modified.push(item);
     },
 
-    addRemoved: function(item) {
+    addRemoved: function (item) {
         this._removed.push(item);
     },
 
-    getAdded: function() {
+    getAdded: function () {
         return this._added;
     },
 
-    getModified: function() {
+    getModified: function () {
         return this._modified;
     },
 
-    getRemoved: function() {
+    getRemoved: function () {
         return this._removed;
     }
 };
@@ -65,7 +65,7 @@ Changes.prototype = {
     _people: undefined,
     _libraries: undefined,
 
-    areModified: function() {
+    areModified: function () {
         return this.getDocs().areModified() ||
             this.getMeta().areModified() ||
             this.getNodes().areModified() ||
@@ -73,27 +73,27 @@ Changes.prototype = {
             this.getLibraries().areModified();
     },
 
-    getDocs: function() {
+    getDocs: function () {
         return this._docs;
     },
 
-    getMeta: function() {
+    getMeta: function () {
         return this._meta;
     },
 
-    getNodes: function() {
-        return  this._nodes;
+    getNodes: function () {
+        return this._nodes;
     },
 
-    getPeople: function() {
+    getPeople: function () {
         return this._people;
     },
 
-    getLibraries: function() {
+    getLibraries: function () {
         return this._libraries;
     },
 
-    init: function() {
+    init: function () {
         this._docs = new Change('docs');
         this._meta = new Change('meta');
         this._nodes = new Change('nodes');
@@ -103,4 +103,3 @@ Changes.prototype = {
 };
 
 module.exports = Changes;
-

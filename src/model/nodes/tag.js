@@ -1,32 +1,31 @@
 var utility = require('../../util'),
-    DynamicNode = require('./dynamic').DynamicNode;
+    DynamicNode = require('./dynamic').DynamicNode,
 
-/**
- * Subclass of dynamic nodes which describe tag of post
- * @param parent - {BaseNode} parent node
- * @param routes - {Object} application routes hash
- * @param tagKey - {String} tag
- * @constructor
- */
-var TagNode = function(parent, tagKey) {
-    this.setTitle(tagKey)
-        .processRoute(parent, {
-            conditions: {
-                id: tagKey
-            }
-        })
-        .init(parent);
-};
+    /**
+     * Subclass of dynamic nodes which describe tag of post
+     * @param {BaseNode} parent node
+     * @param {String} tagKey - tag
+     * @constructor
+     */
+    TagNode = function (parent, tagKey) {
+        this.setTitle(tagKey)
+            .processRoute(parent, {
+                conditions: {
+                    id: tagKey
+                }
+            })
+            .init(parent);
+    };
 
 TagNode.prototype = Object.create(DynamicNode.prototype);
 
 /**
  * Sets title for node
- * @param tagKey - {String} tag key
+ * @param {String} tagKey - tag key
  * @returns {TagNode}
  */
-TagNode.prototype.setTitle = function(tagKey) {
-    this.title = utility.getLanguages().reduce(function(prev, lang) {
+TagNode.prototype.setTitle = function (tagKey) {
+    this.title = utility.getLanguages().reduce(function (prev, lang) {
         prev[lang] = tagKey;
         return prev;
     }, {});
@@ -37,7 +36,7 @@ TagNode.prototype.setTitle = function(tagKey) {
  * Sets view for node
  * @returns {TagNode}
  */
-TagNode.prototype.setView = function() {
+TagNode.prototype.setView = function () {
     this.view = this.VIEW.TAGS;
     return this;
 };
@@ -46,7 +45,7 @@ TagNode.prototype.setView = function() {
  * Sets class for node
  * @returns {TagNode}
  */
-TagNode.prototype.setClass = function() {
+TagNode.prototype.setClass = function () {
     this.class = 'tag';
     return this;
 };

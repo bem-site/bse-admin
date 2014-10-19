@@ -3,27 +3,25 @@ var util = require('util'),
     _ = require('lodash'),
     vow = require('vow'),
     susanin = require('susanin'),
-    deepExtend = require('deep-extend'),
 
     levelDb = require('../../level-db'),
-    BaseNode = require('./base').BaseNode;
+    BaseNode = require('./base').BaseNode,
 
-/**
- * Subclass of BaseNode class
- * Base class for all dynamic nodes
- * @constructor
- */
-var DynamicNode = function() {};
+  /**
+   * Subclass of BaseNode class
+   * Base class for all dynamic nodes
+   * @constructor
+   */
+    DynamicNode = function () {};
 
 DynamicNode.prototype = Object.create(BaseNode.prototype);
 
 /**
  * Init function for node
- * @param parent - {Object} parent node
+ * @param {BaseNode} parent node
  * @returns {DynamicNode}
  */
-DynamicNode.prototype.init = function(parent) {
-
+DynamicNode.prototype.init = function (parent) {
     this.setType()
         .setSize()
         .setView()
@@ -41,7 +39,7 @@ DynamicNode.prototype.init = function(parent) {
  * Sets type for node
  * @returns {DynamicNode}
  */
-DynamicNode.prototype.setType = function() {
+DynamicNode.prototype.setType = function () {
     this.type = this.TYPE.SIMPLE;
     return this;
 };
@@ -50,7 +48,7 @@ DynamicNode.prototype.setType = function() {
  * Sets size for node
  * @returns {DynamicNode}
  */
-DynamicNode.prototype.setSize = function() {
+DynamicNode.prototype.setSize = function () {
     this.size = this.SIZE.NORMAL;
     return this;
 };
@@ -59,7 +57,7 @@ DynamicNode.prototype.setSize = function() {
  * Sets view for node
  * @returns {DynamicNode}
  */
-DynamicNode.prototype.setView = function() {
+DynamicNode.prototype.setView = function () {
     this.view = this.VIEW.POST;
     return this;
 };
@@ -68,7 +66,7 @@ DynamicNode.prototype.setView = function() {
  * Sets hidden state for node
  * @returns {DynamicNode}
  */
-DynamicNode.prototype.setHidden = function() {
+DynamicNode.prototype.setHidden = function () {
     this.hidden = {};
     return this;
 };
@@ -77,27 +75,26 @@ DynamicNode.prototype.setHidden = function() {
  * Sets class for node
  * @returns {DynamicNode}
  */
-DynamicNode.prototype.setClass = function() {
+DynamicNode.prototype.setClass = function () {
     this.class = 'dynamic';
     return this;
 };
 
 /**
  * Create route and url fields for dynamic nodes
- * @param routes - {Object} application routes hash
- * @param parent - {BaseNode} parent node
- * @param params - {Object} route params of node
+ * @param {BaseNode} parent node
+ * @param {Object} params - route params of node
  * @returns {DynamicNode}
  */
-DynamicNode.prototype.processRoute = function(parent, params) {
+DynamicNode.prototype.processRoute = function (parent, params) {
     var baseRoute = parent.route;
-    Object.keys(params).forEach(function(paramsKey) {
-        if(paramsKey === 'conditions') {
+    Object.keys(params).forEach(function (paramsKey) {
+        if (paramsKey === 'conditions') {
             baseRoute.conditions = baseRoute.conditions || {};
-            Object.keys(params[paramsKey]).forEach(function(conditionsKey) {
+            Object.keys(params[paramsKey]).forEach(function (conditionsKey) {
                 var brc = baseRoute.conditions[conditionsKey];
                 brc = brc || [];
-                if(!_.isArray(brc)) {
+                if (!_.isArray(brc)) {
                     brc = [brc];
                 }
                 baseRoute.conditions[conditionsKey] = params.conditions[conditionsKey];
@@ -114,7 +111,7 @@ DynamicNode.prototype.processRoute = function(parent, params) {
  * Generates string key for database record
  * @returns {String}
  */
-DynamicNode.prototype.generateKey = function() {
+DynamicNode.prototype.generateKey = function () {
     return util.format('nodes:%s', this.id);
 };
 
@@ -122,7 +119,7 @@ DynamicNode.prototype.generateKey = function() {
  * Saves record in database
  * @returns {*}
  */
-DynamicNode.prototype.saveToDb = function() {
+DynamicNode.prototype.saveToDb = function () {
     this.parent = this.parent.id;
     return levelDb.put(this.generateKey(), this);
 };
@@ -131,7 +128,7 @@ DynamicNode.prototype.saveToDb = function() {
  * Returns operation object for database batch operation
  * @returns {*}
  */
-DynamicNode.prototype.prepareToSaveToDb = function() {
+DynamicNode.prototype.prepareToSaveToDb = function () {
     this.parent = this.parent.id;
     return vow.resolve({ type: 'put', key: this.generateKey(), value: this });
 };

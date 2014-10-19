@@ -1,4 +1,5 @@
 var util = require('util'),
+    // path = require('path'),
 
     _ = require('lodash'),
     vow = require('vow'),
@@ -90,15 +91,17 @@ function fixGithubLinks(str) {
  * @param {String} treeOrBlob - 'tree' or 'blob'
  * @returns {*}
  */
+/*
 function buildFullGithubLinkForDocs(str, node, lang, treeOrBlob) {
-    // var sourceFoLang = node.source[lang];
-    // if (sourceFoLang && sourceFoLang.repo) {
-    //    var repo = sourceFoLang.repo;
-    //    return 'https://' + path.join(repo.host, repo.user, repo.repo, treeOrBlob, repo.ref,
-    //            str.indexOf('.') === 0 ? path.dirname(repo.path) : '', str.replace(/^\//, ''));
-    // }
+    var sourceFoLang = node.source[lang];
+    if (sourceFoLang && sourceFoLang.repo) {
+        var repo = sourceFoLang.repo;
+        return 'https://' + path.join(repo.host, repo.user, repo.repo, treeOrBlob, repo.ref,
+                str.indexOf('.') === 0 ? path.dirname(repo.path) : '', str.replace(/^\//, ''));
+    }
     return str;
 }
+*/
 
 /**
  * Try to recognize different relative links for library embedded docs
@@ -186,9 +189,10 @@ function recognizeRelativeBlockLinkOnDifferentLevels(str, node) {
 
 /**
  * Override links for doc sources
- * @param content - {String} content doc node
- * @param repo - {Object} repository object
- * @param urlHash - {Object} hash with existed urls
+ * @param {String} content doc node
+ * @param {BaseNode} node - doc node
+ * @param {Object} urlHash - hash with existed urls
+ * @param {String} lang - language
  */
 function overrideLinks(content, node, urlHash, lang) {
     if (!_.isString(content)) {
@@ -228,8 +232,8 @@ function overrideLinks(content, node, urlHash, lang) {
             links.push(href.replace(/\/tree\//, '/blob/'));
             links.push(href.replace(/\/blob\//, '/tree/'));
         } else {
-            links.push(buildFullGithubLinkForDocs(href, node, lang, 'tree'));
-            links.push(buildFullGithubLinkForDocs(href, node, lang, 'blob'));
+            // links.push(buildFullGithubLinkForDocs(href, node, lang, 'tree'));
+            // links.push(buildFullGithubLinkForDocs(href, node, lang, 'blob'));
             links = links.concat(recognizeRelativeLinkForLibraryDocs(href, node));
             if (node.source && node.source.data) {
                 links.push(recognizeRelativeBlockLinkOnSameLevel(href, node));

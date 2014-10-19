@@ -1,16 +1,15 @@
 var _ = require('lodash'),
-    deepExtend = require('deep-extend'),
     susanin = require('susanin'),
-    sha = require('sha1');
+    sha = require('sha1'),
 
-/**
- * Base class for nodes with common nodes methods
- * @param node - {Object} source node object
- * @param parent - {Object} parent node object
- * @constructor
- */
-var BaseNode = function(node, parent) {
-    Object.keys(node).forEach(function(key) { this[key] = node[key]; }, this);
+  /**
+   * Base class for nodes with common nodes methods
+   * @param {BaseNode} node - source node object
+   * @param {BaseNode} parent - parent node object
+   * @constructor
+   */
+   BaseNode = function (node, parent) {
+    Object.keys(node).forEach(function (key) { this[key] = node[key]; }, this);
 
     this.generateUniqueId()
         .setParent(parent)
@@ -51,21 +50,6 @@ BaseNode.prototype = {
     },
 
     /**
-     * Return base route for node
-     * Route of one of parent nodes which have route pattern
-     * @returns {Object}
-     */
-    getBaseRoute: function () {
-        if (this.route && this.route.pattern) {
-            return this.route;
-        }
-
-        if (this.parent) {
-            return this.parent.getBaseRoute();
-        }
-    },
-
-    /**
      * Generate unique id for node as sha sum of node object
      * @returns {BaseNode}
      */
@@ -76,7 +60,7 @@ BaseNode.prototype = {
 
     /**
      * Sets parent for current node
-     * @param parent - {Object} parent node
+     * @param {BaseNode } parent - parent node
      * @returns {BaseNode}
      */
     setParent: function (parent) {
@@ -86,7 +70,6 @@ BaseNode.prototype = {
 
     /**
      * Makes title consistent
-     * @param node {BaseNode}
      */
     setTitle: function () {
         if (this.title && _.isString(this.title)) {
@@ -119,7 +102,7 @@ BaseNode.prototype = {
 
     /**
      * Sets level for node
-     * @param parent - {Object} parent node
+     * @param {BaseNode} parent - parent node
      * @returns {BaseNode}
      */
     setLevel: function (parent) {
@@ -130,17 +113,15 @@ BaseNode.prototype = {
 
     /**
      * Set hidden state for node
-     * @param node {Object} - single node of sitemap model
      */
     setHidden: function () {
-
-        //show node for all locales
+        // show node for all locales
         if (!this.hidden) {
             this.hidden = {};
             return this;
         }
 
-        //hide node for locales that exists in node hidden array
+        // hide node for locales that exists in node hidden array
         if (_.isArray(this.hidden)) {
             this.hidden = {
                 en: this.hidden.indexOf('en') !== -1,
@@ -149,7 +130,7 @@ BaseNode.prototype = {
             return this;
         }
 
-        //hide node for all locales
+        // hide node for all locales
         if (this.hidden === true) {
             this.hidden = {
                 en: true,
@@ -177,10 +158,10 @@ BaseNode.prototype = {
     createBreadcrumbs: function () {
         this.breadcrumbs = [];
 
-        var self = this,
+        var _this = this,
             traverse = function (node) {
                 if (node.url) {
-                    self.breadcrumbs.unshift({
+                    _this.breadcrumbs.unshift({
                         title: node.title,
                         url: node.url
                     });
@@ -192,18 +173,17 @@ BaseNode.prototype = {
             };
 
         traverse(this);
-
     },
 
-    processRoute: function() {
-        if(!this.route) {
+    processRoute: function () {
+        if (!this.route) {
             this.route = this.parent.route;
             this.type = this.type || (this.url ? this.TYPE.SIMPLE : this.TYPE.GROUP);
             return this;
         }
 
-        //BEMINFO-195
-        if(_.isString(this.route)) {
+        // BEMINFO-195
+        if (_.isString(this.route)) {
             this.route = {
                 conditions: {
                     id: this.route
@@ -224,23 +204,23 @@ BaseNode.prototype = {
      * Sets params for indexation by search engines
      * @returns {BaseNode}
      */
-    setSearch: function() {
+    setSearch: function () {
         var def = this.SITEMAP_XML.DEFAULT,
             search = this.search;
 
-        if(!search) {
+        if (!search) {
             this.search = def;
             return this;
         }
 
-        //validate settled changefreq property
-        if(!search.changefreq ||
+        // validate settled changefreq property
+        if (!search.changefreq ||
             this.SITEMAP_XML.FREQUENCIES.indexOf(search.changefreq) === -1) {
             search.changefreq = def.changefreq;
         }
 
-        //validate settled priority property
-        if(!search.priority || search.priority < 0 || search.priority > 1) {
+        // validate settled priority property
+        if (!search.priority || search.priority < 0 || search.priority > 1) {
             search.priority = def.priority;
         }
 
