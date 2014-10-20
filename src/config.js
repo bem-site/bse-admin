@@ -9,7 +9,7 @@ var path = require('path'),
 module.exports = (function () {
     nconf
         .env()
-        .file({ file: path.resolve(process.cwd(), 'configs/config.json') });
+        .file({ file: path.resolve(__dirname, '../configs/config.json') });
 
     nconf.add('app', {
         type: 'file',
