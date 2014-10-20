@@ -54,7 +54,7 @@ TargetBase.prototype = {
 
     execute: function () {
         var _this = this,
-            initial = this.getTasks().shift();
+            initial = this.getTasks()[0];
         return this.getTasks().reduce(function (prev, item) {
             return prev.then(function () {
                 return item(_this);
