@@ -33,6 +33,7 @@ module.exports = function () {
         .get('/data/:environment', controllers.data)
         .get('/set/:environment/:version', controllers.set)
         .get('/remove/:version', controllers.delete)
+        .post('/model', controllers.model)
         .listen(app.get('port'), function () {
             logger.info(util.format('Express server listening on port %s', app.get('port')), module);
             template.init({ level: 'common', bundle: 'index' });
