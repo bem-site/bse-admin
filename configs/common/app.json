@@ -1,4 +1,7 @@
 {
+  "defaultLanguage": "ru",
+  "languages": ["en", "ru"],
+  "logLevel": "debug",
   "github": {
     "token": "",
     "people": "",

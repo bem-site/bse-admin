@@ -11,9 +11,9 @@ module.exports = (function () {
         .env()
         .file({ file: path.resolve(process.cwd(), 'configs/config.json') });
 
-    nconf.add('credentials', {
+    nconf.add('app', {
         type: 'file',
-        file: path.resolve(process.cwd(), 'configs/secure.json')
+        file: path.resolve(process.cwd(), 'configs/common/app.json')
     });
 
     return nconf;
