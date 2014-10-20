@@ -5,6 +5,7 @@ var CronJob = require('cron').CronJob,
 
     job,
     state,
+    target = new TargetNodes({}),
 
     STATE = {
         IDLE: 0,
@@ -32,7 +33,7 @@ function execute () {
     }
 
     setActive();
-    return (new TargetNodes({})).execute()
+    return target.execute()
         .then(function () {
             setIdle();
             logger.info('=== CRON CHECK FOR DATA END ===', module);
