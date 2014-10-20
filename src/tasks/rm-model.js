@@ -7,7 +7,7 @@ module.exports = function (target) {
     logger.info('Start to remove model.json file', module);
     return vowFs.exists(target.MODEL_FILE_PATH)
         .then(function (exists) {
-            return exists ? vowFs.remove(target.MODEL_FILE_PATH) : vow.resolve({ removed: true });
+            return exists ? vowFs.remove(target.MODEL_FILE_PATH) : vow.resolve({ removed: false });
         })
         .then(function (res) {
             if (!res || !res.removed) {

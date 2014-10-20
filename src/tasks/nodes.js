@@ -32,7 +32,8 @@ function analyzeMeta(collected, node) {
 
     utility.getLanguages().forEach(function (lang) {
         if (!source[lang]) {
-            logger.warn(util.format('source with lang %s does not exists for node with url %s', lang, node.url), module);
+            logger.warn(
+                util.format('source with lang %s does not exists for node with url %s', lang, node.url), module);
             source[lang] = null;
             return;
         }
@@ -43,7 +44,7 @@ function analyzeMeta(collected, node) {
     return collected;
 }
 
-function findDifferences(target, nodes) {
+function findDifferencesForMeta(target, nodes) {
     // get array of data.source[lang] objects
     // also add nodeId and lang fields
     var newRecords = nodes.reduce(function (prev, node) {
@@ -140,8 +141,76 @@ function separateSource(target, nodes) {
             levelDb.put(target.KEY.AUTHORS, collected.authors),
             levelDb.put(target.KEY.TRANSLATORS, collected.translators),
             levelDb.put(target.KEY.TAGS, collected.tags),
-            findDifferences(target, nodesWithSource)
+            findDifferencesForMeta(target, nodesWithSource)
         ]);
+}
+
+function findDifferencesForNodes(target, nodes) {
+    return vow.all([
+            nodes.getAll(),
+            levelDb.getByCriteria(function (record) {
+                return record.key.indexOf(target.KEY.NODE_PREFIX) > -1 &&
+                    record.value.class === 'base';
+            })
+        ]).spread(function (newRecords, dbRecords) {
+            var putBatchOperations = newRecords
+                .filter(function (item) {
+                    // try to find corresponded database record for current item
+                    var isDifferentFromDb,
+                        dbRecord = _.find(dbRecords, function (record) {
+                            return record.key === util.format('%s%s', target.KEY.NODE_PREFIX, item.id);
+                        });
+
+                    // case when record is new and not presented in yet
+                    if (!dbRecord) {
+                        target.getChanges().getNodes().addAdded({ title: item.title, url: item.url });
+                        return true;
+                    }
+
+                    // case when record was modified (meta information was changed manually)
+                    isDifferentFromDb = item.isDifferentFromDb(dbRecord);
+                    if (isDifferentFromDb) {
+                        target.getChanges().getNodes().addModified({
+                            title: item.title,
+                            url: item.url
+                        });
+                        return true;
+                    }
+
+                    return false;
+                })
+                .map(function (item) {
+                    return {
+                        type: 'put',
+                        key: util.format('%s%s', target.KEY.NODE_PREFIX, item.id),
+                        value: item
+                    };
+                }),
+                delBatchOperations = dbRecords
+                    .filter(function (record) {
+                        var newRecord = _.find(newRecords, function (item) {
+                            return record.key === util.format('%s%s', target.KEY.NODE_PREFIX, item.id);
+                        });
+
+                        if (!newRecord) {
+                            var v = record.value;
+                            target.getChanges().getNodes().addRemoved({ title: v.title, url: v.url });
+                            return true;
+                        }
+
+                        return false;
+                    })
+                    .map(function (record) {
+                        return {
+                            type: 'del',
+                            key: record.key
+                        };
+                    });
+            return vow.all([
+                levelDb.batch(putBatchOperations),
+                levelDb.batch(delBatchOperations)
+            ]);
+        });
 }
 
 function processModel(target) {
@@ -153,12 +222,12 @@ function processModel(target) {
             return vow.resolve(target);
         }
 
+        var nodes,
+            error;
+
         return vowFs
             .read(target.MODEL_FILE_PATH, 'utf-8')
             .then(function (content) {
-                var nodes,
-                    error;
-
                 try {
                     nodes = new Nodes(JSON.parse(content));
                 } catch (err) {
@@ -166,18 +235,11 @@ function processModel(target) {
                     logger.error(error, module);
                     return vow.reject(error);
                 }
-
-                return separateSource(target, nodes)
-                    .then(function () {
-                        nodes.removeSources();
-                        return levelDb.removeByKeyPrefix(target.KEY.NODE_PREFIX);
-                    })
-                    .then(function () {
-                        return levelDb.batch(nodes.getAll().map(function (node) {
-                            var key = util.format('%s%s', target.KEY.NODE_PREFIX, node.id);
-                            return { type: 'put', key: key, value: node };
-                        }));
-                    });
+                return separateSource(target, nodes);
+            })
+            .then(function () {
+                nodes.removeSources();
+                return findDifferencesForNodes(target, nodes);
             });
     });
 }

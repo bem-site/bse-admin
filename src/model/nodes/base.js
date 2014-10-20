@@ -226,6 +226,10 @@ BaseNode.prototype = {
 
         this.search  = search;
         return this;
+    },
+
+    isDifferentFromDb: function (dbRecord) {
+        return _.isEqual(this, dbRecord);
     }
 };
 
