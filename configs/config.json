@@ -1,4 +1,5 @@
 {
+  "logLevel": "debug",
   "server": {
     "port": 3000
   }
