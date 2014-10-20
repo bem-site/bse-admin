@@ -1,17 +1,28 @@
 'use strict';
 
-var intel = require('intel'),
-    config = require('./config');
+var path = require('path'),
 
-intel.setLevel(config.get('logLevel'));
-intel.addHandler(
-    new intel.handlers.Console({
+    _ = require('lodash'),
+    intel = require('intel'),
+    config = require('./config'),
+    baseHandlerConfig = {
         level: intel.VERBOSE,
         formatter: new intel.Formatter({
             format: '[%(date)s] %(levelname)s %(name)s: %(message)s',
             colorize: true
         })
-    })
+    };
+
+intel.setLevel(config.get('logLevel'));
+intel.addHandler(
+    new intel.handlers.Console(_.extend({}, baseHandlerConfig))
+);
+
+intel.addHandler(
+    new intel.handlers.Rotating(_.extend({
+        file: './logs/bse.log',
+        maxSize: 1024 * 1024
+    }, baseHandlerConfig))
 );
 
 /**
