@@ -11,7 +11,8 @@ var path = require('path'),
             format: '[%(date)s] %(levelname)s %(name)s: %(message)s',
             colorize: true
         })
-    };
+    },
+    LOG_DIR = path.join(process.cwd(), 'logs');
 
 intel.setLevel(config.get('logLevel'));
 intel.addHandler(
@@ -20,7 +21,7 @@ intel.addHandler(
 
 intel.addHandler(
     new intel.handlers.Rotating(_.extend({
-        file: './logs/bse.log',
+        file: path.join(LOG_DIR, 'bse.log'),
         maxSize: 1024 * 1024
     }, baseHandlerConfig))
 );
