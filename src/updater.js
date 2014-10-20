@@ -33,7 +33,7 @@ function execute () {
     }
 
     setActive();
-    return target.execute()
+    return target.clearChanges().execute()
         .then(function () {
             setIdle();
             logger.info('=== CRON CHECK FOR DATA END ===', module);

@@ -32,6 +32,7 @@ TargetNodes.prototype._getTasksDev = function () {
         require('../tasks/init'),
         require('../tasks/get-jsmodel'),
         require('../tasks/nodes'),
+        require('../tasks/rm-model'),
         require('../tasks/docs'),
         require('../tasks/people'),
         require('../tasks/dynamic-people'),

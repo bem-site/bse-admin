@@ -60,6 +60,11 @@ TargetBase.prototype = {
                 return item(_this);
             });
         }, initial(_this));
+    },
+
+    clearChanges: function () {
+        this.changes = new Changes();
+        return this;
     }
 };
 
