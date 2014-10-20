@@ -215,6 +215,11 @@ function syncLibraryVersions(target, record) {
 }
 
 module.exports = function (target) {
+    if (!target.getChanges().getNodes().areModified() && !target.getChanges().getLibraries().areModified()) {
+        logger.warn('No changes were made during this synchronization. This step will be skipped', module);
+        return vow.resolve(target);
+    }
+
     return getLibraryNodesFromDb(target)
         .then(function (records) {
             return vow.all(records.map(function (record) {
