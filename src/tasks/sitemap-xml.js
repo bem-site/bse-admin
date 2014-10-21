@@ -40,19 +40,21 @@ module.exports = function (target) {
         .then(function (records) {
             // convert data set to sitemap format
             // left only data fields that are needed for sitemap.xml file
-            records = records
-                .map(function (record) {
-                    return _.pick(record.value, 'url', 'hidden', 'search');
-                })
-                .reduce(function (prev, item) {
-                    Object.keys(hosts).forEach(function (lang) {
-                        if (!item.hidden[lang]) {
-                            prev.push(_.extend({ loc: hosts[lang] + item.url }, item.search));
-                        }
-                    });
-                    return prev;
-                }, []);
-
+            return records.map(function (record) {
+                return _.pick(record.value, 'url', 'hidden', 'search');
+            });
+        })
+        .then(function (records) {
+            return records.reduce(function (prev, item) {
+                Object.keys(hosts).forEach(function (lang) {
+                    if (!item.hidden[lang]) {
+                        prev.push(_.extend({ loc: hosts[lang] + item.url }, item.search));
+                    }
+                });
+                return prev;
+            }, []);
+        })
+        .then(function (records) {
             // convert json model to xml format
             return levelDb.put('sitemapXml', js2xml('urlset', { url: records }));
         })
