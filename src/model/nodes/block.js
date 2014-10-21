@@ -95,6 +95,7 @@ BlockNode.prototype.saveToDb = function () {
     return levelDb.batch(batchOperations).then(function () {
         this.source.data = dataKey;
         this.source.jsdoc = jsdocKey;
+        this.hasSource = true;
         return this.prepareToSaveToDb();
     }, this);
 };

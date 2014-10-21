@@ -71,6 +71,7 @@ PostNode.prototype.saveToDb = function () {
         return levelDb.put(util.format('docs:%s:%s', this.id, lang), this.source);
     }, this))
     .then(function () {
+        this.hasSource = true;
         delete this.source;
         return nodes.dynamic.DynamicNode.prototype.saveToDb.apply(this);
     }, this);

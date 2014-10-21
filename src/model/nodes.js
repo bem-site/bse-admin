@@ -52,9 +52,11 @@ Nodes.prototype._makePlainModel = function () {
     logger.info('Make plain model start', module);
 
     var plain = [];
-    function traverseTreeNodes(node) {
+    function traverseTreeNodes(node, index) {
+        node.order = index;
         plain.push(node);
-        if (node.items) {
+        if (node.items && node.items.length) {
+            node.hasItems = true;
             node.items.forEach(traverseTreeNodes);
         }
     }
@@ -83,6 +85,7 @@ Nodes.prototype._makePlainModel = function () {
 Nodes.prototype.removeSources = function () {
     this._data = this._data.map(function (item) {
         if (item.source) {
+            item.hasSource = true;
             delete item.source;
         }
         return item;
