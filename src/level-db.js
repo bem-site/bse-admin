@@ -33,12 +33,11 @@ var util = require('util'),
 module.exports = {
     /**
      * Initialize database
-     * @param {Object} options for database initialization
      */
     init: function () {
         var def = vow.defer();
 
-        if(isInitialized) {
+        if (isInitialized) {
             return vow.resolve();
         }
 
