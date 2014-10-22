@@ -35,8 +35,7 @@ Nodes.prototype._analyze = function (content) {
         this._data = content.map(function (item) {
             return traverseTreeNodes(item, {
                 level: -1,
-                route: { name: null },
-                params: {}
+                route: { name: null }
             });
         });
     } catch (err) {
