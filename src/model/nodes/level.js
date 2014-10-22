@@ -78,7 +78,8 @@ LevelNode.prototype.addItems = function (version, level) {
 
 LevelNode.prototype.saveToDb = function () {
     return vow
-        .all(this.items.map(function (item) {
+        .all(this.items.map(function (item, index) {
+            item.order = index;
             return item.saveToDb();
         }))
         .then(levelDb.batch)

@@ -141,7 +141,8 @@ VersionNode.prototype.addItems = function (version) {
 };
 
 VersionNode.prototype.saveToDb = function () {
-    return vow.all(this.items.map(function (item) {
+    return vow.all(this.items.map(function (item, index) {
+            item.order = index;
             return item.saveToDb();
         })).then(function () {
             if (this.items && this.items.length) {
