@@ -1,5 +1,7 @@
-var vow = require('vow'),
+var util = require('util'),
+    vow = require('vow'),
     levelDb = require('../../level-db'),
+    logger = require('../../logger'),
     utility = require('../../util'),
     nodes = require('./index'),
 
@@ -70,9 +72,13 @@ LevelNode.prototype.addItems = function (version, level) {
         return;
     }
 
-    blocks.forEach(function (block) {
-        this.items.push(new nodes.block.BlockNode(this, version, level, block));
-    }, this);
+    blocks
+        .sort(function (a, b) {
+            return a.name - b.name;
+        })
+        .forEach(function (block) {
+            this.items.push(new nodes.block.BlockNode(this, version, level, block));
+        }, this);
     return this;
 };
 
@@ -81,14 +87,19 @@ LevelNode.prototype.saveToDb = function () {
         .all(this.items.map(function (item, index) {
             item.order = index;
             return item.saveToDb();
-        }))
+        }, []))
         .then(levelDb.batch)
         .then(function () {
             if (this.items && this.items.length) {
-                this.hasItems = true;
+                this.markAsHasItems();
             }
 
             delete this.items;
+
+            var conditions = this.route.conditions;
+            logger.verbose(util.format('save lib: %s version: %s, level: %s',
+                conditions.lib, conditions.version, conditions.level), module);
+
             return nodes.dynamic.DynamicNode.prototype.saveToDb.apply(this);
         }, this);
 };

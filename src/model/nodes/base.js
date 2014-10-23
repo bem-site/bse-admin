@@ -49,6 +49,9 @@ BaseNode.prototype = {
         }
     },
 
+    hasSource: false,
+    hasItems: false,
+
     /**
      * Generate unique id for node as sha sum of node object
      * @returns {BaseNode}
@@ -230,6 +233,16 @@ BaseNode.prototype = {
 
     isDifferentFromDb: function (dbRecord) {
         return _.isEqual(this, dbRecord);
+    },
+
+    markAsHasSource: function () {
+        this.hasSource = true;
+        return this;
+    },
+
+    markAsHasItems: function () {
+        this.hasItems = true;
+        return this;
     }
 };
 

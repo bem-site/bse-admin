@@ -1,6 +1,7 @@
 var util = require('util'),
     sha = require('sha1'),
     levelDb = require('../../level-db'),
+    logger = require('../../logger'),
     utility = require('../../util'),
     nodes = require('./index'),
 
@@ -95,7 +96,15 @@ BlockNode.prototype.saveToDb = function () {
     return levelDb.batch(batchOperations).then(function () {
         this.source.data = dataKey;
         this.source.jsdoc = jsdocKey;
-        this.hasSource = true;
+        this.markAsHasSource();
+
+        // this.parent = this.parent.id;
+        // batchOperations.push({ type: 'put', key: this.generateKey(), value: this });
+
+        var conditions = this.route.conditions;
+        logger.verbose(util.format('save lib: %s version: %s, level: %s block: %s',
+            conditions.lib, conditions.version, conditions.level, conditions.block), module);
+
         return this.prepareToSaveToDb();
     }, this);
 };

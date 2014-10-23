@@ -1,4 +1,7 @@
-var vow = require('vow'),
+var util = require('util'),
+    vow = require('vow'),
+
+    levelDb = require('../../level-db'),
     utility = require('../../util'),
     nodes = require('./index'),
 
@@ -144,11 +147,22 @@ VersionNode.prototype.saveToDb = function () {
     return vow.all(this.items.map(function (item, index) {
             item.order = index;
             return item.saveToDb();
-        })).then(function () {
-            if (this.items && this.items.length) {
-                this.hasItems = true;
-            }
-
+        }))
+        .then(function () {
+            return vow.all(utility.getLanguages().map(function (lang) {
+                if (this.source) {
+                    this.source[lang].nodeId = this.id;
+                    this.source[lang].lang = lang;
+                    return levelDb.put(util.format('docs:%s:%s', this.id, lang), this.source);
+                } else {
+                    return vow.resolve();
+                }
+            }, this));
+        })
+        .then(function () {
+            this.markAsHasItems();
+            this.markAsHasSource();
+            delete this.source;
             delete this.items;
             return nodes.dynamic.DynamicNode.prototype.saveToDb.apply(this);
         }, this);

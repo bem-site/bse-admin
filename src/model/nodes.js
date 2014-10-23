@@ -55,7 +55,7 @@ Nodes.prototype._makePlainModel = function () {
         node.order = index;
         plain.push(node);
         if (node.items && node.items.length) {
-            node.hasItems = true;
+            node.markAsHasItems();
             node.items.forEach(traverseTreeNodes);
         }
     }
@@ -84,7 +84,7 @@ Nodes.prototype._makePlainModel = function () {
 Nodes.prototype.removeSources = function () {
     this._data = this._data.map(function (item) {
         if (item.source) {
-            item.hasSource = true;
+            item.markAsHasSource();
             delete item.source;
         }
         return item;
