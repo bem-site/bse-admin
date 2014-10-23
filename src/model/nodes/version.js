@@ -150,15 +150,11 @@ VersionNode.prototype.saveToDb = function () {
         }))
         .then(function () {
             return vow.all(utility.getLanguages().map(function (lang) {
-                if (this.source) {
-                    this.source[lang].nodeId = this.id;
-                    this.source[lang].lang = lang;
-                    return levelDb.put(util.format('docs:%s:%s', this.id, lang), this.source);
-                } else {
-                    return vow.resolve();
-                }
+                this.source[lang].nodeId = this.id;
+                this.source[lang].lang = lang;
+                return levelDb.put(util.format('docs:%s:%s', this.id, lang), this.source);
             }, this));
-        })
+        }, this)
         .then(function () {
             this.markAsHasItems();
             this.markAsHasSource();
