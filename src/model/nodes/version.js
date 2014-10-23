@@ -152,7 +152,7 @@ VersionNode.prototype.saveToDb = function () {
             return vow.all(utility.getLanguages().map(function (lang) {
                 this.source[lang].nodeId = this.id;
                 this.source[lang].lang = lang;
-                return levelDb.put(util.format('docs:%s:%s', this.id, lang), this.source);
+                return levelDb.put(util.format('docs:%s:%s', this.id, lang), this.source[lang]);
             }, this));
         }, this)
         .then(function () {
