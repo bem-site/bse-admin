@@ -61,6 +61,7 @@ TargetNodes.prototype._getTasksProd = function () {
         require('../tasks/override-links'),
         require('../tasks/sitemap-xml'),
         require('../tasks/snapshot'),
+        require('../tasks/switch-symlink'),
         require('../tasks/finalize')
     ];
 };

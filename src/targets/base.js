@@ -8,6 +8,7 @@ var path = require('path'),
 
 TargetBase.prototype = {
     CACHE_DIR: path.join(process.cwd(), 'cache'),
+    DB_DIR: path.join(process.cwd(), 'db'),
     SNAPSHOTS_DIR: path.join(process.cwd(), 'db', 'snapshots'),
     KEY: {
         NODE_PREFIX: 'nodes:',
