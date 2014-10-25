@@ -24,6 +24,7 @@ function command() {
         .cmd().name('sync-nodes').apply(require('./commands/sync-nodes')).end()
         .cmd().name('sync-libraries').apply(require('./commands/sync-libraries')).end()
         .cmd().name('clear-db').apply(require('./commands/clear-db')).end()
+        .cmd().name('view-db').apply(require('./commands/view-db')).end()
         .cmd().name('update-model').apply(require('./commands/update-model')).end()
         .completable();
 }
