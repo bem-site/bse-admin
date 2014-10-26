@@ -17,10 +17,12 @@ module.exports = function () {
     var app = express();
     app.set('port', config.get('server:port') || 3000);
 
-    app.use(require('enb/lib/server/server-middleware').createMiddleware({
-        cdir: process.cwd(),
-        noLog: false
-    }));
+    if (config.get('NODE_ENV') === 'development') {
+        app.use(require('enb/lib/server/server-middleware').createMiddleware({
+            cdir: process.cwd(),
+            noLog: false
+        }));
+    }
 
     app
         .use(st(process.cwd()))

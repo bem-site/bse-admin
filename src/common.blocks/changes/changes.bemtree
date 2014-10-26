@@ -1,3 +1,6 @@
 block('changes').content()(function() {
+    console.log(this.ctx._added);
+    console.log(this.ctx._modified);
+    console.log(this.ctx._removed);
     return [];
 })

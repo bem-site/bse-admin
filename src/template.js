@@ -11,7 +11,7 @@ var util = require('util'),
         noLog: false
     }),
     dropRequireCache = require('enb/lib/fs/drop-require-cache'),
-
+    config = require('./config'),
     targets;
 
 function rebuild(targets) {
@@ -40,10 +40,10 @@ exports.init = function (o) {
  * @returns {*}
  */
 exports.run = function (ctx, req) {
-    var build = rebuild;
-    // var build = vow.resolve();
+    var build = config.get('NODE_ENV') === 'development' ?
+        rebuild(_.values(targets)) : vow.resolve();
 
-    return build(_.values(targets))
+    return build
         .then(function () {
             var p = path.join(process.cwd(), targets.bemtree),
                 context = vm.createContext({

@@ -74,7 +74,7 @@ LevelNode.prototype.addItems = function (version, level) {
 
     blocks
         .sort(function (a, b) {
-            return a.name - b.name;
+            return a.name > b.name ? 1 : (a.name < b.name ? -1 : 0);
         })
         .forEach(function (block) {
             this.items.push(new nodes.block.BlockNode(this, version, level, block));
@@ -87,7 +87,7 @@ LevelNode.prototype.saveToDb = function () {
         .all(this.items.map(function (item, index) {
             item.order = index;
             return item.saveToDb();
-        }, []))
+        }))
         .then(levelDb.batch)
         .then(function () {
             if (this.items && this.items.length) {

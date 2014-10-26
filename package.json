@@ -63,7 +63,7 @@
   "scripts": {
     "make": "bower i && enb make --no-cache && mkdir -p logs && mkdir -p cache/libraries mkdir -p cache/model",
     "start": "node bin/bse server",
-    "cluster": "node src/cluster.js",
+    "cluster": "NODE_ENV=production node src/cluster.js",
     "test": "node_modules/.bin/jshint . && node_modules/.bin/jscs -c .jscsrc ."
   },
   "readmeFilename": "README.md",
