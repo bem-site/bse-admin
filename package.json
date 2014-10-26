@@ -72,6 +72,5 @@
       "type": "APACHE",
       "url": "http://github.com/bem/bem-data-source/raw/master/LICENSE"
     }
-  ],
-  "private": true
+  ]
 }
