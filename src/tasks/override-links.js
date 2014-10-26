@@ -1,5 +1,5 @@
 var util = require('util'),
-    // path = require('path'),
+    path = require('path'),
 
     _ = require('lodash'),
     vow = require('vow'),
@@ -91,17 +91,15 @@ function fixGithubLinks(str) {
  * @param {String} treeOrBlob - 'tree' or 'blob'
  * @returns {*}
  */
-/*
-function buildFullGithubLinkForDocs(str, node, lang, treeOrBlob) {
-    var sourceFoLang = node.source[lang];
-    if (sourceFoLang && sourceFoLang.repo) {
-        var repo = sourceFoLang.repo;
+
+function buildFullGithubLinkForDocs(str, doc, lang, treeOrBlob) {
+    if (doc.repo) {
+        var repo = doc.repo;
         return 'https://' + path.join(repo.host, repo.user, repo.repo, treeOrBlob, repo.ref,
                 str.indexOf('.') === 0 ? path.dirname(repo.path) : '', str.replace(/^\//, ''));
     }
     return str;
 }
-*/
 
 /**
  * Try to recognize different relative links for library embedded docs
@@ -232,8 +230,8 @@ function overrideLinks(content, node, urlHash, lang) {
             links.push(href.replace(/\/tree\//, '/blob/'));
             links.push(href.replace(/\/blob\//, '/tree/'));
         } else {
-            // links.push(buildFullGithubLinkForDocs(href, node, lang, 'tree'));
-            // links.push(buildFullGithubLinkForDocs(href, node, lang, 'blob'));
+            links.push(buildFullGithubLinkForDocs(href, node, lang, 'tree'));
+            links.push(buildFullGithubLinkForDocs(href, node, lang, 'blob'));
             links = links.concat(recognizeRelativeLinkForLibraryDocs(href, node));
             if (node.source && node.source.data) {
                 links.push(recognizeRelativeBlockLinkOnSameLevel(href, node));
@@ -306,10 +304,10 @@ function collectUrls(target) {
 module.exports = function (target) {
     logger.info('Start overriding links', module);
 
-    //if (!target.getChanges().areModified()) {
-    //    logger.warn('No changes were made during this synchronization. This step will be skipped', module);
-    //    return vow.resolve(target);
-    //}
+    if (!target.getChanges().areModified()) {
+        logger.warn('No changes were made during this synchronization. This step will be skipped', module);
+        return vow.resolve(target);
+    }
 
     var languages = utility.getLanguages();
     return vow.all([
@@ -343,7 +341,7 @@ module.exports = function (target) {
                                         overrideLinks(item.content || '', nodeValue, urlsHash, lang);
                                 }
                             });
-                        }else {
+                        } else {
                             if (blockValue[lang]) {
                                 blockValue[lang].description =
                                     overrideLinks(description, nodeValue, urlsHash, lang);
@@ -365,7 +363,7 @@ module.exports = function (target) {
                         if (!docValue || !docValue.content) {
                             return vow.resolve();
                         }
-                        docValue.content = overrideLinks(docValue.content, nodeValue, urlsHash, lang);
+                        docValue.content = overrideLinks(docValue.content, docValue, urlsHash, lang);
                         return levelDb.put(docKey, docValue);
                     });
             }));
