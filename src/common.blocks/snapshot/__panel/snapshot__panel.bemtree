@@ -11,7 +11,7 @@ block('snapshot').elem('panel').content()(function() {
     return [
         {
             block : 'button',
-            url : '#',
+            url : content.changesUrl,
             mods : { theme : 'normal', size : 'l', type : 'link' },
             icon : {
                 block : 'icon',

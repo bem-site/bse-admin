@@ -71,6 +71,7 @@ function getData() {
                         .map(function (item) {
                             return {
                                 date: item,
+                                changesUrl: util.format('/changes/%s', item),
                                 testingUrl: util.format('/set/testing/%s', item),
                                 productionUrl: util.format('/set/production/%s', item),
                                 removeUrl: util.format('/remove/%s', item),
@@ -105,3 +106,4 @@ exports.ping = require('./ping');
 exports.data = require('./data');
 exports.model = require('./model');
 exports.delete = require('./remove');
+exports.changes = require('./changes');

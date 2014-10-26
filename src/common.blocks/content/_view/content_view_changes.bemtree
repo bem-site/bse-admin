@@ -1,0 +1,13 @@
+block('content').mod('view', 'changes')(
+    content()(function() {
+        var changes = this.ctx.data.changes;
+        //console.log('CHANGES ' + changes);
+        return Object.keys(changes).map(function(key) {
+            console.log(key);
+            var item = changes[key];
+            item.block = 'changes';
+            item.mods = { type: item.type };
+            return item;
+        });
+    })
+);

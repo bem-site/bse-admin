@@ -1,0 +1,4 @@
+- mods: { type: [docs, libraries, meta, nodes, people] }
+- elems:
+  - title
+  - item

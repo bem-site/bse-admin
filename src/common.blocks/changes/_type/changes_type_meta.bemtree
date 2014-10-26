@@ -1,0 +1,11 @@
+block('changes').mod('type', 'meta')(
+    content()(function() {
+        return [
+            {
+                elem: 'title',
+                content: 'Meta information'
+            },
+            applyNext()
+        ];
+    })
+);

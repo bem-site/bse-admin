@@ -1,0 +1,11 @@
+block('changes').mod('type', 'people')(
+    content()(function() {
+        return [
+            {
+                elem: 'title',
+                content: 'People'
+            },
+            applyNext()
+        ];
+    })
+);

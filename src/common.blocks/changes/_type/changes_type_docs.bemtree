@@ -1,0 +1,11 @@
+block('changes').mod('type', 'docs')(
+    content()(function() {
+        return [
+            {
+                elem: 'title',
+                content: 'Documentation'
+            },
+            applyNext()
+        ];
+    })
+);

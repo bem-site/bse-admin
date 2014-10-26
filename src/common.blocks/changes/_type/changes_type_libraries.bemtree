@@ -1,0 +1,11 @@
+block('changes').mod('type', 'libraries')(
+    content()(function() {
+        return [
+            {
+                elem: 'title',
+                content: 'Libraries'
+            },
+            applyNext()
+        ];
+    })
+);
