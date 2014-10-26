@@ -6,9 +6,12 @@ module.exports = function () {
         .title('sends updated model file to remote host')
         .helpful()
         .opt()
-            .name('url').title('Url for send model archive file')
-            .short('u').long('url')
-            .req()
+            .name('host').title('Host of data provider service')
+            .short('h').long('host')
+            .end()
+        .opt()
+            .name('port').title('Port of data provider service')
+            .short('p').long('port')
             .end()
         .act(function (opts) {
             logger.info('Try to compile and send model file', module);
