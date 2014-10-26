@@ -35,6 +35,14 @@ exports.removeDir = function (p) {
     return def.promise();
 };
 
+exports.copyDir = function (source, target) {
+    var def = vow.defer();
+    fsExtra.copy(source, target, function (err) {
+        err ? def.reject(err) : def.resolve();
+    });
+    return def.promise();
+};
+
 /**
  * Loads data from gh to file on local filesystem via https request
  * @param {Object} options
