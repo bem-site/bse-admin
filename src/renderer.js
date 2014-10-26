@@ -12,7 +12,7 @@ function createRenderer() {
      * @param {Object} options object
      * @returns {String} - result header string
      */
-    renderer.heading = function(text, level, raw, options) {
+    renderer.heading = function (text, level, raw, options) {
         var specials = null;
         /* jshint ignore:start */
         specials = ['-', '[', ']', '/', '{', '}', '(', ')', '*', '+', '?', '.', '\\', '^', '$', '|', '\ ', '\'', '\"'];

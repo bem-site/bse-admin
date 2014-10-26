@@ -1,15 +1,13 @@
 'use strict';
 
 var util = require('util'),
-
-    _ = require('lodash'),
     vow = require('vow'),
 
     levelDb = require('../level-db'),
     logger = require('../logger');
 
 module.exports = function (target) {
-    return levelDb.getKeysByCriteria(function() {
+    return levelDb.getKeysByCriteria(function () {
             return true;
         })
         .then(function (keys) {
