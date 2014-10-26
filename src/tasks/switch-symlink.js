@@ -6,6 +6,11 @@ var util = require('util'),
 
     logger = require('../logger');
 
+/**
+ * Returns name of latest created snapshot
+ * @param {NodesTarget} target object
+ * @returns {String}
+ */
 function getLatestSnapshot(target) {
     return vowFs.listDir(target.SNAPSHOTS_DIR)
         .then(function (snapshots) {
@@ -26,6 +31,11 @@ function getLatestSnapshot(target) {
         });
 }
 
+/**
+ * Check if symlink exists and remove it
+ * @param {String} symlinkPath - path to symlink
+ * @returns {*}
+ */
 function checkAndRemoveExistedSymlink(symlinkPath) {
     return vowFs.exists(symlinkPath).then(function (exists) {
         if (!exists) {
