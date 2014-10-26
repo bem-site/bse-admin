@@ -8,6 +8,7 @@ var util = require('util'),
     vow = require('vow'),
     vowFs = require('vow-fs'),
 
+    utility = require('./util'),
     logger = require('./logger'),
 
     DB_NAME = 'leveldb',
@@ -216,16 +217,7 @@ module.exports = {
     },
 
     copy: function (snapshotPath) {
-        var def = vow.defer(),
-            snapshotDb = levelup(path.join(snapshotPath, DB_NAME), DB_OPTIONS);
-        db.createReadStream().pipe(snapshotDb.createWriteStream())
-            .on('error', function (err) {
-                def.reject(err);
-            })
-            .on('close', function () {
-                def.resolve();
-            });
-        return def.promise();
+        return utility.copyDir(path.join('db', DB_NAME), path.join(snapshotPath, DB_NAME));
     },
 
     getDb: function () {
