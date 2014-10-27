@@ -188,6 +188,7 @@ function syncLibraryVersions(target, record) {
 
             added = added.map(function (item) {
                 logger.debug(util.format('add lib: %s version: %s to db', value.lib, item), module);
+                target.getChanges().getLibraries().addAdded({ lib: value.lib, version: item });
                 return loadVersionFile(target, value.lib, item).then(function (versionData) {
                     return (new nodes.version.VersionNode(value, versionData, stateMap[value.lib][item])).saveToDb();
                 });
@@ -195,6 +196,7 @@ function syncLibraryVersions(target, record) {
 
             modified = modified.map(function (item) {
                 logger.debug(util.format('modify lib: %s version: %s into db', value.lib, item), module);
+                target.getChanges().getLibraries().addModified({ lib: value.lib, version: item });
                 return removeLibraryVersionNodesFromDb(target, value.lib, item)
                     .then(function () {
                         return loadVersionFile(target, value.lib, item).then(function (versionData) {
@@ -207,6 +209,7 @@ function syncLibraryVersions(target, record) {
             removed = removed.map(function (item) {
                 logger.debug(util.format('remove lib: %s version: %s from db',
                     value.lib, item.value.route.conditions.version), module);
+                target.getChanges().getLibraries().addRemoved({ lib: value.lib, version: item });
                 return removeLibraryVersionNodesFromDb(target, value.lib, item);
             });
 
@@ -215,11 +218,6 @@ function syncLibraryVersions(target, record) {
 }
 
 module.exports = function (target) {
-    if (!target.getChanges().getNodes().areModified() && !target.getChanges().getLibraries().areModified()) {
-        logger.warn('No changes were made during this synchronization. This step will be skipped', module);
-        return vow.resolve(target);
-    }
-
     return getLibraryNodesFromDb(target)
         .then(function (records) {
             return vow.all(records.map(function (record) {

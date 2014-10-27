@@ -93,7 +93,7 @@ function fixGithubLinks(str) {
  */
 
 function buildFullGithubLinkForDocs(str, doc, lang, treeOrBlob) {
-    if (doc.repo) {
+    if (doc && doc.repo) {
         var repo = doc.repo;
         return 'https://' + path.join(repo.host, repo.user, repo.repo, treeOrBlob, repo.ref,
                 str.indexOf('.') === 0 ? path.dirname(repo.path) : '', str.replace(/^\//, ''));
@@ -192,7 +192,7 @@ function recognizeRelativeBlockLinkOnDifferentLevels(str, node) {
  * @param {Object} urlHash - hash with existed urls
  * @param {String} lang - language
  */
-function overrideLinks(content, node, urlHash, lang) {
+function overrideLinks(content, node, urlHash, lang, doc) {
     if (!_.isString(content)) {
         return content;
     }
@@ -230,8 +230,8 @@ function overrideLinks(content, node, urlHash, lang) {
             links.push(href.replace(/\/tree\//, '/blob/'));
             links.push(href.replace(/\/blob\//, '/tree/'));
         } else {
-            links.push(buildFullGithubLinkForDocs(href, node, lang, 'tree'));
-            links.push(buildFullGithubLinkForDocs(href, node, lang, 'blob'));
+            links.push(buildFullGithubLinkForDocs(href, doc, lang, 'tree'));
+            links.push(buildFullGithubLinkForDocs(href, doc, lang, 'blob'));
             links = links.concat(recognizeRelativeLinkForLibraryDocs(href, node));
             if (node.source && node.source.data) {
                 links.push(recognizeRelativeBlockLinkOnSameLevel(href, node));
@@ -311,62 +311,72 @@ module.exports = function (target) {
 
     var languages = utility.getLanguages();
     return vow.all([
-        levelDb.getByKeyPrefix(target.KEY.NODE_PREFIX),
-        collectUrls(target)
-    ]).spread(function (nodeRecords, urlsHash) {
-        return vow.all(nodeRecords.map(function (nodeRecord) {
-            var nodeValue = nodeRecord.value;
+            levelDb.getByKeyPrefix(target.KEY.NODE_PREFIX),
+            collectUrls(target)
+        ])
+        .spread(function (nodeRecords, urlsHash) {
+            return vow.all(nodeRecords.map(function (nodeRecord) {
+                var nodeValue = nodeRecord.value;
 
-            if (nodeValue.source && nodeValue.source.data) {
-                return levelDb.get(nodeValue.source.data).then(function (blockValue) {
-                    if (!blockValue) {
-                        return vow.resolve();
-                    }
-
-                    languages.forEach(function (lang) {
-                        var description = blockValue[lang] ? blockValue[lang].description : blockValue.description;
-                        if (!description) {
-                            // logger.warn('there no description in block data for key %s', source.key);
-                            return;
-                        }
-
-                        if (_.isArray(description)) {
-                            // old bem-sets format
-                            description.forEach(function (item, index) {
-                                if (blockValue[lang]) {
-                                    blockValue[lang].description[index].content =
-                                        overrideLinks(item.content || '', nodeValue, urlsHash, lang);
-                                } else {
-                                    blockValue.description[index].content =
-                                        overrideLinks(item.content || '', nodeValue, urlsHash, lang);
-                                }
-                            });
-                        } else {
-                            if (blockValue[lang]) {
-                                blockValue[lang].description =
-                                    overrideLinks(description, nodeValue, urlsHash, lang);
-                            } else {
-                                blockValue.description =
-                                    overrideLinks(description, nodeValue, urlsHash, lang);
-                            }
-                        }
-                    });
-
-                    return levelDb.put(nodeValue.source.data, blockValue);
-                });
-            }
-
-            return vow.all(languages.map(function (lang) {
-                var docKey = util.format('%s%s:%s', target.KEY.DOCS_PREFIX, nodeValue.id, lang);
-                return levelDb.get(docKey)
-                    .then(function (docValue) {
-                        if (!docValue || !docValue.content) {
+                if (nodeValue.source && nodeValue.source.data) {
+                    return levelDb.get(nodeValue.source.data).then(function (blockValue) {
+                        if (!blockValue) {
                             return vow.resolve();
                         }
-                        docValue.content = overrideLinks(docValue.content, docValue, urlsHash, lang);
-                        return levelDb.put(docKey, docValue);
+
+                        languages.forEach(function (lang) {
+                            var description = blockValue[lang] ? blockValue[lang].description : blockValue.description;
+                            if (!description) {
+                                // logger.warn('there no description in block data for key %s', source.key);
+                                return;
+                            }
+
+                            if (_.isArray(description)) {
+                                // old bem-sets format
+                                description.forEach(function (item, index) {
+                                    if (blockValue[lang]) {
+                                        blockValue[lang].description[index].content =
+                                            overrideLinks(item.content || '', nodeValue, urlsHash, lang);
+                                    } else {
+                                        blockValue.description[index].content =
+                                            overrideLinks(item.content || '', nodeValue, urlsHash, lang);
+                                    }
+                                });
+                            } else {
+                                if (blockValue[lang]) {
+                                    blockValue[lang].description =
+                                        overrideLinks(description, nodeValue, urlsHash, lang);
+                                } else {
+                                    blockValue.description =
+                                        overrideLinks(description, nodeValue, urlsHash, lang);
+                                }
+                            }
+                        });
+
+                        return levelDb.put(nodeValue.source.data, blockValue);
                     });
+                }
+
+                return vow.all(languages.map(function (lang) {
+                    var docKey = util.format('%s%s:%s', target.KEY.DOCS_PREFIX, nodeValue.id, lang);
+                    return levelDb.get(docKey)
+                        .then(function (docValue) {
+                            if (!docValue || !docValue.content) {
+                                return vow.resolve();
+                            }
+                            docValue.content = overrideLinks(docValue.content, nodeValue, urlsHash, lang, docValue);
+                            return levelDb.put(docKey, docValue);
+                        });
+                }));
             }));
-        }));
-    });
+        })
+        .then(function () {
+            logger.info('Links were successfully overrided', module);
+            return vow.resolve(target);
+        })
+        .fail(function (err) {
+            logger.error(
+                util.format('Overriding links failed with error %s', err.message), module);
+            return vow.reject(err);
+        });
 };

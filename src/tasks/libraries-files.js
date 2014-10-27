@@ -99,7 +99,7 @@ function addLibDirectories(target, libs) {
         return vow.resolve();
     }
     return vow.all(libs.map(function (item) {
-        target.getChanges().getLibraries().addAdded({ lib: item });
+        // target.getChanges().getLibraries().addAdded({ lib: item });
         return vowFs.makeDir(path.join(target.LIBRARIES_FILE_PATH, item));
     }));
 }
@@ -115,7 +115,7 @@ function removeLibDirectories(target, libs) {
         return vow.resolve();
     }
     return vow.all(libs.map(function (item) {
-        target.getChanges().getLibraries().addRemoved({ lib: item });
+        // target.getChanges().getLibraries().addRemoved({ lib: item });
         return vowFs.removeDir(path.join(target.LIBRARIES_FILE_PATH, item));
     }));
 }
@@ -132,7 +132,7 @@ function addLibVersionDirectories(target, lib, versions) {
         return vow.resolve();
     }
     return vow.all(versions.map(function (item) {
-        target.getChanges().getLibraries().addAdded({ lib: lib, version: item });
+        // target.getChanges().getLibraries().addAdded({ lib: lib, version: item });
         return vowFs.makeDir(path.join(target.LIBRARIES_FILE_PATH, lib, item));
     }));
 }
@@ -149,7 +149,7 @@ function removeLibVersionDirectories(target, lib, versions) {
         return vow.resolve();
     }
     return vow.all(versions.map(function (item) {
-        target.getChanges().getLibraries().addRemoved({ lib: lib, version: item });
+        // target.getChanges().getLibraries().addRemoved({ lib: lib, version: item });
         return vowFs.removeDir(path.join(target.LIBRARIES_FILE_PATH, lib, item));
     }));
 }
@@ -233,7 +233,7 @@ function compareFiles(target, lib, versions) {
                 // compare local and remote file versions
                 if (local && local !== remote) {
                     logger.warn(util.format('Library version %s %s was changed', lib, version), module);
-                    target.getChanges().getLibraries().addModified({ lib: lib, version: version });
+                    // target.getChanges().getLibraries().addModified({ lib: lib, version: version });
                     promise = vowFs.remove(path.join(target.LIBRARIES_FILE_PATH, lib, version, 'data.json'));
                 }
                 return promise
