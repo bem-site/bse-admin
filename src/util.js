@@ -27,6 +27,11 @@ exports.gzip = function (content) {
     return def.promise();
 };
 
+/**
+ * Recurcively removes given folder with all nested files and folders
+ * @param {String} p - path to folder
+ * @returns {*}
+ */
 exports.removeDir = function (p) {
     var def = vow.defer();
     fsExtra.remove(p, function (err) {
@@ -35,6 +40,12 @@ exports.removeDir = function (p) {
     return def.promise();
 };
 
+/**
+ * Copy all files from source folder to target folder
+ * @param {String} source - path to source folder
+ * @param {String} target - path to target folder
+ * @returns {*}
+ */
 exports.copyDir = function (source, target) {
     var def = vow.defer();
     fsExtra.copy(source, target, function (err) {
@@ -121,6 +132,11 @@ exports.dateToMilliseconds = function (dateStr) {
     return date.valueOf();
 };
 
+/**
+ * Returns real path that symlink is pointed to
+ * @param {String} p - path to symlink
+ * @returns {*}
+ */
 exports.realpath = function (p) {
     var def = vow.defer();
     fs.realpath(p, function (err, resolvedPath) {

@@ -12,14 +12,24 @@ var CronJob = require('cron').CronJob,
         ACTIVE: 1
     };
 
+/**
+ * Sets state of updater to idle
+ */
 function setIdle() {
     state = STATE.IDLE;
 }
 
+/**
+ * Sets state of updater to active
+ */
 function setActive() {
     state = STATE.ACTIVE;
 }
 
+/**
+ * Check if state of updater is active
+ * @returns {boolean}
+ */
 function isActive() {
     return state === STATE.ACTIVE;
 }

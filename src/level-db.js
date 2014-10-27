@@ -112,6 +112,11 @@ module.exports = {
         return def.promise();
     },
 
+    /**
+     * Performs batch operations in database
+     * @param {Array} operations - array of operations that should be performed in batch mode
+     * @returns {*}
+     */
     batch: function (operations) {
         if (!operations.length) {
             return vow.resolve();
@@ -185,10 +190,20 @@ module.exports = {
         return this._getByCriteria(criteria, { keys: false, values: true });
     },
 
+    /**
+     * Returns records that satisfied given criteria function
+     * @param {Function} criteria function
+     * @returns {*}
+     */
     getByCriteria: function (criteria) {
         return this._getByCriteria(criteria, { keys: true, values: true });
     },
 
+    /**
+     * Removes records that satisfied given criteria function
+     * @param {Function} criteria function
+     * @returns {*}
+     */
     removeByCriteria: function (criteria) {
         return this.getByCriteria(criteria).then(function (records) {
             return this.batch(records.map(function (record) {
@@ -197,12 +212,22 @@ module.exports = {
         }, this);
     },
 
+    /**
+     * Returns all records that keys contains given prefix
+     * @param {String} prefix of keys
+     * @returns {*}
+     */
     getByKeyPrefix: function (prefix) {
         return this.getByCriteria(function (record) {
             return record.key.indexOf(prefix) > -1;
         });
     },
 
+    /**
+     * Removes all records that keys contains given prefix
+     * @param {String} prefix of keys
+     * @returns {*}
+     */
     removeByKeyPrefix: function (prefix) {
         logger.verbose(util.format('Remove existed data for prefix %s', prefix), module);
 
@@ -216,10 +241,19 @@ module.exports = {
             }, this);
     },
 
+    /**
+     * Copy all db files to another folder
+     * @param {String} snapshotPath - path to shapshot folder
+     * @returns {*}
+     */
     copy: function (snapshotPath) {
         return utility.copyDir(path.join('db', DB_NAME), path.join(snapshotPath, DB_NAME));
     },
 
+    /**
+     * Returns database object
+     * @returns {*}
+     */
     getDb: function () {
         return db;
     }

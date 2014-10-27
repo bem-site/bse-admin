@@ -11,6 +11,11 @@ var fs = require('fs'),
     config = require('../config'),
     logger = require('../logger');
 
+/**
+ * Reads model.json file, compress it and send to configured destination
+ * @param {TargetUpdateModel} target object
+ * @returns {*}
+ */
 function send(target) {
     var def = vow.defer(),
         gzip = zlib.createGzip(),
