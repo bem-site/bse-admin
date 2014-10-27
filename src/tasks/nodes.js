@@ -107,8 +107,10 @@ function findDifferencesForMeta(target, nodes) {
 
                         if (!newRecord) {
                             var v = record.value;
-                            target.getChanges().getMeta().addRemoved({ title: v.title, url: v.url || v.content });
-                            return true;
+                            if (v.repo) {
+                                target.getChanges().getMeta().addRemoved({ title: v.title, url: v.url || v.content });
+                                return true;
+                            }
                         }
 
                         return false;
