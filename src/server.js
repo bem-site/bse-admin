@@ -36,6 +36,9 @@ module.exports = function () {
         .get('/set/:environment/:version', controllers.set)
         .get('/remove/:version', controllers.delete)
         .get('/changes/:version', controllers.changes)
+        .get('/search/:environment/ping', controllers.search.ping)
+        .get('/search/:environment/libraries', controllers.search.libraries)
+        .get('/search/:environment/blocks', controllers.search.blocks)
         .post('/model', controllers.model)
         .listen(app.get('port'), function () {
             logger.info(util.format('Express server listening on port %s', app.get('port')), module);

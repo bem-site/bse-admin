@@ -107,3 +107,4 @@ exports.data = require('./data');
 exports.model = require('./model');
 exports.delete = require('./remove');
 exports.changes = require('./changes');
+exports.search = require('./search');
