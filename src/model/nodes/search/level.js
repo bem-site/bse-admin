@@ -9,7 +9,7 @@ Level.prototype = {
 
     /**
      * Initialize level object
-     * @param name - {String} level name
+     * @param {String} name of level
      */
     init: function (name) {
         this.name = name.replace(/\.(sets|blocks)/, '');
@@ -18,7 +18,7 @@ Level.prototype = {
 
     /**
      * Add block to library search item
-     * @param block - {String} name of block
+     * @param {String} block name
      * @returns {Level}
      */
     addBlock: function (block) {

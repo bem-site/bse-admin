@@ -1,8 +1,7 @@
-var _ = require('lodash');
-
-var Version = function (name, link, doc, current) {
-    return this.init(name, link, doc, current);
-};
+var _ = require('lodash'),
+    Version = function (name, link, doc, current) {
+        return this.init(name, link, doc, current);
+    };
 
 Version.prototype = {
 
@@ -14,10 +13,10 @@ Version.prototype = {
 
     /**
      * Initialize library version search object
-     * @param name - {String} name of library version
-     * @param link - {String} readme string representation
-     * @param readme - {String} url
-     * @param current - {Boolean} indicates that this library version is current
+     * @param {String} name of library version
+     * @param {String} link - readme string representation
+     * @param {String} readme url
+     * @param {Boolean} current indicates that this library version is current
      * @returns {Version}
      */
     init: function (name, link, readme, current) {
@@ -31,7 +30,7 @@ Version.prototype = {
 
     /**
      * Add level to library search item
-     * @param level - {Level} level object
+     * @param {Level} level object
      * @returns {Version}
      */
     addLevel: function (level) {
@@ -41,7 +40,7 @@ Version.prototype = {
 
     /**
      * Returns level object by it name
-     * @param name - {String} name of level
+     * @param {String} name of level
      * @returns {Level}
      */
     getLevel: function (name) {

@@ -1,8 +1,7 @@
-var _ = require('lodash');
-
-var Library = function (name) {
-    return this.init(name);
-};
+var _ = require('lodash'),
+    Library = function (name) {
+        return this.init(name);
+    };
 
 Library.prototype = {
 
@@ -11,19 +10,18 @@ Library.prototype = {
 
     /**
      * Initialize search library object
-     * @param name - {String} name of library
+     * @param {String} name of library
      * @returns {Library}
      */
     init: function (name) {
         this.name = name;
         this.versions = [];
-
         return this;
     },
 
     /**
      * Add version to library search item
-     * @param version - {String} version of library
+     * @param {String} version of library
      * @returns {Library}
      */
     addVersion: function (version) {
@@ -33,7 +31,7 @@ Library.prototype = {
 
     /**
      * Finds version of library by it name
-     * @param name - {String} name of library version
+     * @param {String} name of library version
      * @returns {Version}
      */
     getVersion: function (name) {
