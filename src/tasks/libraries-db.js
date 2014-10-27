@@ -6,6 +6,7 @@ var util = require('util'),
     _ = require('lodash'),
     vow = require('vow'),
     vowFs = require('vow-fs'),
+    semver = require('semver'),
 
     logger = require('../logger'),
     levelDb = require('../level-db'),
@@ -217,11 +218,71 @@ function syncLibraryVersions(target, record) {
         });
 }
 
+function sortLibraryVersions(target, record) {
+    var value = record.value;
+    return getLibraryVersionNodesFromDb(target, value)
+        .then(function (records) {
+            return levelDb.batch(records
+                .sort(function (a, b) {
+                    a = a.value.route.conditions.version;
+                    b = b.value.route.conditions.version;
+
+                    var BRANCHES = ['master', 'dev'],
+                        VERSION_REGEXP = /^\d+\.\d+\.\d+$/;
+
+                    if (BRANCHES.indexOf(a) !== -1) {
+                        return 1;
+                    }
+
+                    if (BRANCHES.indexOf(b) !== -1) {
+                        return -1;
+                    }
+
+                    a = semver.clean(a);
+                    b = semver.clean(b);
+
+                    if (VERSION_REGEXP.test(a) && VERSION_REGEXP.test(b)) {
+                        return semver.rcompare(a, b);
+                    }
+
+                    if (VERSION_REGEXP.test(a)) {
+                        return -1;
+                    }
+
+                    if (VERSION_REGEXP.test(b)) {
+                        return 1;
+                    }
+
+                    if (semver.valid(a) && semver.valid(b)) {
+                        return semver.rcompare(a, b);
+                    }
+
+                    if (semver.valid(a)) {
+                        return -1;
+                    }
+
+                    if (semver.valid(b)) {
+                        return 1;
+                    }
+
+                    return a - b;
+                })
+                .map(function (record, index) {
+                    record.value.order = index;
+                    return { type: 'put', key: record.key, value: record.value };
+                })
+            );
+        });
+}
+
 module.exports = function (target) {
     return getLibraryNodesFromDb(target)
         .then(function (records) {
             return vow.all(records.map(function (record) {
-                return syncLibraryVersions(target, record);
+                return syncLibraryVersions(target, record)
+                    .then(function () {
+                        return sortLibraryVersions(target, record);
+                    });
             }));
         })
         .then(function () {
