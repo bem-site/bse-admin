@@ -5,13 +5,30 @@
     "type": "git",
     "url": "git://github.com/bem/bse-admin.git"
   },
-  "author": "Andrey Kuznetsov <andrey.kuznetsov48@yandex.ua> (http://github.com/tormozz48)",
+  "author": {
+    "name": "Andrey Kuznetsov",
+    "email": "andrey.kuznetsov48@yandex.ua"
+  },
   "maintainers": [
-    "Andrey Kuznetsov <andrey.kuznetsov48@yandex.ua> (http://github.com/tormozz48)"
+    {
+      "name": "Andrey Kuznetsov",
+      "email": "andrey.kuznetsov48@yandex.ua"
+    }
   ],
   "contributors": [
-    "Andrey Kuznetsov <andrey.kuznetsov48@yandex.ua> (http://github.com/tormozz48)"
+    {
+      "name": "Andrey Kuznetsov",
+      "email": "andrey.kuznetsov48@yandex.ua"
+    }
   ],
+  "keywords": [
+    "bem",
+    "bem-site-engine",
+    "data provider"
+  ],
+  "bugs": {
+    "url": "https://github.com/bem/bse-admin/issues"
+  },
   "engines": {
     "node": ">= 0.10.0"
   },
@@ -57,6 +74,7 @@
     "jshint": "2.5.5",
     "jscs": "1.5.9"
   },
+  "main": "./bin/bse",
   "bin": {
     "bse": "./bin/bse"
   },
