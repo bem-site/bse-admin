@@ -1,4 +1,5 @@
 var _ = require('lodash'),
+    utility = require('../../../util'),
 
     /**
      *
@@ -24,8 +25,8 @@ Block.prototype = {
     level: null,
     mods: [],
     elems: [],
-    doc: null,
-    jsdoc: null,
+    doc: undefined,
+    jsdoc: undefined,
 
     /**
      *
@@ -44,8 +45,9 @@ Block.prototype = {
         this.lib = lib;
         this.version = version;
         this.level = level;
+        this.data = data;
         this.jsdoc = jsdoc;
-        return this.processData(data);
+        return this;
     },
 
     /**
@@ -69,13 +71,14 @@ Block.prototype = {
         this.mods = (data.mods && _.isArray(data.mods)) ?
             _.pluck(data.mods, 'name') : [];
 
-        if (data.description && _.isArray(data.description)) {
-            var doc = (_.pluck(data.description, 'content'))[0];
-            this.doc = _.isString(doc) ? doc : '';
-            // this.doc = (_.pluck(data.description, 'content'))[0];
-        }else {
-            this.doc = '';
-        }
+        utility.getLanguages().forEach(function (lang) {
+            var description = data[lang] ? data[lang].description : data.description;
+            if (!description) {
+                this.doc = '';
+                return;
+            }
+            this.doc = _.isArray(description) ? description[0].content : description;
+        }, this);
 
         return this;
     }

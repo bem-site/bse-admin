@@ -5,6 +5,7 @@ var util = require('util'),
     vowFs = require('vow-fs'),
 
     levelDb = require('../level-db'),
+    utility = require('../util'),
     logger = require('../logger');
 
 /**
@@ -43,6 +44,13 @@ module.exports = function (target) {
                 changes: target.getChanges()
             };
             return vowFs.write(path.join(snapshotPath, 'data.json'), JSON.stringify(meta, null, 4));
+        })
+        .then(function () {
+            var searchDirPath = path.join(target.CACHE_DIR, 'search');
+            return vowFs.exists(searchDirPath)
+                .then(function (exists) {
+                    return exists ? utility.copyDir(searchDirPath, snapshotPath) : vow.resolve();
+                });
         })
         .then(function () {
             logger.info(util.format('Database snapshot %s has been created successfully', snapshotName), module);

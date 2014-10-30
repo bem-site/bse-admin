@@ -20,6 +20,14 @@ Library.prototype = {
     },
 
     /**
+     * Returns name of library
+     * @returns {String}
+     */
+    getName: function () {
+        return this.name;
+    },
+
+    /**
      * Add version to library search item
      * @param {String} version of library
      * @returns {Library}

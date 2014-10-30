@@ -41,7 +41,6 @@ TargetNodes.prototype._getTasksDev = function () {
         require('../tasks/libraries-db'),
         require('../tasks/urls-map'),
         require('../tasks/override-links'),
-        require('../tasks/sitemap-xml'),
         require('../tasks/finalize')
     ];
 };
@@ -60,6 +59,7 @@ TargetNodes.prototype._getTasksProd = function () {
         require('../tasks/urls-map'),
         require('../tasks/override-links'),
         require('../tasks/sitemap-xml'),
+        require('../tasks/search-data'),
         require('../tasks/snapshot'),
         require('../tasks/switch-symlink'),
         require('../tasks/finalize')
