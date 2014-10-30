@@ -23,7 +23,6 @@ module.exports = function (req, res) {
 
     return vowFs.read(path.join(DB_PATH, version, 'data.json'), 'utf-8')
         .then(function (content) {
-            // return res.json(JSON.parse(content));
             return template.run(_.extend({ block: 'page', view: 'changes' }, { data: JSON.parse(content) }), req);
         })
         .then(function (html) {

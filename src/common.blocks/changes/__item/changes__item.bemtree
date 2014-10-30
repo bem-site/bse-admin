@@ -1,0 +1,16 @@
+block('changes').elem('item')(
+
+    match(function() { return !this.ctx.content.length }).def()(function() {
+        return false;
+    }),
+
+    content()(function() {
+        return this.ctx.content.map(function(item) {
+            return {
+                block: this.block,
+                elem: 'change',
+                content: item.title || item.url || (item.lib + ' ' + item.version)
+            }
+        }, this);
+    })
+);
