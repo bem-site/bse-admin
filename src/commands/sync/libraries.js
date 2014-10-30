@@ -1,5 +1,5 @@
-var logger = require('../logger'),
-    TargetLibraries = require('../targets/libraries').TargetLibraries;
+var logger = require('../../logger'),
+    TargetLibraries = require('../../targets/libraries').TargetLibraries;
 
 module.exports = function () {
     return this

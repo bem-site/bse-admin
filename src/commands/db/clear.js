@@ -1,5 +1,5 @@
-var logger = require('../logger'),
-    TargetClearDb = require('../targets/clear-db').TargetClearDb;
+var logger = require('../../logger'),
+    TargetClearDb = require('../../targets/clear-db').TargetClearDb;
 
 // TODO add options for remove only records with prefixes given by command options
 

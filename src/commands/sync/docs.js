@@ -1,5 +1,5 @@
-var logger = require('../logger'),
-    TargetDocs = require('../targets/docs').TargetDocs;
+var logger = require('../../logger'),
+    TargetDocs = require('../../targets/docs').TargetDocs;
 
 module.exports = function () {
     return this

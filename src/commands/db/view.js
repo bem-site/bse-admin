@@ -1,5 +1,5 @@
 var path = require('path'),
-    logger = require('../logger'),
+    logger = require('../../logger'),
     levelup  = require('levelup'),
     LevelHUD = require('levelhud');
 
