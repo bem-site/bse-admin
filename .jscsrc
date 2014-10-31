@@ -1,7 +1,5 @@
 {
     "excludeFiles" : [
-        "libs/**",
-        "src/common.bundles/**",
         "node_modules",
         ".*"
     ],

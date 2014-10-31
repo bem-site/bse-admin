@@ -37,8 +37,3 @@ npm-debug.log
 
 db/*
 cache
-
-libs
-.enb/tmp
-src/*.bundles/*/*.*
-!src/*.bundles/*/*.bemdecl.js
