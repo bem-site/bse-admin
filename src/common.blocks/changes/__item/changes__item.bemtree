@@ -9,8 +9,8 @@ block('changes').elem('item')(
             return {
                 block: this.block,
                 elem: 'change',
-                content: item.title || item.url || (item.lib + ' ' + item.version)
-            }
+                content: item
+            };
         }, this);
     })
 );
