@@ -1,7 +1,4 @@
 {
   "NODE_ENV": "development",
-  "logLevel": "debug",
-  "server": {
-    "port": 3000
-  }
+  "logLevel": "debug"
 }
