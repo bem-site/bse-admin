@@ -1,5 +1,0 @@
-- mods: { environment: [testing, production] }
-- elems:
-  - title
-  - icon
-  - panel

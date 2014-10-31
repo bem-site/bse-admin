@@ -1,3 +1,0 @@
-- block: button
-  mods: { theme : 'normal', size : 'm', type : 'link', view: 'action' }
-- block: icon

@@ -1,9 +1,0 @@
-block('content').mod('view', 'index')(
-    content()(function() {
-        var data = this.ctx.data;
-        return data.versions.map(function(item) {
-            item.block = 'snapshot';
-            return item;
-        })
-    })
-);
