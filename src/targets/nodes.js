@@ -11,42 +11,7 @@ TargetNodes.prototype.MODEL_JSPATH = path.join(process.cwd(), 'model', 'index.js
 TargetNodes.prototype.LIBRARIES_FILE_PATH = path.join(TargetNodes.prototype.CACHE_DIR, 'libraries');
 
 TargetNodes.prototype.init = function (options) {
-    var tasks = this._getTasksProd();
-    if (options.dev) {
-        tasks = this._getTasksDev();
-    }
-
-    tasks.forEach(function (task) {
-        this.addTask(task);
-    }, this);
-
-    TargetBase.prototype.init.call(this, options);
-};
-
-TargetNodes.prototype.getName = function () {
-    return 'NODES SYNCHRONIZATION';
-};
-
-TargetNodes.prototype._getTasksDev = function () {
-    return [
-        require('../tasks/init'),
-        require('../tasks/get-jsmodel'),
-        require('../tasks/nodes'),
-        require('../tasks/rm-model'),
-        require('../tasks/docs'),
-        require('../tasks/people'),
-        require('../tasks/dynamic-people'),
-        require('../tasks/dynamic-tags'),
-        require('../tasks/libraries-files'),
-        require('../tasks/libraries-db'),
-        require('../tasks/urls-map'),
-        require('../tasks/override-links'),
-        require('../tasks/finalize')
-    ];
-};
-
-TargetNodes.prototype._getTasksProd = function () {
-    return [
+    var tasks = [
         require('../tasks/init'),
         require('../tasks/nodes'),
         require('../tasks/rm-model'),
@@ -64,6 +29,16 @@ TargetNodes.prototype._getTasksProd = function () {
         require('../tasks/switch-symlink'),
         require('../tasks/finalize')
     ];
+
+    tasks.forEach(function (task) {
+        this.addTask(task);
+    }, this);
+
+    TargetBase.prototype.init.call(this, options);
+};
+
+TargetNodes.prototype.getName = function () {
+    return 'NODES SYNCHRONIZATION';
 };
 
 exports.TargetNodes = TargetNodes;
