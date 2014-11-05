@@ -1,5 +1,5 @@
 var TargetBase = require('./base').TargetBase,
-    TargetNodes = require('./base').TargetNodes,
+    TargetNodes = require('./nodes').TargetNodes,
     TargetNodesDev = function (options) {
         this.init(options);
     };
