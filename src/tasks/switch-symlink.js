@@ -15,16 +15,12 @@ function getLatestSnapshot(target) {
     return vowFs.listDir(target.SNAPSHOTS_DIR)
         .then(function (snapshots) {
             snapshots = snapshots.sort(function (a, b) {
-                a = a.split('-');
-                b = b.split('-');
-                var dmyA = a[0].split(':'),
-                    dmyB = b[0].split(':'),
-                    hmsA = a[1].split(':'),
-                    hmsB = b[1].split(':'),
-                    dateA = new Date(dmyA[0], dmyA[1] - 1, dmyA[2], hmsA[0], hmsA[1], hmsA[2], 0),
-                    dateB = new Date(dmyB[0], dmyB[1] - 1, dmyB[2], hmsB[0], hmsB[1], hmsB[2], 0);
-
-                return +dateB - +dateA;
+                var re = /(\d{1,2}):(\d{1,2}):(\d{1,4})-(\d{1,2}):(\d{1,2}):(\d{1,2})/;
+                a = a.match(re);
+                b = b.match(re);
+                a = new Date(a[3], a[2] - 1, a[1], a[4], a[5], a[6], 0);
+                b = new Date(b[3], b[2] - 1, b[1], b[4], b[5], b[6], 0);
+                return b.getTime() - a.getTime();
             });
 
             return snapshots[0];
