@@ -19,14 +19,6 @@ exports.getLanguages = function () {
     return config.get('languages') || [config.get('defaultLanguage') || 'en'];
 };
 
-exports.gzip = function (content) {
-    var def = vow.defer();
-    zlib.gzip(new Buffer(content, 'utf-8'), function (err, result) {
-        err ? def.reject(err) : def.resolve(result);
-    });
-    return def.promise();
-};
-
 /**
  * Recurcively removes given folder with all nested files and folders
  * @param {String} p - path to folder
@@ -130,17 +122,4 @@ exports.dateToMilliseconds = function (dateStr) {
     });
 
     return date.valueOf();
-};
-
-/**
- * Returns real path that symlink is pointed to
- * @param {String} p - path to symlink
- * @returns {*}
- */
-exports.realpath = function (p) {
-    var def = vow.defer();
-    fs.realpath(p, function (err, resolvedPath) {
-        err ? def.reject(err) : def.resolve(resolvedPath);
-    });
-    return def.promise();
 };
