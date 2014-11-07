@@ -130,22 +130,6 @@ module.exports = {
     },
 
     /**
-     * Returns true if database is in open state
-     * @returns {*|boolean}
-     */
-    isOpen: function () {
-        return db.isOpen();
-    },
-
-    /**
-     * Returns true if database is in closed state
-     * @returns {*|boolean}
-     */
-    isClosed: function () {
-        return db.isClosed();
-    },
-
-    /**
      * Returns data by criteria
      * @param {Function} criteria function
      * @param {Object} config object for set type of data that should be returned
@@ -248,13 +232,5 @@ module.exports = {
      */
     copy: function (snapshotPath) {
         return utility.copyDir(path.join('db', DB_NAME), path.join(snapshotPath, DB_NAME));
-    },
-
-    /**
-     * Returns database object
-     * @returns {*}
-     */
-    getDb: function () {
-        return db;
     }
 };
