@@ -7,8 +7,14 @@ var util = require('util'),
     logger = require('../logger');
 
 module.exports = function (target) {
-    return levelDb.getKeysByCriteria(function () {
-            return true;
+    var keysForRemove = target.getOptions().keys || [];
+    return levelDb.getKeysByCriteria(function (key) {
+            if (!keysForRemove.length) {
+                return true;
+            }
+            return keysForRemove.filter(function (kfr) {
+                return key.indexOf(kfr) > -1;
+            }).length;
         })
         .then(function (keys) {
             return keys.map(function (key) {

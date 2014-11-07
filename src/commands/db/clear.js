@@ -1,14 +1,28 @@
-var logger = require('../../logger'),
-    TargetClearDb = require('../../targets/clear-db').TargetClearDb;
+var util = require('util'),
+    logger = require('../../logger'),
+    TargetClearDb = require('../../targets/clear-db').TargetClearDb,
 
-// TODO add options for remove only records with prefixes given by command options
+    DEFAULT = {
+        DB_PATH: 'db/leveldb'
+    };
 
 module.exports = function () {
     return this
-        .title('removes all data from database')
+        .title('Removes data from database. You can specify key patterns for records which should be removed')
         .helpful()
-        .act(function () {
-            logger.info('Try to clear all data in database', module);
-            return (new TargetClearDb()).execute();
+        .opt()
+            .name('database').title('Path to database')
+            .short('db').long('database')
+            .def(DEFAULT.DB_PATH)
+            .end()
+        .opt()
+            .name('keys').title('Keys of records which should be removed')
+            .short('k').long('keys')
+            .arr()
+            .end()
+        .act(function (opts) {
+            logger.info(util.format('Try to clear data for keys %s in database',
+                opts.database, opts.keys || 'all'), module);
+            return (new TargetClearDb(opts)).execute();
         });
 };
