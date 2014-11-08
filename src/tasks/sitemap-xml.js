@@ -4,6 +4,7 @@ var util = require('util'),
     vow = require('vow'),
     js2xml = require('js2xmlparser'),
 
+    errors = require('../errors').TaskSitemapXML,
     config = require('../config'),
     logger = require('../logger'),
     levelDb = require('../level-db');
@@ -63,7 +64,7 @@ module.exports = function (target) {
             return vow.resolve(target);
         })
         .fail(function (err) {
-            logger.error(util.format('Creation of sitemap.xml file failed with error %s', err.message), module);
+            errors.createError(errors.CODES.COMMON, { err: err }).log();
             return vow.reject(err);
         });
 };

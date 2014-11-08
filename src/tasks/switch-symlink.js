@@ -4,6 +4,7 @@ var util = require('util'),
     vow = require('vow'),
     vowFs = require('vow-fs'),
 
+    errors = require('../errors').TaskSwitchSymlink,
     logger = require('../logger');
 
 /**
@@ -22,7 +23,6 @@ function getLatestSnapshot(target) {
                 b = new Date(b[3], b[2] - 1, b[1], b[4], b[5], b[6], 0);
                 return b.getTime() - a.getTime();
             });
-
             return snapshots[0];
         });
 }
@@ -45,19 +45,20 @@ module.exports = function (target) {
     logger.info('Switch symlink start', module);
 
     var symlinkPath = path.join(target.DB_DIR, 'testing');
-
     return getLatestSnapshot(target)
         .then(function (version) {
-            return checkAndRemoveExistedSymlink(symlinkPath).then(function () {
-                return vowFs.symLink(util.format('./snapshots/%s', version), symlinkPath, 'dir')
-                    .then(function () {
-                        logger.info(util.format('symlink for %s environment was set to %s version',
-                            'testing', version), module);
-                        return vow.resolve(target);
-                    })
-                    .fail(function (err) {
-                        return vow.reject(err);
-                    });
-            });
+            return checkAndRemoveExistedSymlink(symlinkPath)
+                .then(function () {
+                    return vowFs.symLink(util.format('./snapshots/%s', version), symlinkPath, 'dir');
+                })
+                .then(function () {
+                    logger.info(util.format('symlink for %s environment was set to %s version',
+                        'testing', version), module);
+                    return vow.resolve(target);
+                });
+        })
+        .fail(function (err) {
+            errors.createError(errors.CODES.COMMON, { err: err }).log();
+            return vow.reject(err);
         });
 };

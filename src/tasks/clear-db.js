@@ -4,6 +4,7 @@ var util = require('util'),
     vow = require('vow'),
 
     levelDb = require('../level-db'),
+    errors = require('../errors').TaskClearDB,
     logger = require('../logger');
 
 module.exports = function (target) {
@@ -29,7 +30,7 @@ module.exports = function (target) {
             return vow.resolve(target);
         })
         .fail(function (err) {
-            logger.error(util.format('Database clear failed with error', err.message), module);
+            errors.createError(errors.CODES.COMMON, { err: err }).log();
             return vow.reject(err);
         });
 };

@@ -8,6 +8,7 @@ var fs = require('fs'),
     request = require('request'),
     vow = require('vow'),
 
+    errors = require('../errors').TaskUpdateModel,
     config = require('../config'),
     logger = require('../logger');
 
@@ -34,7 +35,7 @@ function send(target) {
         .pipe(gzip)
         .pipe(request.post(link))
         .on('error', function (err) {
-            logger.error(util.format('model send error %s', err), module);
+            errors.createError(errors.CODES.STREAMING, { err: err }).log();
             def.reject(err);
         })
         .on('end', function () {
@@ -52,7 +53,7 @@ module.exports = function (target) {
             return vow.resolve(target);
         })
         .fail(function (err) {
-            logger.error(util.format('Sending model failed with error', err.message), module);
+            errors.createError(errors.CODES.COMMON, { err: err }).log();
             return vow.reject(err);
         });
 };

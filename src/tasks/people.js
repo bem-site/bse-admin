@@ -1,9 +1,8 @@
 'use strict';
 
-var util = require('util'),
+var vow = require('vow'),
 
-    vow = require('vow'),
-
+    errors = require('../errors').TaskPeople,
     logger = require('../logger'),
     config = require('../config'),
     githubApi = require('../gh-api'),
@@ -12,13 +11,13 @@ var util = require('util'),
     repo = (function () {
         var pr = config.get('github:people');
         if (!pr) {
-            logger.warn('Path to people data file has not been set in application configuration', module);
+            errors.createError(errors.CODES.PATH_NOT_SET).log('warn');
             return null;
         }
 
         pr = pr.match(/^https?:\/\/(.+?)\/(.+?)\/(.+?)\/(tree|blob)\/(.+?)\/(.+)/);
         if (!pr) {
-            logger.warn('Path to people repository has invalid format', module);
+            errors.createError(errors.CODES.PATH_INVALID).log('warn');
             return null;
         }
 
@@ -58,7 +57,7 @@ function updatePeopleData(target, remote) {
     try {
         content = JSON.parse(content);
     } catch (err) {
-        logger.error('Error occur while parsing people data', module);
+        errors.createError(errors.CODES.PARSING).log();
         return vow.reject();
     }
 
@@ -104,7 +103,7 @@ module.exports = function (target) {
                 return vow.resolve(target);
             })
             .fail(function (err) {
-                logger.error(util.format('People data synchronization failed with error', err), module);
+                errors.createError(errors.CODES.COMMON, { err: err }).log();
                 return vow.reject(err);
             });
     });

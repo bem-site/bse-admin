@@ -4,6 +4,7 @@ var util = require('util'),
     vow = require('vow'),
     vowFs = require('vow-fs'),
 
+    errors = require('../errors').TaskSnapshot,
     levelDb = require('../level-db'),
     utility = require('../util'),
     logger = require('../logger');
@@ -57,7 +58,7 @@ module.exports = function (target) {
             return vow.resolve(target);
         })
         .fail(function (err) {
-            logger.error(util.format('Database snapshot creation failed with error', err.message), module);
+            errors.createError(errors.CODES.COMMON, { err: err }).log();
             return vow.reject(err);
         });
 };

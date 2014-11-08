@@ -5,6 +5,7 @@ var util = require('util'),
     _ = require('lodash'),
     vow = require('vow'),
 
+    errors = require('../errors').TaskUrlsMap,
     levelDb = require('../level-db'),
     logger = require('../logger');
 
@@ -44,8 +45,7 @@ module.exports = function (target) {
             return vow.resolve(target);
         })
         .fail(function (err) {
-            console.log(err);
-            logger.error('Error occur while creating url - id map for router', module);
+            errors.createError(errors.CODES.COMMON, { err: err }).log();
             return vow.reject(err);
         });
 };
