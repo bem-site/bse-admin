@@ -2,6 +2,7 @@ var util = require('util'),
 
     vow = require('vow'),
 
+    errors = require('../errors').TaskDynamicTags,
     logger = require('../logger'),
     levelDb = require('../level-db'),
     nodes = require('../model/nodes/index.js');
@@ -80,7 +81,7 @@ module.exports = function (target) {
             return vow.resolve(target);
         })
         .fail(function (err) {
-            logger.error(util.format('Creation of dynamic nodes for tags failed with error %s', err.message), module);
+            errors.createError(errors.CODES.COMMON, { err: err }).log();
             return vow.reject(err);
         });
 };

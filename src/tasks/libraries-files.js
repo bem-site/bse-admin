@@ -7,35 +7,35 @@ var util = require('util'),
     vow = require('vow'),
     vowFs = require('vow-fs'),
 
+    errors = require('../errors').TaskLibrariesFiles,
     logger = require('../logger'),
     config = require('../config'),
     githubApi = require('../gh-api'),
     utility = require('../util'),
 
     repo = (function () {
-        var isValidConfiguration = true,
+        var error,
             repo = config.get('github:libraries');
 
         if (!repo) {
-            isValidConfiguration = false;
-            logger.error('Libraries repository was not set in configuration', module);
+            error = errors.createError(errors.CODES.LIBRARIES_REPO_NOT_SET);
         } else if (!repo.type || !_.isString(repo.type) || !repo.type.length) {
-            isValidConfiguration = false;
-            logger.error('Type of libraries repository was not set in configuration', module);
+            error = errors.createError(errors.CODES.LIBRARIES_REPO_TYPE_NOT_SET);
         } else if (!repo.user || !_.isString(repo.user) || !repo.user.length) {
-            isValidConfiguration = false;
-            logger.error('User field of libraries repository was not set in configuration', module);
+            error = errors.createError(errors.CODES.LIBRARIES_REPO_USER_NOT_SET);
         } else if (!repo.repo || !_.isString(repo.repo) || !repo.repo.length) {
-            isValidConfiguration = false;
-            logger.error('Name of libraries repository was not set in configuration', module);
+            error = errors.createError(errors.CODES.LIBRARIES_REPO_NAME_NOT_SET);
         } else if (!repo.ref  || !_.isString(repo.ref)  || !repo.ref.length) {
-            isValidConfiguration = false;
-            logger.error('Reference of libraries repository was not set in configuration', module);
+            error = errors.createError(errors.CODES.LIBRARIES_REPO_REF_NOT_SET);
         } else if (!repo.pattern || !_.isString(repo.pattern) || !repo.pattern.length) {
-            isValidConfiguration = false;
-            logger.error('Pattern for libraries repository was not set in configuration', module);
+            error = errors.createError(errors.CODES.LIBRARIES_REPO_PATTERN_NOT_SET);
         }
-        return isValidConfiguration ? repo : null;
+
+        if (error) {
+            error.log();
+            return null;
+        }
+        return repo;
     })();
 
 /**
@@ -99,7 +99,6 @@ function addLibDirectories(target, libs) {
         return vow.resolve();
     }
     return vow.all(libs.map(function (item) {
-        // target.getChanges().getLibraries().addAdded({ lib: item });
         return vowFs.makeDir(path.join(target.LIBRARIES_FILE_PATH, item));
     }));
 }
@@ -115,7 +114,6 @@ function removeLibDirectories(target, libs) {
         return vow.resolve();
     }
     return vow.all(libs.map(function (item) {
-        // target.getChanges().getLibraries().addRemoved({ lib: item });
         return vowFs.removeDir(path.join(target.LIBRARIES_FILE_PATH, item));
     }));
 }
@@ -132,7 +130,6 @@ function addLibVersionDirectories(target, lib, versions) {
         return vow.resolve();
     }
     return vow.all(versions.map(function (item) {
-        // target.getChanges().getLibraries().addAdded({ lib: lib, version: item });
         return vowFs.makeDir(path.join(target.LIBRARIES_FILE_PATH, lib, item));
     }));
 }
@@ -149,7 +146,6 @@ function removeLibVersionDirectories(target, lib, versions) {
         return vow.resolve();
     }
     return vow.all(versions.map(function (item) {
-        // target.getChanges().getLibraries().addRemoved({ lib: lib, version: item });
         return vowFs.removeDir(path.join(target.LIBRARIES_FILE_PATH, lib, item));
     }));
 }
@@ -217,9 +213,9 @@ function compareFiles(target, lib, versions) {
     }
     return vow.all(versions.map(function (version) {
         return vow.all([
-            getShaOfLocalDataFile(target, lib, version),
-            getShaOfRemoteDataFile(lib, version)
-        ])
+                getShaOfLocalDataFile(target, lib, version),
+                getShaOfRemoteDataFile(lib, version)
+            ])
             .spread(function (local, remote) {
                 if (!remote || (local && local === remote)) {
                     return vow.resolve();
@@ -233,7 +229,6 @@ function compareFiles(target, lib, versions) {
                 // compare local and remote file versions
                 if (local && local !== remote) {
                     logger.warn(util.format('Library version %s %s was changed', lib, version), module);
-                    // target.getChanges().getLibraries().addModified({ lib: lib, version: version });
                     promise = vowFs.remove(path.join(target.LIBRARIES_FILE_PATH, lib, version, 'data.json'));
                 }
                 return promise
@@ -241,7 +236,7 @@ function compareFiles(target, lib, versions) {
                         return downloadFile(target, lib, version);
                     })
                     .then(function () {
-                        vowFs.write(path.join(target.LIBRARIES_FILE_PATH, lib, version, '_data.json'), remote);
+                        return vowFs.write(path.join(target.LIBRARIES_FILE_PATH, lib, version, '_data.json'), remote);
                     });
             });
     }));
@@ -262,9 +257,9 @@ function syncLibVersion(target, lib) {
             });
 
             return vow.all([
-                addLibVersionDirectories(target, lib, _.difference(remote, local)),
-                removeLibVersionDirectories(target, lib, _.difference(local, remote))
-            ])
+                    addLibVersionDirectories(target, lib, _.difference(remote, local)),
+                    removeLibVersionDirectories(target, lib, _.difference(local, remote))
+                ])
                 .then(function () {
                     return compareFiles(target, lib, remote);
                 });
@@ -302,7 +297,7 @@ module.exports = function (target) {
             return vow.resolve(target);
         })
         .fail(function (err) {
-            logger.error(util.format('Libraries synchronization with cache failed with error %s', err.message), module);
+            errors.createError(errors.CODES.COMMON, { err: err }).log();
             return vow.reject(err);
         });
 };

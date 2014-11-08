@@ -1,5 +1,7 @@
 var vow = require('vow'),
     vowFs = require('vow-fs'),
+
+    errors = require('../errors').TaskGetJsModel,
     logger = require('../logger');
 
 module.exports = function (target) {
@@ -14,7 +16,7 @@ module.exports = function (target) {
             });
         });
     } catch (err) {
-        logger.error('No js model were found', module);
+        errors.createError(errors.CODES.COMMON, { err: err }).log();
         return vow.reject(err);
     }
 };

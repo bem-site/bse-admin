@@ -59,5 +59,31 @@ module.exports = {
             PATH_NOT_SET: [171, 'Path to people data file has not been set in application configuration'],
             PATH_INVALID: [172, 'Path to people repository has invalid format'],
             PARSING: [173, 'Error occur while parsing people data']
+        }).setLogger(log),
+
+    TaskDynamicPeople: Terror
+        .create('DynamicPeople', {
+            COMMON: [ 180, 'Creation of dynamic nodes for people failed with error %err%' ]
+        }).setLogger(log),
+
+    TaskDynamicTags: Terror
+        .create('DynamicTags', {
+            COMMON: [ 190, 'Creation of dynamic nodes for tags failed with error %err%' ]
+        }).setLogger(log),
+
+    TaskGetJsModel: Terror
+        .create('GetJsModel', {
+            COMMON: [ 200, 'No js model were found or error %err% occur' ]
+        }).setLogger(log),
+
+    TaskLibrariesFiles: Terror
+        .create('LibrariesFiles', {
+            COMMON: [ 210, 'Libraries synchronization with cache failed with error %err%' ],
+            LIBRARIES_REPO_NOT_SET: [211, 'Libraries repository was not set in configuration'],
+            LIBRARIES_REPO_TYPE_NOT_SET: [212, 'Type of libraries repository was not set in configuration'],
+            LIBRARIES_REPO_USER_NOT_SET: [213, 'User field of libraries repository was not set in configuration'],
+            LIBRARIES_REPO_NAME_NOT_SET: [214, 'Name of libraries repository was not set in configuration'],
+            LIBRARIES_REPO_REF_NOT_SET: [215, 'Reference of libraries repository was not set in configuration'],
+            LIBRARIES_REPO_PATTERN_NOT_SET: [216, 'Pattern for libraries repository was not set in configuration']
         }).setLogger(log)
 };
