@@ -1,6 +1,5 @@
 var util = require('util'),
     fs = require('fs'),
-    zlib = require('zlib'),
 
     _ = require('lodash'),
     vow = require('vow'),
@@ -8,6 +7,7 @@ var util = require('util'),
     request = require('request'),
     fsExtra = require('fs-extra'),
 
+    errors = require('./errors').Util,
     logger = require('./logger'),
     config = require('./config');
 
@@ -27,7 +27,12 @@ exports.getLanguages = function () {
 exports.removeDir = function (p) {
     var def = vow.defer();
     fsExtra.remove(p, function (err) {
-        err ? def.reject(err) : def.resolve();
+        if (err) {
+            errors.createError(errors.CODES.REMOVE_DIR, { err: err }).log();
+            def.reject(err);
+        } else {
+            def.resolve();
+        }
     });
     return def.promise();
 };
@@ -41,7 +46,12 @@ exports.removeDir = function (p) {
 exports.copyDir = function (source, target) {
     var def = vow.defer();
     fsExtra.copy(source, target, function (err) {
-        err ? def.reject(err) : def.resolve();
+        if (err) {
+            errors.createError(errors.CODES.COPY_DIR, { err: err }).log();
+            def.reject(err);
+        } else {
+            def.resolve();
+        }
     });
     return def.promise();
 };
@@ -65,7 +75,7 @@ exports.loadFromRepoToFile = function (options) {
 
     request.get(url).pipe(fs.createWriteStream(file))
         .on('error', function (err) {
-            logger.error(util.format('Error occur while loading from url %s to file %s', url, file), module);
+            errors.createError(errors.LOAD_FROM_URL_TO_FILE, { url: url, file: file }).log();
             def.reject(err);
         })
         .on('close', function () {

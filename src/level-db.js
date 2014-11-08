@@ -8,6 +8,7 @@ var util = require('util'),
     vow = require('vow'),
     vowFs = require('vow-fs'),
 
+    errors = require('./errors').LevelDB,
     utility = require('./util'),
     logger = require('./logger'),
 
@@ -52,9 +53,8 @@ module.exports = {
                     isInitialized = true;
                     def.resolve();
                 } catch (err) {
-                    var message = util.format('Can not connect to leveldb database. Error: %s', err.message);
-                    logger.error(message, module);
-                    def.reject(message);
+                    errors.createError(errors.INIT, { err: err }).log();
+                    def.reject(err);
                 }
                 return def.promise();
             });
@@ -71,7 +71,12 @@ module.exports = {
 
         var def = vow.defer();
         db.put(key, value, DB_OPTIONS, function (err) {
-            err ? def.reject(err) : def.resolve();
+            if (err) {
+                errors.createError(errors.PUT, { key: key, err: err }).log();
+                def.reject(err);
+            } else {
+                def.resolve();
+            }
         });
         return def.promise();
     },
@@ -88,9 +93,11 @@ module.exports = {
         db.get(key, DB_OPTIONS, function (err, value) {
             if (err) {
                 if (err.type === 'NotFoundError') {
-                    return def.resolve();
+                    def.resolve();
+                } else {
+                    errors.createError(errors.GET, { key: key, err: err }).log();
+                    def.reject();
                 }
-                def.reject();
             }
             def.resolve(value);
         });
@@ -107,7 +114,12 @@ module.exports = {
 
         var def = vow.defer();
         db.del(key, function (err) {
-            err ? def.reject(err) : def.resolve();
+            if (err) {
+                errors.createError(errors.DEL, { key: key, err: err }).log();
+                def.reject(err);
+            } else {
+                def.resolve();
+            }
         });
         return def.promise();
     },
@@ -124,7 +136,12 @@ module.exports = {
 
         var def = vow.defer();
         db.batch(operations, DB_OPTIONS, function (err) {
-            err ? def.reject(err) : def.resolve();
+            if (err) {
+                errors.createError(errors.BATCH, { err: err }).log();
+                def.reject(err);
+            } else {
+                def.resolve();
+            }
         });
         return def.promise();
     },
@@ -145,6 +162,7 @@ module.exports = {
                 }
             })
             .on('error', function (err) {
+                errors.createError(errors.GET_BY_CRITERIA, { err: err }).log();
                 def.reject(err);
             })
             .on('close', function () {
