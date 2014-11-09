@@ -7,7 +7,8 @@ bse-admin
 в режиме разработки.
 
 В качестве хранилища данных используется база данных [LevelDB](http://en.wikipedia.org/wiki/LevelDB)
-и [nodejs модуль](https://github.com/rvagg/node-levelup)
+
+Соответствующий [nodejs модуль](https://github.com/rvagg/node-levelup) для работы с базой данных.
 
 Архитектурно данный сборщик представляет собой nodejs приложение, которое имеет command line интерфейс
 и предоставляет определенное js API для возможности вызова основных команд из сторонних приложений.
@@ -57,7 +58,7 @@ exports.TargetFoo = TargetFoo;
 Удаляет все записи из базы данных.
 
 * Название: `CLEAR DATABASE`
-* Модуль: `./src/targets/clear-db.js`
+* Модуль: [clear-db.js](./src/targets/clear-db.js)
 * Примечание: Можно передать массив шаблонов названий ключей. Записи соответствующие ключам
 которые попадают под соответствующий шаблон будут удалены.
 
@@ -66,7 +67,7 @@ exports.TargetFoo = TargetFoo;
 Собирает `*.json` файл из js - структуры описания модели и шлет его на сервер провайдера данных.
 
 * Название: `UPDATE MODEL`
-* Модуль: `./src/targets/update-model.js`
+* Модуль: [update-model.js](./src/targets/update-model.js)
 * Примечание: Можно передать хост и порт провайдера данных.
 Если эти опции не указаны, то хост и порт будут выставлены по значениям указанным в конфигурационном файле.
 
@@ -78,7 +79,7 @@ exports.TargetFoo = TargetFoo;
 создает копию базы данных в папке с текущей датой.
 
 * Название: `NODES SYNCHRONIZATION`
-* Модуль: `./src/targets/nodes.js`
+* Модуль: [nodes.js](./src/targets/nodes.js)
 
 #### Сборка в режиме разработки
 
@@ -86,7 +87,7 @@ exports.TargetFoo = TargetFoo;
 Не создает копий базы данных.
 
 * Название: `NODES DEV SYNCHRONIZATION`
-* Модуль: `./src/targets/nodes-dev.js`
+* Модуль: [nodes-dev.js](./src/targets/nodes-dev.js)
 
 
 #### Сборка документации
@@ -98,7 +99,7 @@ exports.TargetFoo = TargetFoo;
 Главным образом данный сценарий используется для поиска ошибок на этапе разработки.
 
 * Название: `DOCS SYNCHRONIZATION`
-* Модуль: `./src/targets/docs.js`
+* Модуль: [docs.js](./src/targets/docs.js)
 
 #### Сборка библиотек
 
@@ -108,11 +109,113 @@ exports.TargetFoo = TargetFoo;
 Главным образом данный сценарий используется для поиска ошибок на этапе разработки.
 
 * Название: `LIBRARIES SYNCHRONIZATION`
-* Модуль: `./src/targets/libraries.js`
+* Модуль: [libraries.js](./src/targets/libraries.js)
 * Примечание: Можно передать параметры библиотеки или отдельной версии.
 Соответствующие этой версии или библиотеки файлы будут удалены из файлового кэша и заново загружены
 из github-репозитория.
 
-## Шаги сборки
+## Этапы сборки
 
+Этапы сборки представляет собой модуль, который экспортирует функцию принимающую аргументом
+объект сценария сборки и возвращающую fullfill vow promise c объектом сценария сборки
+при успешном прохождении этапа сборки и reject vow promise с объектом ошибки выполнения.
 
+Код простейшего модуля удовлетворяющего таким требованиям представлен ниже:
+
+```
+var vow = require('vow');
+
+module.exports = function (target) {
+    console.log('Hello world')
+    return vow.resolve(target);
+};
+```
+
+Если добавить такой этап сборки в любой из сценариев, то при выполнении такого модуля в консоль
+выведется "Hello world".
+
+Модули всех этапов сборки раположены в директории [targets](./src/tasks).
+
+### Готовые этапы сборки
+
+#### Очистка базы данных
+
+* Модуль: [clear-db.js](./src/tasks/clear-db.js)
+
+#### Синхронизация документации
+
+* Модуль: [docs.js](./src/tasks/docs.js)
+
+#### Создание узлов авторов и переводчиков
+
+* Модуль: [dynamic-people.js](./src/tasks/dynamic-people.js)
+
+#### Создание узлов тегов
+
+* Модуль: [dynamic-tags.js](./src/tasks/dynamic-tags.js)
+
+#### Финализация сборки
+
+* Модуль: [finalize.js](./src/tasks/finalize.js)
+
+#### Сборка файла из js файловой структуры модели
+
+* Модуль: [get-jsmodel.js](./src/tasks/get-jsmodel.js)
+
+#### Инициализация
+
+* Модуль: [init.js](./src/tasks/init.js)
+
+#### Очистка кэша файлов библиотек блоков
+
+* Модуль: [clear-cache.js](./src/tasks/libraries-cache.js)
+
+#### Синхронизация данных по библиотекам блоков с базой данных
+
+* Модуль: [libraries-db.js](./src/tasks/libraries-db.js)
+
+#### Синхронизация данных по библиотекам блоков с файловой системой
+
+* Модуль: [libraries-files.js](./src/tasks/libraries-files.js)
+
+#### Синхронизация модели
+
+* Модуль: [nodes.js](./src/tasks/nodes.js)
+
+#### Переопределение ссылок
+
+* Модуль: [override-links.js](./src/tasks/override-links.js)
+
+#### Синхронизация файла с мета-информацией по авторам и переводчикам
+
+* Модуль: [people.js](./src/tasks/people.js)
+
+#### Удаление файла модели
+
+* Модуль: [rm-model.js](./src/tasks/rm-model.js)
+
+#### Построение данных для системы внутреннего поиска
+
+* Модуль: [search-data.js](./src/tasks/search-data.js)
+
+#### Создание структуры данных для файла sitemap.xml
+
+* Модуль: [sitemap-xml.js](./src/tasks/sitemap-xml.js)
+
+#### Создание копии базы данных
+
+* Модуль: [snapshot.js](./src/tasks/snapshot.js)
+
+#### Переключение симлинки на копию базы данных
+
+* Модуль: [switch-symlink.js](./src/tasks/switch-symlink.js)
+
+#### Публикация модели на удаленный сервис
+
+* Модуль: [update-model.js](./src/tasks/update-model.js)
+
+#### Построение карты ссылок - узлов модели
+
+* Модуль: [urls-map.js](./src/tasks/urls-map.js)
+
+Ответственный за разработку: @tormozz48
