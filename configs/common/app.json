@@ -2,7 +2,9 @@
   "defaultLanguage": "ru",
   "languages": ["en", "ru"],
   "github": {
-    "token": "",
+    "public": {
+      "token": ""
+    },
     "people": "",
     "libraries": {
       "type": "",
