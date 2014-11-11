@@ -38,7 +38,7 @@ module.exports = {
         if (ghPublic) {
             gitPublic = new Api(_.extend(ghPublic, common));
 
-            var token = ghConfig.token;
+            var token = ghConfig.public.token;
             if (token && token.length) {
                 gitPublic.authenticate({ type: 'oauth', token: token });
             }else {
