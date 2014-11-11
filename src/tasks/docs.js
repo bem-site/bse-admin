@@ -128,10 +128,10 @@ function syncDoc(target, record) {
             }
 
             if (!localEtag) {
-                logger.debug(util.format('New document was added: %s', getTitle(value)), module);
+                logger.debug(util.format('New document was added: %s', getTitle(value) || value.content), module);
                 target.getChanges().getDocs().addAdded({ title: getTitle(value), url: value.content });
             } else {
-                logger.debug(util.format('Document was modified: %s', getTitle(value)), module);
+                logger.debug(util.format('Document was modified: %s', getTitle(value) || value.url), module);
                 target.getChanges().getDocs().addModified({ title: getTitle(value), url: value.url });
             }
 
