@@ -194,9 +194,14 @@ BaseNode.prototype = {
             };
         }
 
-        var fullRoute = _.extend({}, this.parent.route, this.route);
-            fullRoute.conditions = _.extend(fullRoute.conditions || {}, this.route.conditions);
+        var fullRoute = Object.create(this.parent.route);
+
+        fullRoute.name = this.route.name || this.parent.route.name;
+        fullRoute.pattern = this.route.pattern || this.parent.route.pattern;
+
+        fullRoute.conditions = _.extend({}, fullRoute.conditions || {}, this.route.conditions);
         this.url = susanin.Route(fullRoute).build(_.omit(fullRoute.conditions, 'query_string'));
+
         this.route = fullRoute;
 
         this.type = this.type || this.TYPE.SIMPLE;
