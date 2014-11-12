@@ -2,6 +2,7 @@ var util = require('util'),
     path = require('path'),
     vow = require('vow'),
 
+    errors = require('../errors').TaskLibrariesCache,
     logger = require('../logger'),
     utility = require('../util');
 
@@ -26,7 +27,7 @@ module.exports = function (target) {
             return vow.resolve(target);
         })
         .fail(function (err) {
-            logger.error(util.format('Libraries cache clean failed with error %s', err.message), module);
+            errors.createError(errors.CODES.COMMON, { err: err }).log();
             return vow.reject(err);
         });
 };

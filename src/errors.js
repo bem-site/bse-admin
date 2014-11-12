@@ -85,5 +85,23 @@ module.exports = {
             LIBRARIES_REPO_NAME_NOT_SET: [214, 'Name of libraries repository was not set in configuration'],
             LIBRARIES_REPO_REF_NOT_SET: [215, 'Reference of libraries repository was not set in configuration'],
             LIBRARIES_REPO_PATTERN_NOT_SET: [216, 'Pattern for libraries repository was not set in configuration']
+        }).setLogger(log),
+
+    TaskNodes: Terror
+        .create('Nodes', {
+            COMMON: [ 220, 'Nodes synchronization failed with error %err%' ],
+            PARSING_MODEL: [221, 'Error while parsing or analyzing model']
+        }).setLogger(log),
+
+    TaskDocs: Terror
+        .create('Docs', {
+            COMMON: [ 230, 'Docs synchronization failed with error %err%' ],
+            MARKDOWN_NOT_EXISTS: [231, 'markdown from %url% does not exists'],
+            MARKDOWN_INVALID: [232, 'markdown from %url% invalid']
+        }).setLogger(log),
+
+    TaskLibrariesCache: Terror
+        .create('LibrariesCache', {
+            COMMON: [ 240, 'Libraries cache clean failed with error %err%' ]
         }).setLogger(log)
 };

@@ -5,6 +5,7 @@ var util = require('util'),
     _ = require('lodash'),
     vow = require('vow'),
 
+    errors = require('../errors').TaskDocs,
     logger = require('../logger'),
     renderer = require('../renderer'),
     githubApi = require('../gh-api'),
@@ -32,12 +33,12 @@ function getRemoteData(value) {
 }
 
 function onError(md, url) {
-    var errorMsg = (!md || !md.res) ?
-        'markdown from url %s does not exists' :
-        'markdown form url %s contains errors';
-    errorMsg = util.format(errorMsg, url);
-    logger.error(errorMsg, module);
-    return vow.reject(errorMsg);
+    var error = (!md || !md.res) ?
+        errors.createError(errors.CODES.MARKDOWN_NOT_EXISTS, { url: url }) :
+        errors.createError(errors.CODES.MARKDOWN_INVALID, { url: url });
+
+    error.log();
+    return vow.reject(error);
 }
 
 /**
@@ -177,7 +178,7 @@ module.exports = function (target) {
             return vow.resolve(target);
         })
         .fail(function (err) {
-            logger.error(util.format('Docs synchronization failed with error %s', err.message), module);
+            errors.createError(errors.CODES.COMMON, { err: err }).log();
             return vow.reject(err);
         });
 };
