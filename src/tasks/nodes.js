@@ -106,7 +106,7 @@ function separateSource(target, nodes) {
 function clearDb() {
     return levelDb.getKeysByCriteria(function () {
             return true;
-        })
+        }, undefined)
         .then(function (keys) {
             return keys.map(function (key) {
                 return { type: 'del', key: key };
