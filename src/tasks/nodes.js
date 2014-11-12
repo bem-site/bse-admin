@@ -6,6 +6,7 @@ var util = require('util'),
     vow = require('vow'),
     vowFs = require('vow-fs'),
 
+    errors = require('../errors').TaskNodes,
     logger = require('../logger'),
     levelDb = require('../level-db'),
     utility = require('../util'),
@@ -44,90 +45,41 @@ function analyzeMeta(collected, node) {
     return collected;
 }
 
-function findDifferencesForMeta(target, nodes) {
+/**
+ * Saves records for meta-information
+ * @param {TargetNodes} target object
+ * @param {Array} nodes - array of node objects parsed from model
+ * @returns {*}
+ */
+function saveMeta(target, nodes) {
     // get array of data.source[lang] objects
     // also add nodeId and lang fields
-    var newRecords = nodes.reduce(function (prev, node) {
-        utility.getLanguages().forEach(function (lang) {
-            if (node.source[lang]) {
-                node.source[lang].nodeId = node.id;
-                node.source[lang].lang = lang;
-                prev.push(node.source[lang]);
-            }
-        });
-        return prev;
-    }, []);
-
-    // get existed database records
-    return levelDb.getByKeyPrefix(target.KEY.DOCS_PREFIX)
-        .then(function (oldRecords) {
-            var putBatchOperations = newRecords
-                    .filter(function (item) {
-                        // try to find corresponded database record for current item
-                        var isDifferentFromDb = false,
-                            dbRecord = _.find(oldRecords, function (record) {
-                                return record.key === util.format('%s%s:%s',
-                                        target.KEY.DOCS_PREFIX, item.nodeId, item.lang);
-                            });
-
-                        // case when record is new and not presented in yet
-                        if (!dbRecord) {
-                            target.getChanges().getMeta().addAdded({ title: item.title, url: item.content });
-                            return true;
-                        }
-
-                        // case when record was modified (meta information was changed manually)
-                        isDifferentFromDb = item.isDifferentFromDb(dbRecord);
-                        if (isDifferentFromDb) {
-                            target.getChanges().getMeta().addModified({
-                                title: item.title,
-                                url: item.url || item.content
-                            });
-                            return true;
-                        }
-
-                        return false;
-                    })
-                    .map(function (item) {
-                        return {
-                            type: 'put',
-                            key: util.format('%s%s:%s', target.KEY.DOCS_PREFIX, item.nodeId, item.lang),
-                            value: item
-                        };
-                    }),
-
-                // try to find database records that already were excluded from new records set
-                // create set of batch operations for remove records from database
-                delBatchOperations = oldRecords
-                    .filter(function (record) {
-                        var newRecord = _.find(newRecords, function (item) {
-                            return record.key === util.format('%s%s:%s',
-                                    target.KEY.DOCS_PREFIX, item.nodeId, item.lang);
-                        });
-
-                        if (!newRecord) {
-                            var v = record.value;
-                            if (v.repo) {
-                                target.getChanges().getMeta().addRemoved({ title: v.title, url: v.url || v.content });
-                                return true;
-                            }
-                        }
-
-                        return false;
-                    })
-                    .map(function (record) {
-                        return {
-                            type: 'del',
-                            key: record.key
-                        };
-                    });
-            return vow.all([
-                levelDb.batch(putBatchOperations),
-                levelDb.batch(delBatchOperations)
-            ]);
-        });
+    return levelDb.batch(nodes.reduce(function (prev, node) {
+            utility.getLanguages().forEach(function (lang) {
+                if (node.source[lang]) {
+                    node.source[lang].nodeId = node.id;
+                    node.source[lang].lang = lang;
+                    prev.push(node.source[lang]);
+                }
+            });
+            return prev;
+        }, [])
+        .map(function (item) {
+            return {
+                type: 'put',
+                key: util.format('%s%s:%s', target.KEY.DOCS_PREFIX, item.nodeId, item.lang),
+                value: item
+            };
+        }));
 }
 
+/**
+ * Perform analyze for meta-information
+ * Collect and save info about authors, translators and tags
+ * @param {TargetNodes} target object
+ * @param {Nodes} nodes object
+ * @returns {*}
+ */
 function separateSource(target, nodes) {
     var nodesWithSource = nodes.getAll().filter(function (item) {
             return item.source;
@@ -143,76 +95,36 @@ function separateSource(target, nodes) {
             levelDb.put(target.KEY.AUTHORS, _.uniq(collected.authors)),
             levelDb.put(target.KEY.TRANSLATORS, _.uniq(collected.translators)),
             levelDb.put(target.KEY.TAGS, collected.tags),
-            findDifferencesForMeta(target, nodesWithSource)
+            saveMeta(target, nodesWithSource)
         ]);
 }
 
-function findDifferencesForNodes(target, nodes) {
-    return vow.all([
-            nodes.getAll(),
-            levelDb.getByCriteria(function (record) {
-                return record.key.indexOf(target.KEY.NODE_PREFIX) > -1 &&
-                    record.value.class === 'base';
-            })
-        ]).spread(function (newRecords, dbRecords) {
-            var putBatchOperations = newRecords
-                .filter(function (item) {
-                    // try to find corresponded database record for current item
-                    var isDifferentFromDb,
-                        dbRecord = _.find(dbRecords, function (record) {
-                            return record.key === util.format('%s%s', target.KEY.NODE_PREFIX, item.id);
-                        });
-
-                    // case when record is new and not presented in yet
-                    if (!dbRecord) {
-                        target.getChanges().getNodes().addAdded({ title: item.title, url: item.url });
-                        return true;
-                    }
-
-                    // case when record was modified (meta information was changed manually)
-                    isDifferentFromDb = item.isDifferentFromDb(dbRecord);
-                    if (isDifferentFromDb) {
-                        target.getChanges().getNodes().addModified({
-                            title: item.title,
-                            url: item.url
-                        });
-                        return true;
-                    }
-
-                    return false;
-                })
-                .map(function (item) {
-                    return {
-                        type: 'put',
-                        key: util.format('%s%s', target.KEY.NODE_PREFIX, item.id),
-                        value: item
-                    };
-                }),
-                delBatchOperations = dbRecords
-                    .filter(function (record) {
-                        var newRecord = _.find(newRecords, function (item) {
-                            return record.key === util.format('%s%s', target.KEY.NODE_PREFIX, item.id);
-                        });
-
-                        if (!newRecord) {
-                            var v = record.value;
-                            target.getChanges().getNodes().addRemoved({ title: v.title, url: v.url });
-                            return true;
-                        }
-
-                        return false;
-                    })
-                    .map(function (record) {
-                        return {
-                            type: 'del',
-                            key: record.key
-                        };
-                    });
-            return vow.all([
-                levelDb.batch(putBatchOperations),
-                levelDb.batch(delBatchOperations)
-            ]);
+/**
+ * Remove all records from database
+ * @returns {*}
+ */
+function clearDb() {
+    return levelDb.getKeysByCriteria(function () {
+            return true;
+        })
+        .then(function (keys) {
+            return keys.map(function (key) {
+                return { type: 'del', key: key };
+            });
+        })
+        .then(function (operations) {
+            return levelDb.batch(operations);
         });
+}
+
+function saveNodes(target, nodes) {
+    return levelDb.batch(nodes.getAll().map(function (item) {
+        return {
+            type: 'put',
+            key: util.format('%s%s', target.KEY.NODE_PREFIX, item.id),
+            value: item
+        };
+    }));
 }
 
 function processModel(target) {
@@ -224,8 +136,7 @@ function processModel(target) {
             return vow.resolve(target);
         }
 
-        var nodes,
-            error;
+        var nodes;
 
         return vowFs
             .read(target.MODEL_FILE_PATH, 'utf-8')
@@ -233,15 +144,23 @@ function processModel(target) {
                 try {
                     nodes = new Nodes(JSON.parse(content));
                 } catch (err) {
-                    error = 'Error while parsing or analyzing model';
-                    logger.error(error, module);
+                    var error = errors.createError(errors.CODES.PARSING_MODEL, { err: err });
+                    error.log();
                     return vow.reject(error);
                 }
+                return nodes;
+            })
+            .then(function (nodes) {
+                return clearDb().then(function () {
+                    return nodes;
+                });
+            })
+            .then(function (nodes) {
                 return separateSource(target, nodes);
             })
             .then(function () {
                 nodes.removeSources();
-                return findDifferencesForNodes(target, nodes);
+                return saveNodes(target, nodes);
             });
     });
 }
@@ -254,7 +173,7 @@ module.exports = function (target) {
             return vow.resolve(target);
         })
         .fail(function (err) {
-            logger.error(err, module);
+            errors.createError(errors.CODES.COMMON, { err: err }).log();
             return vow.reject(err);
         });
 };
