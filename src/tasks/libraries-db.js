@@ -132,13 +132,12 @@ function loadVersionFile(target, lib, version) {
         });
 }
 
-function syncLibraryVersions(target, record) {
+function syncLibraryVersions(target, record, stateMap) {
     var key = record.key,
         value = record.value;
     return vow.all([
             getLibraryVersionsFromCache(target, value),
-            getLibraryVersionNodesFromDb(target, value),
-            getPreviousStateMap(target)
+            getLibraryVersionNodesFromDb(target, value)
         ])
         .spread(function (newVersions, oldVersions, stateMap) {
             // hide library if there no  versions for it
@@ -218,6 +217,12 @@ function syncLibraryVersions(target, record) {
         });
 }
 
+/**
+ * Method for sorting library versions in correct order
+ * @param {TargetLibraries} target object
+ * @param {Object} record - library record from database
+ * @returns {*}
+ */
 function sortLibraryVersions(target, record) {
     var value = record.value;
     return getLibraryVersionNodesFromDb(target, value)
@@ -276,10 +281,13 @@ function sortLibraryVersions(target, record) {
 }
 
 module.exports = function (target) {
-    return getLibraryNodesFromDb(target)
-        .then(function (records) {
+    return vow.all([
+            getLibraryNodesFromDb(target),
+            getPreviousStateMap(target)
+        ])
+        .spread(function (records, stateMap) {
             return vow.all(records.map(function (record) {
-                return syncLibraryVersions(target, record)
+                return syncLibraryVersions(target, record, stateMap)
                     .then(function () {
                         return sortLibraryVersions(target, record);
                     });
