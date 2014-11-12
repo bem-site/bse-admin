@@ -88,7 +88,6 @@ function getPreviousStateMap(target) {
 }
 
 function removeLibraryVersionNodesFromDb(target, lib, version) {
-    logger.debug(util.format('remove lib: %s version: %s from db', lib, version), module);
     return levelDb
         .getByCriteria(function (record) {
             var key = record.key,
@@ -207,10 +206,11 @@ function syncLibraryVersions(target, record, stateMap) {
             });
 
             removed = removed.map(function (item) {
+                var _version = item.value.route.conditions.version;
                 logger.debug(util.format('remove lib: %s version: %s from db',
-                    value.lib, item.value.route.conditions.version), module);
+                    value.lib, _version), module);
                 target.getChanges().getLibraries().addRemoved({ lib: value.lib, version: item });
-                return removeLibraryVersionNodesFromDb(target, value.lib, item);
+                return removeLibraryVersionNodesFromDb(target, value.lib, _version);
             });
 
             return vow.all(added.concat(modified).concat(removed));
