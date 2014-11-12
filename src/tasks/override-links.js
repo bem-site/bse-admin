@@ -311,7 +311,7 @@ module.exports = function (target) {
 
     var languages = utility.getLanguages();
     return vow.all([
-            levelDb.getByKeyPrefix(target.KEY.NODE_PREFIX),
+            levelDb.getByKeyRange(target.KEY.NODE_PREFIX, target.KEY.PEOPLE_PREFIX),
             collectUrls(target)
         ])
         .spread(function (nodeRecords, urlsHash) {

@@ -1,7 +1,5 @@
 var util = require('util'),
     sha = require('sha1'),
-    levelDb = require('../../level-db'),
-    logger = require('../../logger'),
     utility = require('../../util'),
     nodes = require('./index'),
 
@@ -81,32 +79,42 @@ BlockNode.prototype.setClass = function () {
 };
 
 BlockNode.prototype.saveToDb = function () {
-    var dataKey = util.format('blocks:data:%s', sha(JSON.stringify(this.source.data))),
-        jsdocKey = util.format('blocks:jsdoc:%s', sha(JSON.stringify(this.source.jsdoc))),
+    var dataValue = this.source.data,
+        dataKey = util.format('blocks:data:%s', sha(JSON.stringify(dataValue))),
+        jsdocValue = this.source.jsdoc,
+        jsdocKey = util.format('blocks:jsdoc:%s', sha(JSON.stringify(jsdocValue))),
         batchOperations = [];
 
     if (this.source.data) {
-        batchOperations.push({ type: 'put', key: dataKey, value: this.source.data });
+        batchOperations.push({
+            type: 'put',
+            key: dataKey,
+            value: dataValue
+        });
     }
 
     if (this.source.jsdoc) {
-        batchOperations.push({ type: 'put', key: jsdocKey, value: this.source.jsdoc });
+        batchOperations.push({
+            type: 'put',
+            key: jsdocKey,
+            value: jsdocValue
+        });
     }
 
-    return levelDb.batch(batchOperations).then(function () {
-        this.source.data = dataKey;
-        this.source.jsdoc = jsdocKey;
-        this.markAsHasSource();
+    this.source.data = dataKey;
+    this.source.jsdoc = jsdocKey;
+    this.markAsHasSource();
 
-        // this.parent = this.parent.id;
-        // batchOperations.push({ type: 'put', key: this.generateKey(), value: this });
+    // var conditions = this.route.conditions;
+    // logger.verbose(util.format('save lib: %s version: %s, level: %s block: %s',
+    //    conditions.lib, conditions.version, conditions.level, conditions.block), module);
 
-        var conditions = this.route.conditions;
-        logger.verbose(util.format('save lib: %s version: %s, level: %s block: %s',
-            conditions.lib, conditions.version, conditions.level, conditions.block), module);
-
-        return this.prepareToSaveToDb();
-    }, this);
+    this.parent = this.parent.id;
+    return batchOperations.concat({
+        type: 'put',
+        key: this.generateKey(),
+        value: this
+    });
 };
 
 exports.BlockNode = BlockNode;

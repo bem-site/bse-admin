@@ -1,6 +1,8 @@
 var util = require('util'),
     vow = require('vow'),
 
+    _ = require('lodash'),
+    logger = require('../../logger'),
     levelDb = require('../../level-db'),
     utility = require('../../util'),
     nodes = require('./index'),
@@ -144,10 +146,12 @@ VersionNode.prototype.addItems = function (version) {
 };
 
 VersionNode.prototype.saveToDb = function () {
-    return vow.all(this.items.map(function (item, index) {
+    return levelDb
+        .batch(this.items.reduce(function (prev, item, index) {
             item.order = index;
-            return item.saveToDb();
-        }))
+            prev = prev.concat(prev, item.saveToDb());
+            return prev;
+        }, []))
         .then(function () {
             return vow.all(utility.getLanguages().map(function (lang) {
                 this.source[lang].nodeId = this.id;
@@ -156,10 +160,14 @@ VersionNode.prototype.saveToDb = function () {
             }, this));
         }, this)
         .then(function () {
-            this.markAsHasItems();
-            this.markAsHasSource();
-            delete this.source;
-            delete this.items;
+            this.markAsHasItems()
+                .markAsHasSource()
+                .removeSourceField()
+                .removeItemsField();
+
+            logger.debug(util.format('%s library version %s saved to database',
+                this.route.conditions.lib, this.route.conditions.version), module);
+
             return nodes.dynamic.DynamicNode.prototype.saveToDb.apply(this);
         }, this);
 };

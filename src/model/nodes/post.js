@@ -1,6 +1,4 @@
 var util = require('util'),
-    vow = require('vow'),
-    levelDb = require('../../level-db'),
     utility = require('../../util'),
     nodes = require('./index'),
 
@@ -65,16 +63,27 @@ PostNode.prototype.setClass = function () {
 };
 
 PostNode.prototype.saveToDb = function () {
-    return vow.all(utility.getLanguages().map(function (lang) {
-        this.source[lang].nodeId = this.id;
-        this.source[lang].lang = lang;
-        return levelDb.put(util.format('docs:%s:%s', this.id, lang), this.source[lang]);
-    }, this))
-    .then(function () {
-        this.markAsHasSource();
-        delete this.source;
-        return nodes.dynamic.DynamicNode.prototype.saveToDb.apply(this);
-    }, this);
+    var _this = this,
+        batchOperations = utility.getLanguages().reduce(function (prev, lang) {
+            _this.source[lang].nodeId = _this.id;
+            _this.source[lang].lang = lang;
+            prev = prev.concat({
+                type: 'put',
+                key: util.format('docs:%s:%s', _this.id, lang),
+                value: _this.source[lang]
+            });
+            return prev;
+        }, []);
+
+    this.markAsHasSource()
+        .removeSourceField();
+
+    this.parent = this.parent.id;
+    return batchOperations.concat({
+        type: 'put',
+        key: this.generateKey(),
+        value: this
+    });
 };
 
 exports.PostNode = PostNode;

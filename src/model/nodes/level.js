@@ -1,7 +1,4 @@
-var util = require('util'),
-    vow = require('vow'),
-    levelDb = require('../../level-db'),
-    logger = require('../../logger'),
+var _ = require('lodash'),
     utility = require('../../util'),
     nodes = require('./index'),
 
@@ -83,25 +80,28 @@ LevelNode.prototype.addItems = function (version, level) {
 };
 
 LevelNode.prototype.saveToDb = function () {
-    return vow
-        .all(this.items.map(function (item, index) {
-            item.order = index;
-            return item.saveToDb();
-        }))
-        .then(levelDb.batch)
-        .then(function () {
-            if (this.items && this.items.length) {
-                this.markAsHasItems();
-            }
+    var batchOperations = this.items.reduce(function (prev, item, index) {
+        item.order = index;
+        prev = _.union(prev, item.saveToDb());
+        return prev;
+    }, []);
 
-            delete this.items;
+    if (this.items && this.items.length) {
+        this.markAsHasItems();
+    }
 
-            var conditions = this.route.conditions;
-            logger.verbose(util.format('save lib: %s version: %s, level: %s',
-                conditions.lib, conditions.version, conditions.level), module);
+    this.removeItemsField();
 
-            return nodes.dynamic.DynamicNode.prototype.saveToDb.apply(this);
-        }, this);
+    // var conditions = this.route.conditions;
+    // logger.verbose(util.format('save lib: %s version: %s, level: %s',
+    //    conditions.lib, conditions.version, conditions.level), module);
+
+    this.parent = this.parent.id;
+    return batchOperations.concat({
+        type: 'put',
+        key: this.generateKey(),
+        value: this
+    });
 };
 
 exports.LevelNode = LevelNode;

@@ -248,6 +248,16 @@ BaseNode.prototype = {
     markAsHasItems: function () {
         this.hasItems = true;
         return this;
+    },
+
+    removeSourceField: function () {
+        delete this.source;
+        return this;
+    },
+
+    removeItemsField: function () {
+        delete this.items;
+        return this;
     }
 };
 
