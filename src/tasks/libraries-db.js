@@ -29,7 +29,7 @@ function getLibraryNodesFromDb(target) {
 
             // criteria - is existed field lib
             return value.lib;
-        });
+        }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true });
 }
 
 /**
@@ -60,7 +60,7 @@ function getLibraryVersionNodesFromDb(target, lib) {
 
             // criteria is equality of parent and id fields of version and library nodes
             return value.parent === lib.id;
-        });
+        }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true });
 }
 
 /**
@@ -106,7 +106,7 @@ function removeLibraryVersionNodesFromDb(target, lib, version) {
 
             return route.conditions.lib === lib && !value.lib &&
                 (version ? route.conditions.version === version : true);
-        })
+        }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true })
         .then(function (result) {
             return levelDb.batch(result.map(function (record) {
                 return { type: 'del', key: record.key };
@@ -139,7 +139,7 @@ function syncLibraryVersions(target, record, stateMap) {
             getLibraryVersionsFromCache(target, value),
             getLibraryVersionNodesFromDb(target, value)
         ])
-        .spread(function (newVersions, oldVersions, stateMap) {
+        .spread(function (newVersions, oldVersions) {
             // hide library if there no  versions for it
             if (!newVersions.length) {
                 util.getLanguages().forEach(function (lang) {

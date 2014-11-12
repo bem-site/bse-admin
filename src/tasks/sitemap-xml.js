@@ -37,7 +37,7 @@ module.exports = function (target) {
                 return false;
             }
             return value.hidden && _.isString(value.url) && !/^(https?:)?\/\//.test(value.url);
-        })
+        }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true })
         .then(function (records) {
             // convert data set to sitemap format
             // left only data fields that are needed for sitemap.xml file

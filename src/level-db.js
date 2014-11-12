@@ -177,37 +177,41 @@ module.exports = {
     /**
      * Returns array of keys by criteria
      * @param {Function} criteria function
+     * @param {Object} options - advanced options
      * @returns {*}
      */
-    getKeysByCriteria: function (criteria) {
-        return this._getByCriteria(criteria, { keys: true, values: false });
+    getKeysByCriteria: function (criteria, options) {
+        return this._getByCriteria(criteria, _.extend({ keys: true, values: false }, options || {}));
     },
 
     /**
      * Returns array of values by criteria
      * @param {Function} criteria function
+     * @param {Object} options - advanced options
      * @returns {*}
      */
-    getValuesByCriteria: function (criteria) {
-        return this._getByCriteria(criteria, { keys: false, values: true });
+    getValuesByCriteria: function (criteria, options) {
+        return this._getByCriteria(criteria, _.extend({ keys: false, values: true }, options || {}));
     },
 
     /**
      * Returns records that satisfied given criteria function
      * @param {Function} criteria function
+     * @param {Object} options - advanced options
      * @returns {*}
      */
-    getByCriteria: function (criteria) {
-        return this._getByCriteria(criteria, { keys: true, values: true });
+    getByCriteria: function (criteria, options) {
+        return this._getByCriteria(criteria, _.extend({ keys: true, values: true }, options || {}));
     },
 
     /**
      * Removes records that satisfied given criteria function
      * @param {Function} criteria function
+     * @param {Object} options - advanced options
      * @returns {*}
      */
-    removeByCriteria: function (criteria) {
-        return this.getByCriteria(criteria).then(function (records) {
+    removeByCriteria: function (criteria, options) {
+        return this.getByCriteria(criteria, options).then(function (records) {
             return this.batch(records.map(function (record) {
                 return { type: 'del', key: record.key };
             }));

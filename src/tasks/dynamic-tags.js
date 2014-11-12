@@ -17,7 +17,7 @@ function removeTagNodes(target, key) {
     return levelDb
         .getByCriteria(function (record) {
             return record.value.dynamic === key;
-        })
+        }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true })
         .then(function (dynamicRecords) {
             return vow.all(dynamicRecords.map(function (dynamicRecord) {
                 return levelDb.removeByCriteria(function (record) {
@@ -37,7 +37,7 @@ function addTagNodes(target, key) {
     return vow.all([
             levelDb.getByCriteria(function (record) {
                 return record.value.dynamic === key;
-            }),
+            }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true }),
             levelDb.get(target.KEY.TAGS)
         ])
         .spread(function (dynamicRecords, tags) {

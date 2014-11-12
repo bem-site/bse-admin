@@ -13,40 +13,40 @@ var path = require('path'),
  * Returns library node values from db
  * @returns {*}
  */
-function getLibraries() {
+function getLibraries(target) {
     return levelDb.getValuesByCriteria(function (value) {
         return value.lib;
-    });
+    }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true });
 }
 
 /**
  * Returns library version node values from db
  * @returns {*}
  */
-function getVersions() {
+function getVersions(target) {
     return levelDb.getValuesByCriteria(function (value) {
         return value.class === 'version';
-    });
+    }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true });
 }
 
 /**
  * Returns library level node values from db
  * @returns {*}
  */
-function getLevels() {
+function getLevels(target) {
     return levelDb.getValuesByCriteria(function (value) {
         return value.class === 'level';
-    });
+    }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true });
 }
 
 /**
  * Returns library block node values from db
  * @returns {*}
  */
-function getBlocks() {
+function getBlocks(target) {
     return levelDb.getValuesByCriteria(function (value) {
         return value.class === 'block';
-    });
+    }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true });
 }
 
 function getVersionsOfLibrary(libValue, versionValues) {
@@ -102,7 +102,7 @@ function saveToFile(target, fileName, data) {
 }
 
 function createSearchData(target) {
-    return vow.all([ getLibraries(), getVersions(), getLevels(), getBlocks() ])
+    return vow.all([ getLibraries(target), getVersions(target), getLevels(target), getBlocks(target) ])
         .spread(function (libV, versionV, levelV, blockV) {
             var blocks = [],
                 libraries = libV.reduce(function (prev, lib, libIndex) {

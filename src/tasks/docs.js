@@ -20,7 +20,7 @@ var util = require('util'),
 function getDocsFromDb(target) {
     return levelDb.getByCriteria(function (record) {
         return record.key.indexOf(target.KEY.DOCS_PREFIX) > -1 && record.value.repo;
-    });
+    }, { gte: target.KEY.DOCS_PREFIX, lt: target.KEY.NODE_PREFIX, fillCache: true });
 }
 
 /**
