@@ -43,7 +43,7 @@ function addPeopleNodes(target, key) {
                 return record.value.dynamic === key;
             }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true }),
             levelDb.get(dbPeopleKey),
-            levelDb.getByKeyPrefix(target.KEY.PEOPLE_PREFIX)
+            levelDb.getByKeyRange(target.KEY.PEOPLE_PREFIX, target.KEY.TAGS)
         ])
         .spread(function (dynamicRecords, peopleKeys, peopleData) {
             peopleData = peopleData.reduce(function (prev, record) {

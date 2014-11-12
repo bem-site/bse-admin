@@ -223,10 +223,20 @@ module.exports = {
      * @param {String} prefix of keys
      * @returns {*}
      */
-    getByKeyPrefix: function (prefix) {
-        return this.getByCriteria(function (record) {
-            return record.key.indexOf(prefix) > -1;
-        });
+    getByKeyRange: function (prefixFrom, prefixTo) {
+        var options = { fillCache: true };
+
+        if (prefixFrom) {
+            options.gte = prefixFrom;
+        }
+
+        if (prefixTo) {
+            options.lt = prefixTo;
+        }
+
+        return this.getByCriteria(function () {
+            return true;
+        }, options);
     },
 
     /**

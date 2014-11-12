@@ -19,7 +19,7 @@ module.exports = function (target) {
 
     return levelDb.removeByKeyPrefix(target.KEY.URL_PREFIX)
         .then(function () {
-            return levelDb.getByKeyPrefix(target.KEY.NODE_PREFIX);
+            return levelDb.getByKeyRange(target.KEY.NODE_PREFIX, target.KEY.PEOPLE_PREFIX);
         })
         .then(function (records) {
             return records.reduce(function (prev, record) {
