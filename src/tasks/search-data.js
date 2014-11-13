@@ -4,10 +4,20 @@ var path = require('path'),
     vow = require('vow'),
     vowFs = require('vow-fs'),
 
+    errors = require('../errors').TaskSearchData,
     levelDb = require('../level-db'),
     logger = require('../logger'),
     utility = require('../util'),
     nodes = require('../model/nodes/index.js');
+
+/**
+ * Returns database hints for increase db data retrieve
+ * @param {TargetNodes} target object
+ * @returns {{gte: (TargetBase.KEY.NODE_PREFIX|*), lt: (TargetBase.KEY.PEOPLE_PREFIX|*), fillCache: boolean}}
+ */
+function getDbHints(target) {
+    return { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true };
+}
 
 /**
  * Returns library node values from db
@@ -16,7 +26,7 @@ var path = require('path'),
 function getLibraries(target) {
     return levelDb.getValuesByCriteria(function (value) {
         return value.lib;
-    }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true });
+    }, getDbHints(target));
 }
 
 /**
@@ -26,7 +36,7 @@ function getLibraries(target) {
 function getVersions(target) {
     return levelDb.getValuesByCriteria(function (value) {
         return value.class === 'version';
-    }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true });
+    }, getDbHints(target));
 }
 
 /**
@@ -36,7 +46,7 @@ function getVersions(target) {
 function getLevels(target) {
     return levelDb.getValuesByCriteria(function (value) {
         return value.class === 'level';
-    }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true });
+    }, getDbHints(target));
 }
 
 /**
@@ -46,15 +56,27 @@ function getLevels(target) {
 function getBlocks(target) {
     return levelDb.getValuesByCriteria(function (value) {
         return value.class === 'block';
-    }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true });
+    }, getDbHints(target));
 }
 
+/**
+ * Returns version nodes for given library
+ * @param {Object} libValue - library record value
+ * @param {Array} versionValues - library version record values
+ * @returns {*}
+ */
 function getVersionsOfLibrary(libValue, versionValues) {
     return versionValues.filter(function (item) {
         return item.route.conditions.lib === libValue.route.conditions.lib;
     });
 }
 
+/**
+ * Returns block levels for given library version
+ * @param {Object} versionValue - library version record value
+ * @param {Array} levelValues - block levels record values
+ * @returns {*}
+ */
 function getLevelsOfLibraryVersion(versionValue, levelValues) {
     return levelValues.filter(function (item) {
         var iConditions = item.route.conditions,
@@ -63,6 +85,12 @@ function getLevelsOfLibraryVersion(versionValue, levelValues) {
     });
 }
 
+/**
+ * Returns blocks for given blocks level
+ * @param {Object} levelValue - block level record value
+ * @param {Array} blockValues - blocks record values
+ * @returns {*}
+ */
 function getBlocksOfLibraryVersionLevel(levelValue, blockValues) {
     return blockValues.filter(function (item) {
         var iConditions = item.route.conditions,
@@ -77,6 +105,11 @@ function loadDataForLibraries(libraries) {
     return libraries;
 }
 
+/**
+ * Retrieves block inner data
+ * @param {Array} blocks array
+ * @returns {*}
+ */
 function loadDataForBlocks(blocks) {
     return vow.all(blocks.map(function (item) {
         var setLoadedData = levelDb.get(item.data)
@@ -96,11 +129,23 @@ function loadDataForBlocks(blocks) {
     }));
 }
 
+/**
+ * Save collected search data objects to *.json files
+ * @param {TargetNodes} target object
+ * @param {String} fileName - name of file for data save
+ * @param {Object} data for search engines
+ * @returns {*}
+ */
 function saveToFile(target, fileName, data) {
     var p = path.join(target.CACHE_DIR, 'search', fileName);
     return vowFs.write(p, JSON.stringify(data));
 }
 
+/**
+ * Collect and save search data
+ * @param {TargetNodes} target object
+ * @returns {*}
+ */
 function createSearchData(target) {
     return vow.all([ getLibraries(target), getVersions(target), getLevels(target), getBlocks(target) ])
         .spread(function (libV, versionV, levelV, blockV) {
@@ -174,8 +219,7 @@ module.exports = function (target) {
             return vow.resolve(target);
         })
         .fail(function (err) {
-            console.log(err);
-            logger.error('Error occur while preparing data for search engine', module);
+            errors.createError(errors.CODES.COMMON, { err: err }).log();
             return vow.reject(err);
         });
 };

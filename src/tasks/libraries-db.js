@@ -8,9 +8,19 @@ var util = require('util'),
     vowFs = require('vow-fs'),
     semver = require('semver'),
 
+    errors = require('../errors').TaskLibrariesDb,
     logger = require('../logger'),
     levelDb = require('../level-db'),
     nodes = require('../model/nodes/index.js');
+
+/**
+ * Returns db hint object for improve db calls
+ * @param {TargetNodes} target object
+ * @returns {{gte: (TargetBase.KEY.NODE_PREFIX|*), lt: (TargetBase.KEY.PEOPLE_PREFIX|*), fillCache: boolean}}
+ */
+function getDbHints(target) {
+    return { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true };
+}
 
 /**
  * Returns array of library nodes from database
@@ -29,7 +39,7 @@ function getLibraryNodesFromDb(target) {
 
             // criteria - is existed field lib
             return value.lib;
-        }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true });
+        }, getDbHints(target));
 }
 
 /**
@@ -60,7 +70,7 @@ function getLibraryVersionNodesFromDb(target, lib) {
 
             // criteria is equality of parent and id fields of version and library nodes
             return value.parent === lib.id;
-        }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true });
+        }, getDbHints(target));
 }
 
 /**
@@ -105,7 +115,7 @@ function removeLibraryVersionNodesFromDb(target, lib, version) {
 
             return route.conditions.lib === lib && !value.lib &&
                 (version ? route.conditions.version === version : true);
-        }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true })
+        }, getDbHints(target))
         .then(function (result) {
             return levelDb.batch(result.map(function (record) {
                 return { type: 'del', key: record.key };
@@ -131,6 +141,13 @@ function loadVersionFile(target, lib, version) {
         });
 }
 
+/**
+ * Synchronize versions of given library between file cache and database
+ * @param {TargetNodes} target object
+ * @param {Object} record - library node record
+ * @param {Object} stateMap current cache state
+ * @returns {*}
+ */
 function syncLibraryVersions(target, record, stateMap) {
     var key = record.key,
         value = record.value;
@@ -185,6 +202,7 @@ function syncLibraryVersions(target, record, stateMap) {
                 }
             });
 
+            // library versions that should be added to database
             added = added.map(function (item) {
                 logger.debug(util.format('add lib: %s version: %s to db', value.lib, item), module);
                 target.getChanges().getLibraries().addAdded({ lib: value.lib, version: item });
@@ -193,6 +211,7 @@ function syncLibraryVersions(target, record, stateMap) {
                 });
             });
 
+            // library versions that should be rewrited
             modified = modified.map(function (item) {
                 logger.debug(util.format('modify lib: %s version: %s into db', value.lib, item), module);
                 target.getChanges().getLibraries().addModified({ lib: value.lib, version: item });
@@ -205,11 +224,12 @@ function syncLibraryVersions(target, record, stateMap) {
                     });
             });
 
+            // library versions for remove from db
             removed = removed.map(function (item) {
                 var _version = item.value.route.conditions.version;
                 logger.debug(util.format('remove lib: %s version: %s from db',
                     value.lib, _version), module);
-                target.getChanges().getLibraries().addRemoved({ lib: value.lib, version: item });
+                target.getChanges().getLibraries().addRemoved({ lib: value.lib, version: _version });
                 return removeLibraryVersionNodesFromDb(target, value.lib, _version);
             });
 
@@ -298,8 +318,7 @@ module.exports = function (target) {
             return vow.resolve(target);
         })
         .fail(function (err) {
-            logger.error(
-                util.format('Libraries synchronization with database failed with error %s', err.message), module);
+            errors.createError(errors.CODES.COMMON, { err: err }).log();
             return vow.reject(err);
         });
 };

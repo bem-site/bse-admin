@@ -6,6 +6,7 @@ var util = require('util'),
     vow = require('vow'),
     Api = require('github'),
 
+    errors = require('./errors').GhApi,
     config = require('./config'),
     logger = require('./logger'),
 
@@ -42,7 +43,7 @@ module.exports = {
             if (token && token.length) {
                 gitPublic.authenticate({ type: 'oauth', token: token });
             }else {
-                logger.warn('Github API was not authentificated', module);
+                errors.createError(errors.CODES.NOT_AUTHENTIFICATED).log('warn');
             }
         }
 
@@ -81,6 +82,13 @@ module.exports = {
 
         this.getGit(repository).repos.getContent(repository, function (err, res) {
             if (err || !res) {
+                errors.createError(errors.CODES.LOAD, {
+                    path: repository.path,
+                    user: repository.user,
+                    repo: repository.repo,
+                    ref: repository.ref,
+                    err: err
+                }).log();
                 def.reject({ res: null, repo: repository });
             }else {
                 def.resolve({ res: res, repo: repository });
@@ -103,7 +111,17 @@ module.exports = {
             repository = options.repository;
 
         this.getGit(repository).repos.getBranch(repository, function (err, res) {
-            def.resolve((err || !res) ? false : true);
+            if (err || !res) {
+                errors.createError(errors.CODES.LOAD, {
+                    user: repository.user,
+                    repo: repository.repo,
+                    branch: repository.branch,
+                    err: err
+                }).log();
+                def.reject(false);
+            }else {
+                def.resolve(true);
+            }
         });
 
         return def.promise();
@@ -123,7 +141,17 @@ module.exports = {
             repository = options.repository;
 
         this.getGit(repository).repos.getCommits(repository, function (err, res) {
-            def.resolve(res);
+            if (err || !res) {
+                errors.createError(errors.CODES.GET_COMMITS, {
+                    user: repository.user,
+                    repo: repository.repo,
+                    path: repository.path,
+                    err: err
+                }).log();
+                def.reject(err);
+            }else {
+                def.resolve(res);
+            }
         });
 
         return def.promise();
@@ -142,7 +170,16 @@ module.exports = {
             repository = options.repository;
 
         this.getGit(repository).repos.get(repository, function (err, res) {
-            def.resolve((err || !res) ? null : res['default_branch']);
+            if (err || !res) {
+                errors.createError(errors.CODES.GET_DEFAULT_BRANCH, {
+                    user: repository.user,
+                    repo: repository.repo,
+                    err: err
+                }).log();
+                def.reject(err);
+            }else {
+                def.resolve(res['default_branch']);
+            }
         });
         return def.promise();
     }

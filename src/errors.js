@@ -22,6 +22,15 @@ module.exports = {
             GET_BY_CRITERIA: [ 65, 'Error occur while getting data by criteria. Error: %err%' ]
         }).setLogger(log),
 
+    GhApi: Terror
+        .create('GhApi', {
+            NOT_AUTHENTIFICATED: [ 70, 'Github API was not authentificated' ],
+            LOAD: [ 71, 'Load content of folder or file %path% from %user% %repo% %ref% failed with error %err%' ],
+            IS_BRANCH_EXISTS: [ 72, 'Check for existed branch failed with error %err%' ],
+            GET_COMMITS: [ 73, 'Get commits failed with error %err%' ],
+            GET_DEFAULT_BRANCH: [ 74, 'Get default branch failed with error %err%' ]
+        }).setLogger(log),
+
     TaskClearDB: Terror
         .create('ClearDbError', {
             COMMON: [ 110, 'Database clear failed with error %err%' ]
@@ -103,5 +112,15 @@ module.exports = {
     TaskLibrariesCache: Terror
         .create('LibrariesCache', {
             COMMON: [ 240, 'Libraries cache clean failed with error %err%' ]
+        }).setLogger(log),
+
+    TaskSearchData: Terror
+        .create('SearchData', {
+            COMMON: [ 250, 'Preparing data for search engines failed with error %err%' ]
+        }).setLogger(log),
+
+    TaskLibrariesDb: Terror
+        .create('LibrariesDb', {
+            COMMON: [ 260, 'Libraries synchronization with database failed with error %err%' ]
         }).setLogger(log)
 };
