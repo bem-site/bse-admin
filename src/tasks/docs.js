@@ -114,21 +114,23 @@ function syncDoc(target, record) {
     return getRemoteData(value)
         .then(function (md) {
             var result = md.res,
-                remoteEtag,
-                localEtag;
+                rSha,
+                lSha;
 
             if (!result || !result.content) {
                 return onError(md, value.content);
             }
 
-            remoteEtag = result.meta.etag;
-            localEtag = value.etag;
+            rSha = result.sha;
+            lSha = value.sha;
 
-            if (localEtag === remoteEtag) {
+            if (lSha === rSha) {
                 return vow.resolve();
             }
 
-            if (!localEtag) {
+            value.sha = result.sha;
+            if (!lSha) {
+                value.url = value.content;
                 logger.debug(util.format('New document was added: %s', getTitle(value) || value.content), module);
                 target.getChanges().getDocs().addAdded({ title: getTitle(value), url: value.content });
             } else {
@@ -137,8 +139,6 @@ function syncDoc(target, record) {
             }
 
             try {
-                value.etag = result.meta.etag;
-                value.url = value.content;
                 value.content = utility.mdToHtml(
                     (new Buffer(result.content, 'base64')).toString(), { renderer: renderer.getRenderer() });
             } catch (err) {
