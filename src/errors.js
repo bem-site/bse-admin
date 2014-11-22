@@ -1,6 +1,7 @@
 var Terror = require('terror'),
     logger = require('./logger'),
     log = function (message, level) {
+        level = level || 'error';
         logger[level](message, module);
     };
 
