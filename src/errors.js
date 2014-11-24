@@ -27,8 +27,8 @@ module.exports = {
         .create('GhApi', {
             NOT_AUTHENTIFICATED: [ 70, 'Github API was not authentificated' ],
             LOAD: [ 71, 'Load content of folder or file %path% from %user% %repo% %ref% failed with error %err%' ],
-            IS_BRANCH_EXISTS: [ 72, 'Check for existed branch failed with error %err%' ],
-            GET_COMMITS: [ 73, 'Get commits failed with error %err%' ],
+            IS_BRANCH_EXISTS: [ 72, 'Check %user% %repo% for existed branch %branch% failed with error %err%' ],
+            GET_COMMITS: [ 73, 'Get commits for %user% %repo% %branch% failed with error %err%' ],
             GET_DEFAULT_BRANCH: [ 74, 'Get default branch failed with error %err%' ]
         }).setLogger(log),
 

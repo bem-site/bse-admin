@@ -82,6 +82,8 @@ module.exports = {
 
         this.getGit(repository).repos.getContent(repository, function (err, res) {
             if (err || !res) {
+                logger.error(util.format('Load data from %s %s %s %s',
+                    repository.user, repository.repo, repository.ref, repository.path), module);
                 errors.createError(errors.CODES.LOAD, {
                     path: repository.path,
                     user: repository.user,
@@ -112,13 +114,15 @@ module.exports = {
 
         this.getGit(repository).repos.getBranch(repository, function (err, res) {
             if (err || !res) {
-                errors.createError(errors.CODES.LOAD, {
-                    user: repository.user,
-                    repo: repository.repo,
-                    branch: repository.branch,
-                    err: err
-                }).log();
-                def.reject(false);
+                if (err.code !== 404) {
+                    errors.createError(errors.CODES.IS_BRANCH_EXISTS, {
+                        user: repository.user,
+                        repo: repository.repo,
+                        branch: repository.branch,
+                        err: err.message
+                    }).log('warn');
+                }
+                def.resolve(false);
             }else {
                 def.resolve(true);
             }
@@ -145,13 +149,11 @@ module.exports = {
                 errors.createError(errors.CODES.GET_COMMITS, {
                     user: repository.user,
                     repo: repository.repo,
-                    path: repository.path,
+                    branch: repository.path,
                     err: err
                 }).log();
-                def.reject(err);
-            }else {
-                def.resolve(res);
             }
+            def.resolve(res);
         });
 
         return def.promise();
@@ -176,7 +178,7 @@ module.exports = {
                     repo: repository.repo,
                     err: err
                 }).log();
-                def.reject(err);
+                def.resolve(null);
             }else {
                 def.resolve(res['default_branch']);
             }
