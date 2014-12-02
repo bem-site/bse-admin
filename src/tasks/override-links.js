@@ -136,7 +136,6 @@ function recognizeRelativeLinkForLibraryDocs(str, node) {
     if (match) {
         return [util.format('/libs/%s/v%s/%s', lib, match[1], match[2])];
     }
-    return [str];
 
     // ./changelog
     match = str.match(REGEXP.RELATIVE.DOC);
@@ -146,6 +145,7 @@ function recognizeRelativeLinkForLibraryDocs(str, node) {
             [util.format('/libs/%s/%s', lib, version)] :
             [util.format('/libs/%s/%s/%s', lib, version, match[1])];
     }
+    return [str];
 }
 
 /**
