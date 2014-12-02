@@ -131,6 +131,13 @@ function recognizeRelativeLinkForLibraryDocs(str, node) {
         }, []);
     }
 
+    // 3.1.0-changelog.md
+    match = str.match(REGEXP.RELATIVE.VERSION_DOC);
+    if (match) {
+        return [util.format('/libs/%s/v%s/%s', lib, match[1], match[2])];
+    }
+    return [str];
+
     // ./changelog
     match = str.match(REGEXP.RELATIVE.DOC);
     if (match) {
@@ -139,13 +146,6 @@ function recognizeRelativeLinkForLibraryDocs(str, node) {
             [util.format('/libs/%s/%s', lib, version)] :
             [util.format('/libs/%s/%s/%s', lib, version, match[1])];
     }
-
-    // 3.1.0-changelog.md
-    match = str.match(REGEXP.RELATIVE.VERSION_DOC);
-    if (match) {
-        return [util.format('/libs/%s/v%s/%s', lib, match[1], match[2])];
-    }
-    return [str];
 }
 
 /**
