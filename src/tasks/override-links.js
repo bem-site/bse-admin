@@ -136,7 +136,6 @@ function recognizeRelativeLinkForLibraryDocs(str, node) {
     if (match) {
         return [util.format('/libs/%s/v%s/%s', lib, match[1], match[2])];
     }
-    return [str];
 
     // ./changelog
     match = str.match(REGEXP.RELATIVE.DOC);
@@ -146,6 +145,7 @@ function recognizeRelativeLinkForLibraryDocs(str, node) {
             [util.format('/libs/%s/%s', lib, version)] :
             [util.format('/libs/%s/%s/%s', lib, version, match[1])];
     }
+    return [str];
 }
 
 /**
@@ -289,7 +289,7 @@ function collectUrls(target) {
             utility.getLanguages().forEach(function (lang) {
                 if (!nodeValue.hidden[lang]) {
                     doc = getDocByNodeId(docRecords, nodeValue.id, lang);
-                    if (doc) {
+                    if (doc && doc.value.url) {
                         prev[doc.value.url] = nodeValue.url;
                     } else {
                         prev[nodeValue.id] = nodeValue.url;
