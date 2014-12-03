@@ -289,7 +289,7 @@ function collectUrls(target) {
             utility.getLanguages().forEach(function (lang) {
                 if (!nodeValue.hidden[lang]) {
                     doc = getDocByNodeId(docRecords, nodeValue.id, lang);
-                    if (doc) {
+                    if (doc && doc.value.url) {
                         prev[doc.value.url] = nodeValue.url;
                     } else {
                         prev[nodeValue.id] = nodeValue.url;
