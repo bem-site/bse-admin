@@ -8,42 +8,24 @@ var util = require('util'),
     vowFs = require('vow-fs'),
 
     errors = require('../errors').TaskLibrariesFiles,
+    storage = require('../lib-storage/api'),
+    constants = require('../constants'),
     logger = require('../logger'),
     config = require('../config'),
-    githubApi = require('../gh-api'),
-    utility = require('../util'),
-
-    repo = (function () {
-        var error,
-            repo = config.get('github:libraries');
-
-        if (!repo) {
-            error = errors.createError(errors.CODES.LIBRARIES_REPO_NOT_SET);
-        } else if (!repo.type || !_.isString(repo.type) || !repo.type.length) {
-            error = errors.createError(errors.CODES.LIBRARIES_REPO_TYPE_NOT_SET);
-        } else if (!repo.user || !_.isString(repo.user) || !repo.user.length) {
-            error = errors.createError(errors.CODES.LIBRARIES_REPO_USER_NOT_SET);
-        } else if (!repo.repo || !_.isString(repo.repo) || !repo.repo.length) {
-            error = errors.createError(errors.CODES.LIBRARIES_REPO_NAME_NOT_SET);
-        } else if (!repo.ref  || !_.isString(repo.ref)  || !repo.ref.length) {
-            error = errors.createError(errors.CODES.LIBRARIES_REPO_REF_NOT_SET);
-        } else if (!repo.pattern || !_.isString(repo.pattern) || !repo.pattern.length) {
-            error = errors.createError(errors.CODES.LIBRARIES_REPO_PATTERN_NOT_SET);
-        }
-
-        if (error) {
-            error.log();
-            return null;
-        }
-        return repo;
-    })();
+    utility = require('../util');
 
 /**
  * Returns list of libraries folders from configured remote github repository with compiled libraries data
  * @returns {Object}
  */
-function getRemoteLibraries() {
-    return githubApi.load({ repository: _.extend({ path: '' }, repo) });
+function loadRegistry() {
+    return storage.read(constants.REGISTRY_KEY).then(function (registry) {
+        try {
+            return JSON.parse(registry);
+        } catch(err) {
+            return {};
+        }
+    });
 }
 
 /**
@@ -71,21 +53,6 @@ function getRemoteVersions(lib) {
  */
 function getLocalVersions(target, lib) {
     return vowFs.listDir(path.join(target.LIBRARIES_FILE_PATH, lib));
-}
-
-function filterMapRemote(remote) {
-    remote = remote.res;
-    if (!remote || !remote.length) {
-        return [];
-    }
-
-    return remote
-        .map(function (item) {
-            return item.name;
-        })
-        .filter(function (item) {
-            return ['.gitignore', 'freeze', 'repositories.json'].indexOf(item) < 0;
-        });
 }
 
 /**
@@ -151,25 +118,6 @@ function removeLibVersionDirectories(target, lib, versions) {
 }
 
 /**
- * Get sha sum of remote data.json file
- * @param {String} lib - name of library
- * @param {Array} version - array of version names
- * @returns {*}
- */
-function getShaOfRemoteDataFile(lib, version) {
-    return githubApi.load({
-        repository: _.extend({ path: path.join(lib, version) }, repo)
-    }).then(function (result) {
-        result = result.res;
-        result = result.filter(function (item) {
-            return item.name === 'data.json';
-        })[0];
-
-        return result ? result.sha : null;
-    });
-}
-
-/**
  * Returns sha sum of local data.json file
  * @param {TargetLibraries} target object
  * @param {String} lib - name of library
@@ -194,10 +142,11 @@ function getShaOfLocalDataFile(target, lib, version) {
  * @returns {*}
  */
 function downloadFile(target, lib, version) {
-    return utility.loadFromRepoToFile({
-        repository: _.extend({ path: path.join(lib, version, 'data.json') }, repo),
-        file: path.join(target.LIBRARIES_FILE_PATH, lib, version, 'data.json')
-    });
+    var destinationPath = path.join(target.LIBRARIES_FILE_PATH, lib.name, version, 'data.json');
+    return storage.read(util.format('%s/%s/data.json', lib.name, version))
+        .then(function(content) {
+            return vowFs.write(destinationPath, content, 'utf-8');
+        });
 }
 
 /**
@@ -207,14 +156,17 @@ function downloadFile(target, lib, version) {
  * @param {Array} versions - array of library versions
  * @returns {*}
  */
-function compareFiles(target, lib, versions) {
+function compareFiles(target, lib) {
+    var versions = Object.keys(lib.versions);
+
     if (!lib || !versions.length) {
         return vow.resolve();
     }
+
     return vow.all(versions.map(function (version) {
         return vow.all([
-                getShaOfLocalDataFile(target, lib, version),
-                getShaOfRemoteDataFile(lib, version)
+                getShaOfLocalDataFile(target, lib.name, version),
+                lib.versions[version].sha
             ])
             .spread(function (local, remote) {
                 if (!remote || (local && local === remote)) {
@@ -223,20 +175,20 @@ function compareFiles(target, lib, versions) {
 
                 var promise = vow.resolve();
                 if (!local) {
-                    logger.warn(util.format('Library version %s %s was added', lib, version), module);
+                    logger.warn(util.format('Library version %s %s was added', lib.name, version), module);
                 }
 
                 // compare local and remote file versions
                 if (local && local !== remote) {
-                    logger.warn(util.format('Library version %s %s was changed', lib, version), module);
-                    promise = vowFs.remove(path.join(target.LIBRARIES_FILE_PATH, lib, version, 'data.json'));
+                    logger.warn(util.format('Library version %s %s was changed', lib.name, version), module);
+                    promise = vowFs.remove(path.join(target.LIBRARIES_FILE_PATH, lib.name, version, 'data.json'));
                 }
                 return promise
                     .then(function () {
                         return downloadFile(target, lib, version);
                     })
                     .then(function () {
-                        return vowFs.write(path.join(target.LIBRARIES_FILE_PATH, lib, version, '_data.json'), remote);
+                        return vowFs.write(path.join(target.LIBRARIES_FILE_PATH, lib.name, version, '_data.json'), remote);
                     });
             });
     }));
@@ -249,48 +201,50 @@ function compareFiles(target, lib, versions) {
  * @returns {*}
  */
 function syncLibVersion(target, lib) {
-    return vow.all([getLocalVersions(target, lib), getRemoteVersions(lib)])
-        .spread(function (local, remote) {
-            remote = remote.res;
-            remote = remote.map(function (item) {
-                return item.name;
-            });
+    logger.debug(util.format('Synchronize %s library', lib.name), module);
+    return getLocalVersions(target, lib.name)
+        .then(function (local) {
+            var versions = Object.keys(lib.versions);
 
             return vow.all([
-                    addLibVersionDirectories(target, lib, _.difference(remote, local)),
-                    removeLibVersionDirectories(target, lib, _.difference(local, remote))
+                    addLibVersionDirectories(target, lib.name, _.difference(versions, local)),
+                    removeLibVersionDirectories(target, lib.name, _.difference(local, versions))
                 ])
                 .then(function () {
-                    return compareFiles(target, lib, remote);
+                    return compareFiles(target, lib);
                 });
         });
 }
 
 module.exports = function (target) {
-    if (!repo) {
-        logger.warn('Libraries configuration was not recognized. Libraries synchronization will be skipped', module);
-        return vow.resolve();
-    }
-
-    return vowFs.makeDir(target.LIBRARIES_FILE_PATH)
-        .then(function () {
-            return vow.all([getLocalLibraries(target), getRemoteLibraries()]);
+    return storage.init()
+        .then(function() {
+            return vowFs.makeDir(target.LIBRARIES_FILE_PATH);
         })
-        .spread(function (local, remote) {
-            remote = filterMapRemote(remote);
+        .then(function () {
+            return vow.all([getLocalLibraries(target), loadRegistry()]);
+        })
+        .spread(function (local, registry) {
+            var remote = Object.keys(registry);
 
             return vow.all([
                     addLibDirectories(target, _.difference(remote, local)),
                     removeLibDirectories(target, _.difference(local, remote))
                 ])
                 .then(function () {
-                    return remote;
+                    return registry;
                 });
         })
-        .then(function (remote) {
-            return vow.all(remote.map(function (item) {
-                return syncLibVersion(target, item);
-            }));
+        .then(function (registry) {
+            //return vow.all(Object.keys(registry).map(function (lib) {
+            //    return syncLibVersion(target, registry[lib]);
+            //}));
+            return Object.keys(registry).reduce(function (prev, lib) {
+                prev = prev.then(function () {
+                    return syncLibVersion(target, registry[lib]);
+                });
+                return prev;
+            }, vow.resolve());
         })
         .then(function () {
             logger.info('Libraries were synchronized successfully with cache on local filesystem', module);
