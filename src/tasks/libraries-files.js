@@ -10,9 +10,7 @@ var util = require('util'),
     errors = require('../errors').TaskLibrariesFiles,
     storage = require('../lib-storage/api'),
     constants = require('../constants'),
-    logger = require('../logger'),
-    config = require('../config'),
-    utility = require('../util');
+    logger = require('../logger');
 
 /**
  * Returns list of libraries folders from configured remote github repository with compiled libraries data
@@ -22,7 +20,7 @@ function loadRegistry() {
     return storage.read(constants.REGISTRY_KEY).then(function (registry) {
         try {
             return JSON.parse(registry);
-        } catch(err) {
+        } catch (err) {
             return {};
         }
     });
@@ -35,15 +33,6 @@ function loadRegistry() {
  */
 function getLocalLibraries(target) {
     return vowFs.listDir(target.LIBRARIES_FILE_PATH);
-}
-
-/**
- * Returns list of version folders for given library from remote github repository with compiled libraries data
- * @param {String} lib - name of library
- * @returns {*}
- */
-function getRemoteVersions(lib) {
-    return githubApi.load({ repository: _.extend({ path: lib }, repo) });
 }
 
 /**
@@ -144,7 +133,7 @@ function getShaOfLocalDataFile(target, lib, version) {
 function downloadFile(target, lib, version) {
     var destinationPath = path.join(target.LIBRARIES_FILE_PATH, lib.name, version, 'data.json');
     return storage.read(util.format('%s/%s/data.json', lib.name, version))
-        .then(function(content) {
+        .then(function (content) {
             return vowFs.write(destinationPath, content, 'utf-8');
         });
 }
@@ -153,7 +142,6 @@ function downloadFile(target, lib, version) {
  * Compare data.json file of versions between local and remote
  * @param {TargetLibraries} target object
  * @param {String} lib - name of version
- * @param {Array} versions - array of library versions
  * @returns {*}
  */
 function compareFiles(target, lib) {
@@ -188,7 +176,8 @@ function compareFiles(target, lib) {
                         return downloadFile(target, lib, version);
                     })
                     .then(function () {
-                        return vowFs.write(path.join(target.LIBRARIES_FILE_PATH, lib.name, version, '_data.json'), remote);
+                        return vowFs.write(
+                            path.join(target.LIBRARIES_FILE_PATH, lib.name, version, '_data.json'), remote);
                     });
             });
     }));
@@ -218,7 +207,7 @@ function syncLibVersion(target, lib) {
 
 module.exports = function (target) {
     return storage.init()
-        .then(function() {
+        .then(function () {
             return vowFs.makeDir(target.LIBRARIES_FILE_PATH);
         })
         .then(function () {
@@ -236,9 +225,6 @@ module.exports = function (target) {
                 });
         })
         .then(function (registry) {
-            //return vow.all(Object.keys(registry).map(function (lib) {
-            //    return syncLibVersion(target, registry[lib]);
-            //}));
             return Object.keys(registry).reduce(function (prev, lib) {
                 prev = prev.then(function () {
                     return syncLibVersion(target, registry[lib]);

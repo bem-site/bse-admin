@@ -1,6 +1,4 @@
-var util = require('util'),
-
-    _ = require('lodash'),
+var _ = require('lodash'),
     vow = require('vow'),
     js2xml = require('js2xmlparser'),
 

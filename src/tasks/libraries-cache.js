@@ -1,5 +1,4 @@
-var util = require('util'),
-    path = require('path'),
+var path = require('path'),
     vow = require('vow'),
 
     errors = require('../errors').TaskLibrariesCache,

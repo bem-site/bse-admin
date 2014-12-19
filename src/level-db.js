@@ -220,7 +220,8 @@ module.exports = {
 
     /**
      * Returns all records that keys contains given prefix
-     * @param {String} prefix of keys
+     * @param {String} prefixFrom - start prefix of keys
+     * @param {String} prefixTo - end prefix of keys
      * @returns {*}
      */
     getByKeyRange: function (prefixFrom, prefixTo) {

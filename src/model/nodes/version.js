@@ -1,7 +1,6 @@
 var util = require('util'),
     vow = require('vow'),
 
-    _ = require('lodash'),
     logger = require('../../logger'),
     levelDb = require('../../level-db'),
     utility = require('../../util'),
@@ -121,7 +120,7 @@ VersionNode.prototype.addItems = function (version) {
     // TODO implement it
     // add custom nodes to library version
     // if(version.custom) {
-    //    version.custom.forEach(function(item) {
+    //    version.custom.forEach(function (item) {
     //        item.url += '#';
     //        this.items.push(new nodes.base.BaseNode(item, this));
     //    }, this);
