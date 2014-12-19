@@ -35,6 +35,9 @@ module.exports = function (target) {
 
     var snapshotName = getSnapshotName(),
         snapshotPath = path.join(target.SNAPSHOTS_DIR, snapshotName);
+
+    target.setSnapshotName(snapshotName);
+
     return vowFs.makeDir(snapshotPath)
         .then(function () {
             return levelDb.copy(snapshotPath);

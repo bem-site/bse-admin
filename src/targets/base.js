@@ -26,33 +26,63 @@ TargetBase.prototype = {
     tasks: [],
     options: undefined,
     changes: undefined,
+    snapshot: undefined,
 
+    /**
+     * Initialize target
+     * @param {Object} options object
+     */
     init: function (options) {
         this.options = options || {};
         this.changes = new Changes();
     },
 
+    /**
+     * Returns name of target
+     * @returns {string}
+     */
     getName: function () {
         return 'BASE';
     },
 
+    /**
+     * Add task to target
+     * @param {Function} task function
+     * @returns {TargetBase}
+     */
     addTask: function (task) {
         this.tasks.push(task);
         return this;
     },
 
+    /**
+     * Returns array of task functions
+     * @returns {Array}
+     */
     getTasks: function () {
         return this.tasks;
     },
 
+    /**
+     * Returns changes model
+     * @returns {*}
+     */
     getChanges: function () {
         return this.changes;
     },
 
+    /**
+     * Returns options object
+     * @returns {*}
+     */
     getOptions: function () {
         return this.options;
     },
 
+    /**
+     * Runs all tasks in serial mode
+     * @returns {*}
+     */
     execute: function () {
         var _this = this,
             initial = this.getTasks()[0];
@@ -63,8 +93,30 @@ TargetBase.prototype = {
         }, initial(_this));
     },
 
+    /**
+     * Clear all target changes
+     * @returns {TargetBase}
+     */
     clearChanges: function () {
         this.changes = new Changes();
+        return this;
+    },
+
+    /**
+     * Returns name of created db snapshot
+     * @returns {String}
+     */
+    getSnapshotName: function () {
+        return this.snapshot;
+    },
+
+    /**
+     * Sets name of created snapshot
+     * @param {String} snapshot name
+     * @returns {TargetBase}
+     */
+    setSnapshotName: function (snapshot) {
+        this.snapshot = snapshot;
         return this;
     }
 };
