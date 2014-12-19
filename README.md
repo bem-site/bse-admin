@@ -1,6 +1,9 @@
 bse-admin
 =========
 
+[![Dependency Status](https://david-dm.org/bem/bse-admin.svg?style=flat)](https://david-dm.org/bem/bse-admin)
+[![devDependency Status](https://david-dm.org/bem/bse-admin/dev-status.svg?style=flat)](https://david-dm.org/bem/bse-admin#info=devDependencies)
+
 Сборщик данных для [bem-site-engine](https://github.com/bem/bem-site-engine)
 
 Используется как dev-зависимость в [bem-site-engine](https://github.com/bem/bem-site-engine)
