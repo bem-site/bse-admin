@@ -3,15 +3,15 @@
   "languages": ["en", "ru"],
   "github": {
     "public": {
+      "host": "api.github.com",
       "token": ""
     },
-    "people": "",
-    "libraries": {
-      "type": "",
-      "user": "",
-      "repo": "",
-      "ref": "",
-      "pattern": ""
+    "people": ""
+  },
+  "storage": {
+    "cocaine": {
+      "debug": false,
+      "namespace": ""
     }
   }
 }
