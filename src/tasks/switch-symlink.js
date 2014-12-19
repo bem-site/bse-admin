@@ -44,6 +44,11 @@ function checkAndRemoveExistedSymlink(symlinkPath) {
 module.exports = function (target) {
     logger.info('Switch symlink start', module);
 
+    if (!target.getChanges().areModified()) {
+        logger.warn('No changes were made during this synchronization. This step will be skipped', module);
+        return vow.resolve(target);
+    }
+
     var symlinkPath = path.join(target.DB_DIR, 'testing');
     return getLatestSnapshot(target)
         .then(function (version) {
