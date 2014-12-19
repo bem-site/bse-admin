@@ -11,7 +11,13 @@
   "storage": {
     "cocaine": {
       "debug": false,
-      "namespace": ""
+      "namespace": "lego-site-data:master"
     }
+  },
+  "mailer": {
+    "host": "",
+    "port": 25,
+    "from": "",
+    "to": []
   }
 }
