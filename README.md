@@ -1,6 +1,7 @@
 bse-admin
 =========
 
+[![Build Status](https://travis-ci.org/bem/bse-admin.svg?branch=master)](https://travis-ci.org/bem/bse-admin)
 [![Dependency Status](https://david-dm.org/bem/bse-admin.svg?style=flat)](https://david-dm.org/bem/bse-admin)
 [![devDependency Status](https://david-dm.org/bem/bse-admin/dev-status.svg?style=flat)](https://david-dm.org/bem/bse-admin#info=devDependencies)
 
