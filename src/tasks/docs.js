@@ -4,10 +4,10 @@ var util = require('util'),
 
     _ = require('lodash'),
     vow = require('vow'),
+    renderer = require('bem-md-renderer'),
 
     errors = require('../errors').TaskDocs,
     logger = require('../logger'),
-    renderer = require('../renderer'),
     githubApi = require('../gh-api'),
     levelDb = require('../level-db'),
     utility = require('../util');
