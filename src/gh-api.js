@@ -20,6 +20,44 @@ var util = require('util'),
     },
     isInitialized = false;
 
+function _initPrivate () {
+    var ghConfig = config.get('github'),
+        ghPrivate = ghConfig.private || {},
+        conf = {
+            host: ghPrivate.host || 'github.yandex-team.ru',
+            pathPrefix: ghPrivate.pathPrefix || '/api/v3'
+        };
+
+    if (Object.keys(ghPrivate).length) {
+        gitPrivate = new Api(_.extend(conf, common));
+    }
+}
+
+function _initPublic () {
+    var ghConfig = config.get('github'),
+        ghPublic = ghConfig.public || {},
+        conf = {
+            host: ghPublic.host || 'api.github.com'
+        };
+
+    if (Object.keys(ghPublic).length) {
+        var tokens = _.isArray(ghPublic.token) ? ghPublic.token : [ghPublic.token];
+
+        gitPublic = [];
+        tokens.forEach(function (item) {
+            var gp = new Api(_.extend(conf, common));
+            if (item.length) {
+                gp.authenticate({ type: 'oauth', token: item });
+            } else {
+                errors.createError(errors.CODES.NOT_AUTHENTIFICATED).log('warn');
+            }
+
+            logger.debug(util.format('Initialize public ghAPI for token %s', item), module);
+            gitPublic.push(gp);
+        });
+    }
+}
+
 module.exports = {
     /**
      * Initialize github api connections to public and private repositories
@@ -32,24 +70,8 @@ module.exports = {
 
         logger.info('Initialize github API module', module);
 
-        var ghConfig = config.get('github'),
-            ghPublic = _.extend({ host: 'api.github.com' }, ghConfig.public || {}),
-            ghPrivate = _.extend({ host: 'github.yandex-team.ru', pathPrefix: '/api/v3' }, ghConfig.private || {});
-
-        if (ghPublic) {
-            gitPublic = new Api(_.extend(ghPublic, common));
-
-            var token = ghConfig.public.token;
-            if (token && token.length) {
-                gitPublic.authenticate({ type: 'oauth', token: token });
-            }else {
-                errors.createError(errors.CODES.NOT_AUTHENTIFICATED).log('warn');
-            }
-        }
-
-        if (ghPrivate) {
-            gitPrivate = new Api(_.extend(ghPrivate, common));
-        }
+        _initPublic();
+        _initPrivate();
 
         isInitialized = true;
         return vow.resolve();
@@ -61,7 +83,7 @@ module.exports = {
      * @returns {Object}
      */
     getGit: function (r) {
-        return r.type === 'private' ? gitPrivate : gitPublic;
+        return r.type === 'private' ? gitPrivate : _.sample(gitPublic);
     },
 
     /**
