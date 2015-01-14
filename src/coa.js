@@ -19,9 +19,7 @@ function command() {
             return '';
         })
         .end()
-        .cmd().name('sync-docs').apply(require('./commands/sync/docs')).end()
         .cmd().name('sync-nodes').apply(require('./commands/sync/nodes')).end()
-        .cmd().name('sync-libraries').apply(require('./commands/sync/libraries')).end()
         .cmd().name('clear-db').apply(require('./commands/db/clear')).end()
         .cmd().name('view-db').apply(require('./commands/db/view')).end()
         .cmd().name('update-model').apply(require('./commands/update-model')).end()
