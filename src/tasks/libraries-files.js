@@ -36,6 +36,15 @@ function getLocalLibraries(target) {
 }
 
 /**
+ * Returns list of version folders for given library from remote github repository with compiled libraries data
+ * @param {String} lib - name of library
+ * @returns {*}
+ */
+function getRemoteVersions(lib) {
+    return githubApi.load({ repository: _.extend({ path: lib }, repo) });
+}
+
+/**
  * Returns list of version folders for given library from local filesystem temporary folder
  * @param {TargetLibraries} target object
  * @param {String} lib - name of library
