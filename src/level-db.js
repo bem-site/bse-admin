@@ -3,7 +3,7 @@
 var util = require('util'),
     path = require('path'),
 
-    levelup = require('levelup'),
+    levelup = require('level'),
     _ = require('lodash'),
     vow = require('vow'),
     vowFs = require('vow-fs'),
