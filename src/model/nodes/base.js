@@ -196,6 +196,10 @@ BaseNode.prototype = {
 
         var fullRoute = Object.create(this.parent.route);
 
+        if (this.route.name && this.route.pattern) {
+            this.markAsCategory();
+        }
+
         fullRoute.name = this.route.name || this.parent.route.name;
         fullRoute.pattern = this.route.pattern || this.parent.route.pattern;
 
@@ -238,6 +242,11 @@ BaseNode.prototype = {
 
     isDifferentFromDb: function (dbRecord) {
         return _.isEqual(this, dbRecord);
+    },
+
+    markAsCategory: function () {
+        this.isCategory = true;
+        return this;
     },
 
     markAsHasSource: function () {
