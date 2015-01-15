@@ -21,7 +21,6 @@ function command() {
         .end()
         .cmd().name('sync-nodes').apply(require('./commands/sync/nodes')).end()
         .cmd().name('clear-db').apply(require('./commands/db/clear')).end()
-        .cmd().name('view-db').apply(require('./commands/db/view')).end()
         .cmd().name('update-model').apply(require('./commands/update-model')).end()
         .completable();
 }
