@@ -47,6 +47,7 @@ Meta.prototype = {
         if (this.tags) {
             collected.tags[lang] = collected.tags[lang] || [];
             collected.tags[lang] = collected.tags[lang].concat(this.tags);
+            collected.tags[lang] = _.uniq(collected.tags[lang]);
         }
         return this;
     },
