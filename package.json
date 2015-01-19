@@ -53,7 +53,8 @@
     "terror": "0.4.0",
     "trtd": "0.0.1",
     "vow": "~0.4.1",
-    "vow-fs": "~0.3.0"
+    "vow-fs": "~0.3.0",
+    "node-uuid": "~1.4.x"
   },
   "devDependencies": {
     "jshint": "2.5.5",

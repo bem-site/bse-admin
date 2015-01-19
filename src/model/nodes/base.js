@@ -1,5 +1,6 @@
 var _ = require('lodash'),
     susanin = require('susanin'),
+    uuid = require('node-uuid'),
     sha = require('sha1'),
 
   /**
@@ -57,7 +58,7 @@ BaseNode.prototype = {
      * @returns {BaseNode}
      */
     generateUniqueId: function () {
-        this.id = sha(JSON.stringify(this));
+        this.id = sha(JSON.stringify(this) + uuid.v4());
         return this;
     },
 
