@@ -62,8 +62,10 @@ function addPeopleNodes(target, key) {
             }
 
             return vow.all(dynamicRecords.map(function (dynamicRecord) {
-                return vow.all(peopleKeys.map(function (person) {
-                    return (new nodes.person.PersonNode(dynamicRecord.value, person, peopleData[person])).saveToDb();
+                return vow.all(peopleKeys.map(function (person, index) {
+                    var pn = new nodes.person.PersonNode(dynamicRecord.value, person, peopleData[person]);
+                    pn.order = index;
+                    return pn.saveToDb();
                 }));
             }));
         });
