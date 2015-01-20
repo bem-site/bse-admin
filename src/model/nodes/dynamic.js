@@ -1,17 +1,15 @@
-var util = require('util'),
+var _ = require('lodash'),
 
-    _ = require('lodash'),
-    vow = require('vow'),
     susanin = require('susanin'),
 
     levelDb = require('../../level-db'),
     BaseNode = require('./base').BaseNode,
 
-  /**
-   * Subclass of BaseNode class
-   * Base class for all dynamic nodes
-   * @constructor
-   */
+    /**
+     * Subclass of BaseNode class
+     * Base class for all dynamic nodes
+     * @constructor
+     */
     DynamicNode = function () {};
 
 DynamicNode.prototype = Object.create(BaseNode.prototype);
@@ -108,29 +106,12 @@ DynamicNode.prototype.processRoute = function (parent, params) {
 };
 
 /**
- * Generates string key for database record
- * @returns {String}
- */
-DynamicNode.prototype.generateKey = function () {
-    return util.format('nodes:%s', this.id);
-};
-
-/**
  * Saves record in database
  * @returns {*}
  */
 DynamicNode.prototype.saveToDb = function () {
     this.parent = this.parent.id;
     return levelDb.put(this.generateKey(), this);
-};
-
-/**
- * Returns operation object for database batch operation
- * @returns {*}
- */
-DynamicNode.prototype.prepareToSaveToDb = function () {
-    this.parent = this.parent.id;
-    return vow.resolve({ type: 'put', key: this.generateKey(), value: this });
 };
 
 /**

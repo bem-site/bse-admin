@@ -1,27 +1,29 @@
-var _ = require('lodash'),
+var util = require('util'),
+
+    _ = require('lodash'),
     susanin = require('susanin'),
     uuid = require('node-uuid'),
     sha = require('sha1'),
 
-  /**
-   * Base class for nodes with common nodes methods
-   * @param {BaseNode} node - source node object
-   * @param {BaseNode} parent - parent node object
-   * @constructor
-   */
-   BaseNode = function (node, parent) {
-    Object.keys(node).forEach(function (key) { this[key] = node[key]; }, this);
+    /**
+     * Base class for nodes with common nodes methods
+     * @param {BaseNode} node - source node object
+     * @param {BaseNode} parent - parent node object
+     * @constructor
+     */
+    BaseNode = function (node, parent) {
+        Object.keys(node).forEach(function (key) { this[key] = node[key]; }, this);
 
-    this.generateUniqueId()
-        .setParent(parent)
-        .setSize()
-        .setTitle()
-        .setHidden()
-        .setView()
-        .setLevel(parent)
-        .setClass()
-        .setSearch();
-};
+        this.generateUniqueId()
+            .setParent(parent)
+            .setSize()
+            .setTitle()
+            .setHidden()
+            .setView()
+            .setLevel(parent)
+            .setClass()
+            .setSearch();
+    };
 
 BaseNode.prototype = {
 
@@ -91,7 +93,7 @@ BaseNode.prototype = {
      */
     setView: function () {
         this.view = this.view ||
-            (this.source ? this.VIEW.POST : this.VIEW.POSTS);
+        (this.source ? this.VIEW.POST : this.VIEW.POSTS);
         return this;
     },
 
@@ -268,6 +270,14 @@ BaseNode.prototype = {
     removeItemsField: function () {
         delete this.items;
         return this;
+    },
+
+    /**
+     * Generates string key for database record
+     * @returns {String}
+     */
+    generateKey: function () {
+        return util.format('nodes:%s', this.id);
     }
 };
 
