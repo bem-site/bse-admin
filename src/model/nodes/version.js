@@ -7,11 +7,11 @@ var util = require('util'),
     nodes = require('./index'),
 
     /**
-    * Subclass of dynamic nodes which describe single version of library
-    * @param {BaseNode} parent node
-    * @param {Object} version of library
-    * @constructor
-    */
+     * Subclass of dynamic nodes which describe single version of library
+     * @param {BaseNode} parent node
+     * @param {Object} version of library
+     * @constructor
+     */
     VersionNode = function (parent, version, cacheVersion) {
         this.setTitle(version)
             .setSource(version)
@@ -120,12 +120,17 @@ VersionNode.prototype.addItems = function (version) {
 
     // TODO implement it
     // add custom nodes to library version
-    // if(version.custom) {
-    //    version.custom.forEach(function (item) {
-    //        item.url += '#';
-    //        this.items.push(new nodes.base.BaseNode(item, this));
-    //    }, this);
-    // }
+    if (version.custom) {
+        version.custom.forEach(function (item) {
+            item.url += '#';
+            var cItem = new nodes.base.BaseNode(item, this);
+            cItem.saveToDb = function () {
+                cItem.parent = cItem.parent.id;
+                return { type: 'put', key: cItem.generateKey(), value: cItem };
+            };
+            this.items.push(cItem);
+        }, this);
+    }
 
     var levels = version.levels;
     if (!levels) {
