@@ -22,7 +22,8 @@ var util = require('util'),
                 }
             })
             .init(parent)
-            .addItems(version);
+            .addItems(version)
+            .createBreadcrumbs();
 
         this.cacheVersion = cacheVersion;
     };
