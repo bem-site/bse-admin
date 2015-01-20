@@ -133,4 +133,32 @@ DynamicNode.prototype.prepareToSaveToDb = function () {
     return vow.resolve({ type: 'put', key: this.generateKey(), value: this });
 };
 
+/**
+ * Creates breadcrumbs for current node
+ * as suitable structure for templating
+ */
+DynamicNode.prototype.createBreadcrumbs = function () {
+    this.breadcrumbs = [];
+
+    var _this = this,
+        traverse = function (node) {
+            if (node.url) {
+                _this.breadcrumbs.unshift({
+                    title: node.title,
+                    url: node.url
+                });
+            }
+
+            if (node.parent) {
+                if (node.parent.lib) {
+                    _this.breadcrumbs = [].concat(node.parent.breadcrumbs || [], _this.breadcrumbs);
+                }else {
+                    traverse(node.parent);
+                }
+            }
+        };
+
+    traverse(this);
+};
+
 exports.DynamicNode = DynamicNode;
