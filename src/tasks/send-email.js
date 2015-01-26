@@ -54,12 +54,12 @@ function _joinChanges(added, modified, removed, title) {
 
     // check if any docs were modified
     if (modified) {
-        '<br/><h2>Modified</h2><br/>' + modified;
+        result += '<br/><h2>Modified</h2><br/>' + modified;
     }
 
     // check if any docs were removed
     if (removed) {
-        '<br/><h2>Removed</h2><br/>' + removed;
+        result += '<br/><h2>Removed</h2><br/>' + removed;
     }
 
     return result;
