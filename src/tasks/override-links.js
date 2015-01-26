@@ -239,11 +239,6 @@ function overrideLinks(content, node, urlHash, lang, doc) {
             }
         }
 
-        // remove links that are the same as original
-        links = links.filter(function (item) {
-            return item !== href;
-        });
-
         links.some(function (item) {
             if (urlHash[item]) {
                 replaced = urlHash[item];
