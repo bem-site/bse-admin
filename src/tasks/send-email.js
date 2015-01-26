@@ -22,7 +22,7 @@ function _groupLibraryChanges(arr) {
         return prev;
     }, {});
 
-    if (Object.keys(o).length == 0) {
+    if (Object.keys(o).length === 0) {
         return null;
     }
 
