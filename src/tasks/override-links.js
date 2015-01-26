@@ -262,7 +262,10 @@ function overrideLinks(content, node, urlHash, lang, doc) {
 
         if (replaced) {
             href = replaced;
+        }else if (!isAbsolute(href)) {
+            href = links[0];
         }
+
         href += (anchor ? '#' + anchor : '');
         // if (nativeHref.match(/^.\//)) {
         //    logger.debug(util.format('native: %s replaced: %s', nativeHref, href), module);
