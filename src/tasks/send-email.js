@@ -22,6 +22,10 @@ function _groupLibraryChanges(arr) {
         return prev;
     }, {});
 
+    if (Object.keys(o).length == 0) {
+        return null;
+    }
+
     return Object.keys(o).map(function (key) {
         return { lib: key, versions: o[key].join(', ') };
     });
@@ -37,10 +41,28 @@ function _groupLibraryChanges(arr) {
  * @private
  */
 function _joinChanges(added, modified, removed, title) {
-    return '<h1>' + title + '</h1>' +
-        '<br/><h2>Added</h2><br/>' + added +
-        '<br/><h2>Modified</h2><br/>' + modified +
+    var result = '<h1>' + title + '</h1>';
+
+    if (!added && !modified && !removed) {
+        return result + '<br/>Nothing has been changed';
+    }
+
+    // check if any docs were added
+    if (added) {
+        result += '<br/><h2>Added</h2><br/>' + added;
+    }
+
+    // check if any docs were modified
+    if (modified) {
+        '<br/><h2>Modified</h2><br/>' + modified;
+    }
+
+    // check if any docs were removed
+    if (removed) {
         '<br/><h2>Removed</h2><br/>' + removed;
+    }
+
+    return result;
 }
 
 /**
@@ -54,16 +76,19 @@ function _createDocsChangesTable(target) {
 
     return vow.all(CHANGES_FIELDS
             .map(function (key) {
-                if (docs[key].length > 0) {
-                    docs[key] = docs[key].map(function (item) {
-                        item.title = item.title || '';
-                        return item;
-                    });
+                if (docs[key].length === 0) {
+                    return null;
                 }
+
+                docs[key] = docs[key].map(function (item) {
+                    item.title = item.title || '';
+                    return item;
+                });
+
                 return docs[key];
             })
             .map(function (item) {
-                return trtd(['title', 'url'], item);
+                return item ? trtd(['title', 'url'], item) : null;
             })
         )
         .spread(function (added, modified, removed) {
@@ -85,7 +110,7 @@ function _createLibrariesChangesTable(target) {
                 return _groupLibraryChanges(libraries[key]);
             })
             .map(function (item) {
-                return trtd(['lib', 'versions'], item);
+                return item ? trtd(['lib', 'versions'], item) : null;
             })
         )
         .spread(function (added, modified, removed) {
