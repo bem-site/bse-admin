@@ -55,7 +55,8 @@
     "trtd": "0.0.1",
     "vow": "~0.4.1",
     "vow-fs": "~0.3.0",
-    "node-uuid": "~1.4.x"
+    "node-uuid": "~1.4.x",
+    "mds-wrapper": "^1.2.x"
   },
   "devDependencies": {
     "jshint": "2.5.5",
@@ -66,6 +67,7 @@
     "bse": "./bin/bse"
   },
   "scripts": {
+    "config": "cp config/common/_app.json config/common/app.json",
     "test": "node_modules/.bin/jshint . && node_modules/.bin/jscs -c .jscsrc ."
   },
   "readmeFilename": "README.md",
