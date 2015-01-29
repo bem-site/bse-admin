@@ -39,3 +39,4 @@ db/*
 cache
 model
 !src/model
+configs/common/app.json

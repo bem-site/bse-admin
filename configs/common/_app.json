@@ -1,0 +1,32 @@
+{
+  "defaultLanguage": "ru",
+  "languages": ["en", "ru"],
+  "github": {
+    "private": {
+      "host": ""
+    },
+    "public": {
+      "token": []
+    },
+    "people": ""
+  },
+  "storage": {
+    "namespace": "",
+    "get": {
+      "host": "",
+      "port": 80
+    },
+    "post": {
+      "host": "",
+      "port": 1111
+    },
+    "auth": "",
+    "timeout": 300000
+  },
+  "mailer": {
+    "host": "",
+    "port": 25,
+    "from": "",
+    "to": []
+  }
+}
