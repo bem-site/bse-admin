@@ -4,7 +4,9 @@ var util = require('util'),
     vow = require('vow'),
     vowFs = require('vow-fs'),
 
+    config = require('../config'),
     errors = require('../errors').TaskSwitchSymlink,
+    storage = require('../storage').get(config.get('storage')),
     logger = require('../logger');
 
 /**
@@ -60,6 +62,9 @@ module.exports = function (target) {
                     logger.info(util.format('symlink for %s environment was set to %s version',
                         'testing', version), module);
                     return vow.resolve(target);
+                })
+                .then(function () {
+                    return storage.writeP('db/testing', version);
                 });
         })
         .fail(function (err) {

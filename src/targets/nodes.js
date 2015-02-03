@@ -24,8 +24,9 @@ TargetNodes.prototype.init = function (options) {
         require('../tasks/urls-map'),
         require('../tasks/override-links'),
         require('../tasks/sitemap-xml'),
-        require('../tasks/search-data'),
+        // require('../tasks/search-data'),
         require('../tasks/snapshot'),
+        require('../tasks/send-to-mds'),
         require('../tasks/switch-symlink'),
         require('../tasks/send-email'),
         require('../tasks/finalize')

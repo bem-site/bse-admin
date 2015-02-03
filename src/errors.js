@@ -123,5 +123,10 @@ module.exports = {
     TaskLibrariesDb: Terror
         .create('LibrariesDb', {
             COMMON: [ 260, 'Libraries synchronization with database failed with error %err%' ]
+        }).setLogger(log),
+
+    TaskSendToMds: Terror
+        .create('SendToMds', {
+            COMMON: [ 270, 'Send to mds failed with error %err%' ]
         }).setLogger(log)
 };
