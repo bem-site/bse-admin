@@ -35,7 +35,7 @@ function _sendFiles(target) {
                         .then(function (content) {
                             var k = util.format('db/%s/%s', snapshotName, item);
                             logger.debug(k, module);
-                            storage.writeP(k, content);
+                            return storage.writeP(k, content);
                         });
                 }))
                 .then(function () {
@@ -63,11 +63,15 @@ function _sendDb(target) {
                         .then(function (content) {
                             var k = util.format('db/%s/%s/%s', snapshotName, LEVEL_DB_DIR, item);
                             logger.debug(k, module);
-                            storage.writeP(k, content);
+                            return storage.writeP(k, content);
                         });
                 }))
                 .then(function () {
-                    return storage.writeP(util.format('db/%s/%s', snapshotName, LEVEL_DB_DIR), JSON.stringify(items));
+                    var k = util.format('db/%s/%s', snapshotName, LEVEL_DB_DIR),
+                        v = JSON.stringify(items);
+
+                    logger.debug(util.format('write leveldb index %s %s', k, v), module);
+                    return storage.writeP(k, v);
                 })
                 .then(function () {
                     return LEVEL_DB_DIR;
@@ -88,12 +92,17 @@ module.exports = function (target) {
     return vow
         .all([_sendFiles(target), _sendDb(target)])
         .spread(function (files, leveldb) {
-            return storage.writeP(util.format('db/%s', snapshotName), JSON.stringify([].concat(files, leveldb)));
+            var k = util.format('db/%s', snapshotName),
+                v = JSON.stringify([].concat(files, leveldb));
+
+            logger.debug(util.format('write snapshot index %s %s', k, v), module);
+            return storage.writeP(k, v);
         })
         .then(function () {
             return vowFs.listDir(target.SNAPSHOTS_DIR);
         })
         .then(function (registry) {
+            logger.debug('write registry record', module);
             return storage.writeP(REGISTRY, JSON.stringify(registry));
         })
         .fail(function (err) {

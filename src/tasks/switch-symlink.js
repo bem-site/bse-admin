@@ -59,12 +59,13 @@ module.exports = function (target) {
                     return vowFs.symLink(util.format('./snapshots/%s', version), symlinkPath, 'dir');
                 })
                 .then(function () {
+                    logger.debug(util.format('switch symlink in mds to %s', version), module);
+                    return storage.writeP('db/testing', version);
+                })
+                .then(function () {
                     logger.info(util.format('symlink for %s environment was set to %s version',
                         'testing', version), module);
                     return vow.resolve(target);
-                })
-                .then(function () {
-                    return storage.writeP('db/testing', version);
                 });
         })
         .fail(function (err) {
