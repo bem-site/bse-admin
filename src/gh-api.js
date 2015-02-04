@@ -89,33 +89,32 @@ module.exports = {
     /**
      * Returns content of repository directory or file loaded by github api
      * @param {Object} options - object with fields:
-     * - type {String} type of repository privacy ('public' or 'private')
-     * - user {String} name of user or organization which this repository is belong to
-     * - repo {String} name of repository
-     * - ref {String} name of branch
-     * - path {String} relative path from the root of repository
+     * - {Object} repository:
+     *    - type {String} type of repository privacy ('public' or 'private')
+     *    - user {String} name of user or organization which this repository is belong to
+     *    - repo {String} name of repository
+     *    - ref {String} name of branch
+     *    - path {String} relative path from the root of repository
+     * - {Object} headers - optional header params
      * @returns {*}
      */
     load: function (options) {
         var def = vow.defer(),
-            repository = options.repository;
-        logger.verbose(util.format('Load data from %s %s %s %s',
-            repository.user, repository.repo, repository.ref, repository.path), module);
+            ch = options.headers,
+            cr = options.repository,
+            c = _.extend({}, cr, ch ? { headers: ch } : {});
 
-        this.getGit(repository).repos.getContent(repository, function (err, res) {
+        logger.verbose(util.format('Load data from %s %s %s %s', cr.user, cr.repo, cr.ref, cr.path), module);
+
+        this.getGit(cr).repos.getContent(c, function (err, res) {
             if (err || !res) {
                 logger.error(util.format('Load data from %s %s %s %s',
-                    repository.user, repository.repo, repository.ref, repository.path), module);
-                errors.createError(errors.CODES.LOAD, {
-                    path: repository.path,
-                    user: repository.user,
-                    repo: repository.repo,
-                    ref: repository.ref,
-                    err: err
-                }).log();
-                def.reject({ res: null, repo: repository });
+                    cr.user, cr.repo, cr.ref, cr.path), module);
+                errors.createError(errors.CODES.LOAD,
+                    { path: cr.path, user: cr.user, repo: cr.repo, ref: cr.ref, err: err }).log();
+                def.reject({ res: null, repo: cr });
             }else {
-                def.resolve({ res: res, repo: repository });
+                def.resolve({ res: res, repo: cr });
             }
         });
         return def.promise();
@@ -124,25 +123,25 @@ module.exports = {
     /**
      * Returns info for given branch
      * @param {Object} options - object with fields:
-     * - type {String} type of repository privacy ('public' or 'private')
-     * - user {String} name of user or organization which this repository is belong to
-     * - repo {String} name of repository
-     * - branch {String} name of branch
+     * - {Object} repository:
+     *    - type {String} type of repository privacy ('public' or 'private')
+     *    - user {String} name of user or organization which this repository is belong to
+     *    - repo {String} name of repository
+     *    - branch {String} name of branch
+     * - {Object} headers - optional header params
      * @returns {*}
      */
     isBranchExists: function (options) {
         var def = vow.defer(),
-            repository = options.repository;
+            ch = options.headers,
+            cr = options.repository,
+            c = _.extend({}, cr, ch ? { headers: ch } : {});
 
-        this.getGit(repository).repos.getBranch(repository, function (err, res) {
+        this.getGit(cr).repos.getBranch(c, function (err, res) {
             if (err || !res) {
                 if (err.code !== 404) {
-                    errors.createError(errors.CODES.IS_BRANCH_EXISTS, {
-                        user: repository.user,
-                        repo: repository.repo,
-                        branch: repository.branch,
-                        err: err.message
-                    }).log('warn');
+                    errors.createError(errors.CODES.IS_BRANCH_EXISTS,
+                        { user: cr.user, repo: cr.repo, branch: cr.branch, err: err.message }).log('warn');
                 }
                 def.resolve(false);
             }else {
@@ -156,24 +155,24 @@ module.exports = {
     /**
      * Returns list of commits of given file path
      * @param {Object} options - object with fields:
-     * - type {String} type of repository privacy ('public' or 'private')
-     * - user {String} name of user or organization which this repository is belong to
-     * - repo {String} name of repository
-     * - path {String} relative path from the root of repository
+     * - {Object} repository:
+     *    - type {String} type of repository privacy ('public' or 'private')
+     *    - user {String} name of user or organization which this repository is belong to
+     *    - repo {String} name of repository
+     *    - path {String} relative path from the root of repository
+     * - {Object} headers - optional header params
      * @returns {*}
      */
     getCommits: function (options) {
         var def = vow.defer(),
-            repository = options.repository;
+            ch = options.headers,
+            cr = options.repository,
+            c = _.extend({}, cr, ch ? { headers: ch } : {});
 
-        this.getGit(repository).repos.getCommits(repository, function (err, res) {
+        this.getGit(cr).repos.getCommits(c, function (err, res) {
             if (err || !res) {
-                errors.createError(errors.CODES.GET_COMMITS, {
-                    user: repository.user,
-                    repo: repository.repo,
-                    branch: repository.path,
-                    err: err
-                }).log();
+                errors.createError(errors.CODES.GET_COMMITS,
+                    { user: cr.user, repo: cr.repo, branch: cr.path, err: err }).log();
             }
             def.resolve(res);
         });
@@ -184,22 +183,23 @@ module.exports = {
     /**
      * Returns name of default branch for current repository
      * @param {Object} options - object with fields:
-     * - type {String} type of repository privacy ('public' or 'private')
-     * - user {String} name of user or organization which this repository is belong to
-     * - repo {String} name of repository
+     * - {Object} repository:
+     *    - type {String} type of repository privacy ('public' or 'private')
+     *    - user {String} name of user or organization which this repository is belong to
+     *    - repo {String} name of repository
+     * - {Object} headers - optional header params
      * @returns {*}
      */
     getDefaultBranch: function (options) {
         var def = vow.defer(),
-            repository = options.repository;
+            ch = options.headers,
+            cr = options.repository,
+            c = _.extend({}, cr, ch ? { headers: ch } : {});
 
-        this.getGit(repository).repos.get(repository, function (err, res) {
+        this.getGit(cr).repos.get(c, function (err, res) {
             if (err || !res) {
-                errors.createError(errors.CODES.GET_DEFAULT_BRANCH, {
-                    user: repository.user,
-                    repo: repository.repo,
-                    err: err
-                }).log();
+                errors.createError(errors.CODES.GET_DEFAULT_BRANCH,
+                    { user: cr.user, repo: cr.repo, err: err }).log();
                 def.resolve(null);
             }else {
                 def.resolve(res['default_branch']);

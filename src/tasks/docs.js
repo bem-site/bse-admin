@@ -26,10 +26,11 @@ function getDocsFromDb(target) {
 /**
  * Loads docs from remote repository by github API
  * @param {Object} value from database
+ * @parma {Boolean} isFirst load flag
  * @returns {*}
  */
-function getRemoteData(value) {
-    return githubApi.load({ repository: value.repo });
+function getRemoteData(value, isFirstLoad) {
+    return githubApi.load({ repository: value.repo, headers: !isFirstLoad ? { 'If-None-Match': value.etag } : null });
 }
 
 function onError(md, url) {
@@ -55,14 +56,15 @@ function getTitle(value) {
  * @param {Object} value - value object from database
  * @returns {*}
  */
-function setUpdateDate(value) {
+function setUpdateDate(value, isFirstLoad) {
     var repository = value.repo;
     if (!value.repo) {
         return vow.resolve(value);
     }
 
     return githubApi.getCommits({
-            repository: _.extend(repository, { sha: repository.ref })
+            repository: _.extend(repository, { sha: repository.ref }),
+            headers: !isFirstLoad ? { 'If-None-Match': value.etag } : null
         })
         .then(function (res) {
             if (!res || !res[0]) {
@@ -76,7 +78,7 @@ function setUpdateDate(value) {
         });
 }
 
-function checkForBranch(value) {
+function checkForBranch(value, isFirstLoad) {
     var repository = value.repo;
 
     if (!repository) {
@@ -84,14 +86,18 @@ function checkForBranch(value) {
     }
 
     return githubApi.isBranchExists({
-            repository: _.extend(repository, { branch: repository.ref })
+            repository: _.extend(repository, { branch: repository.ref }),
+            headers: !isFirstLoad ? { 'If-None-Match': value.etag } : null
         })
         .then(function (exists) {
             if (exists) {
                 return vow.resolve(value);
             }
 
-            return githubApi.getDefaultBranch({ repository: repository })
+            return githubApi.getDefaultBranch({
+                    repository: repository,
+                    headers: !isFirstLoad ? { 'If-None-Match': value.etag } : null
+                })
                 .then(function (branch) {
                     repository.prose = util.format('http://prose.io/#%s/%s/edit/%s/%s',
                         repository.user, repository.repo, branch, repository.path);
@@ -110,15 +116,31 @@ function checkForBranch(value) {
  */
 function syncDoc(target, record) {
     var key = record.key,
-        value = record.value;
-    return getRemoteData(value)
-        .then(function (md) {
-            var result = md.res,
+        value = record.value,
+        isFirstLoad = !value.etag;
+
+    return getRemoteData(value, isFirstLoad)
+        .then(function (response) {
+            var result = response.res,
                 rSha,
                 lSha;
 
-            if (!result || !result.content) {
-                return onError(md, value.content);
+            if (!result) {
+                return onError(response, value.content);
+            }
+
+            /*
+            console.log('isFirstLoad: %s status: %s', isFirstLoad, result.meta.status);
+            console.log('value.etag %s result.meta.etag %s', value.etag, result.meta.etag);
+            */
+
+            if (result.meta.status === '304 Not Modified') {
+                logger.debug(util.format('Document was not changed: %s', getTitle(value) || value.url), module);
+                return vow.resolve();
+            }
+
+            if (!result.content) {
+                return onError(response, value.content);
             }
 
             rSha = result.sha;
@@ -128,6 +150,7 @@ function syncDoc(target, record) {
                 return vow.resolve();
             }
 
+            value.etag = result.meta.etag;
             value.sha = result.sha;
             if (!lSha) {
                 value.url = value.content;
@@ -142,11 +165,13 @@ function syncDoc(target, record) {
                 value.content = utility.mdToHtml(
                     (new Buffer(result.content, 'base64')).toString(), { renderer: renderer.getRenderer() });
             } catch (err) {
-                return onError(md);
+                return onError(response);
             }
 
-            return setUpdateDate(value)
-                .then(checkForBranch)
+            return setUpdateDate(value, isFirstLoad)
+                .then(function (value) {
+                    return checkForBranch(value, isFirstLoad);
+                })
                 .then(function (value) {
                     return levelDb.put(key, value);
                 });
