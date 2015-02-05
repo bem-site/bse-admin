@@ -13,15 +13,18 @@
   "storage": {
     "namespace": "",
     "get": {
-      "host": "",
-      "port": 80
+      "host": ""
     },
     "post": {
-      "host": "",
-      "port": 1111
+      "host": ""
     },
     "auth": "",
     "timeout": 300000
+  },
+  "yandex-disk": {
+    "user": "",
+    "password": "",
+    "namespace": ""
   },
   "mailer": {
     "host": "",

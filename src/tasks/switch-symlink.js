@@ -3,10 +3,10 @@ var util = require('util'),
 
     vow = require('vow'),
     vowFs = require('vow-fs'),
+    YandexDisk = require('yandex-disk').YandexDisk,
 
     config = require('../config'),
     errors = require('../errors').TaskSwitchSymlink,
-    storage = require('../storage').get(config.get('storage')),
     logger = require('../logger');
 
 /**
@@ -59,8 +59,18 @@ module.exports = function (target) {
                     return vowFs.symLink(util.format('./snapshots/%s', version), symlinkPath, 'dir');
                 })
                 .then(function () {
-                    logger.debug(util.format('switch symlink in mds to %s', version), module);
-                    return storage.writeP('db/testing', version);
+                    if (!config.get('disk')) {
+                        return vow.resolve();
+                    }
+                    logger.debug(util.format('switch symlink on yandex-disk to %s', version), module);
+                    var def = vow.defer(),
+                        destinationPath = path.join(config.get('disk:namespace'), 'testing'),
+                        disk = new YandexDisk(config.get('disk:user'), config.get('disk:user'));
+
+                    disk.writeFile(destinationPath, version, 'utf-8', function (err) {
+                        err ? def.reject(err) : def.resolve();
+                    });
+                    return def.promise();
                 })
                 .then(function () {
                     logger.info(util.format('symlink for %s environment was set to %s version',

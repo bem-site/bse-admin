@@ -125,8 +125,11 @@ module.exports = {
             COMMON: [ 260, 'Libraries synchronization with database failed with error %err%' ]
         }).setLogger(log),
 
-    TaskSendToMds: Terror
+    TaskSendToYandexDisk: Terror
         .create('SendToMds', {
-            COMMON: [ 270, 'Send to mds failed with error %err%' ]
+            COMMON: [ 270, 'Upload to yandex disk failed with error %err%' ],
+            ARCHIVE: [ 271, 'error %s occur while create archive for %s' ],
+            UPLOAD: [ 272, 'Upload to yandex disk failed with error %err%' ],
+            DISK_NOT_CONFIGURED: [ 273, 'Yandex Disk configuration omitted. This step will be skipped' ]
         }).setLogger(log)
 };
