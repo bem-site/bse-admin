@@ -39,7 +39,7 @@ function addTagNodes(target, key) {
                 return record.value.dynamic === key;
             }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true }),
             levelDb.get(target.KEY.TAGS)
-        ])
+       ])
         .spread(function (dynamicRecords, tags) {
             if (!dynamicRecords.length) {
                 logger.warn(util.format('No records for dynamic key %s were found in db', key), module);

@@ -154,7 +154,7 @@ function syncLibraryVersions(target, record, stateMap) {
     return vow.all([
             getLibraryVersionsFromCache(target, value),
             getLibraryVersionNodesFromDb(target, value)
-        ])
+       ])
         .spread(function (newVersions, oldVersions) {
             // hide library if there no  versions for it
             if (!newVersions.length) {
@@ -164,7 +164,7 @@ function syncLibraryVersions(target, record, stateMap) {
                 return vow.all([
                     removeLibraryVersionNodesFromDb(target, value.lib),
                     levelDb.put(key, value)
-                ]);
+               ]);
             }
 
             var added = [],
@@ -304,7 +304,7 @@ module.exports = function (target) {
     return vow.all([
             getLibraryNodesFromDb(target),
             getPreviousStateMap(target)
-        ])
+       ])
         .spread(function (records, stateMap) {
             return vow.all(records.map(function (record) {
                 return syncLibraryVersions(target, record, stateMap)

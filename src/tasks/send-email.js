@@ -132,7 +132,7 @@ module.exports = function (target) {
         .all([
             _createDocsChangesTable(target),
             _createLibrariesChangesTable(target)
-        ])
+       ])
         .spread(function (docs, libraries) {
             return mailer.send({
                 from: config.get('mailer:from'),

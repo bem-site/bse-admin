@@ -96,7 +96,7 @@ function separateSource(target, nodes) {
             levelDb.put(target.KEY.TRANSLATORS, _.uniq(collected.translators)),
             levelDb.put(target.KEY.TAGS, collected.tags),
             saveMeta(target, nodesWithSource)
-        ]);
+       ]);
 }
 
 /**

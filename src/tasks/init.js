@@ -14,7 +14,7 @@ module.exports = function (target) {
         yandexDisk.init(config.get('yandex-disk')),
         githubApi.init(config.get('github')),
         levelDb.init()
-    ]).then(function () {
+   ]).then(function () {
         return vow.resolve(target);
     });
 };

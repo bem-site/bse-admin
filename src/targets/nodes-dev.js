@@ -21,7 +21,7 @@ TargetNodesDev.prototype.init = function (options) {
         require('../tasks/urls-map'),
         require('../tasks/override-links'),
         require('../tasks/finalize')
-    ];
+   ];
 
     tasks.forEach(function (task) {
         this.addTask(task);

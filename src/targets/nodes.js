@@ -30,7 +30,7 @@ TargetNodes.prototype.init = function (options) {
         require('../tasks/switch-symlink'),
         require('../tasks/send-email'),
         require('../tasks/finalize')
-    ];
+   ];
 
     tasks.forEach(function (task) {
         this.addTask(task);

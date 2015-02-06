@@ -9,7 +9,7 @@ TargetClearDb.prototype.init = function (options) {
         require('../tasks/init'),
         require('../tasks/clear-db'),
         require('../tasks/finalize')
-    ].forEach(function (task) {
+   ].forEach(function (task) {
         this.addTask(task);
     }, this);
 

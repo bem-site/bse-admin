@@ -155,7 +155,7 @@ function compareFiles(target, lib) {
         return vow.all([
             getShaOfLocalDataFile(target, lib.name, version),
             lib.versions[version].sha
-        ])
+       ])
             .spread(function (local, remote) {
                 if (!remote || (local && local === remote)) {
                     return vow.resolve();
@@ -198,7 +198,7 @@ function syncLibVersion(target, lib) {
             return vow.all([
                 addLibVersionDirectories(target, lib.name, _.difference(versions, local)),
                 removeLibVersionDirectories(target, lib.name, _.difference(local, versions))
-            ])
+           ])
                 .then(function () {
                     return compareFiles(target, lib);
                 });
@@ -216,7 +216,7 @@ module.exports = function (target) {
             return vow.all([
                 addLibDirectories(target, _.difference(remote, local)),
                 removeLibDirectories(target, _.difference(local, remote))
-            ])
+           ])
                 .then(function () {
                     return registry;
                 });

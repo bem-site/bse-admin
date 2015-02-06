@@ -122,7 +122,7 @@ function loadDataForBlocks(blocks) {
                     item.jsdoc = jsdoc;
                     return item;
                 });
-        return vow.all([ setLoadedData, setLoadedJsDoc ])
+        return vow.all([setLoadedData, setLoadedJsDoc])
             .then(function () {
                 return item;
             });
@@ -147,7 +147,7 @@ function saveToFile(target, fileName, data) {
  * @returns {*}
  */
 function createSearchData(target) {
-    return vow.all([ getLibraries(target), getVersions(target), getLevels(target), getBlocks(target) ])
+    return vow.all([getLibraries(target), getVersions(target), getLevels(target), getBlocks(target)])
         .spread(function (libV, versionV, levelV, blockV) {
             var blocks = [],
                 libraries = libV.reduce(function (prev, lib, libIndex) {
@@ -200,7 +200,7 @@ function createSearchData(target) {
                     return vow.all([
                         saveToFile(target, 'libraries.json', libraries),
                         saveToFile(target, 'blocks.json', blocks)
-                    ]);
+                   ]);
                 });
         });
 }

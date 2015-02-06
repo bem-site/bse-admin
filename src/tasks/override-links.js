@@ -279,7 +279,7 @@ function collectUrls(target) {
     return vow.all([
         levelDb.getByKeyRange(target.KEY.NODE_PREFIX, target.KEY.PEOPLE_PREFIX),
         levelDb.getByKeyRange(target.KEY.DOCS_PREFIX, target.KEY.NODE_PREFIX)
-    ]).spread(function (nodeRecords, docRecords) {
+   ]).spread(function (nodeRecords, docRecords) {
         return nodeRecords.reduce(function (prev, nodeRecord) {
             var nodeValue = nodeRecord.value,
                 doc;
@@ -311,7 +311,7 @@ module.exports = function (target) {
     return vow.all([
             levelDb.getByKeyRange(target.KEY.NODE_PREFIX, target.KEY.PEOPLE_PREFIX),
             collectUrls(target)
-        ])
+       ])
         .spread(function (nodeRecords, urlsHash) {
             return vow.all(nodeRecords.map(function (nodeRecord) {
                 var nodeValue = nodeRecord.value;
