@@ -6,3 +6,4 @@ cache
 logs
 model
 db
+!src/model
