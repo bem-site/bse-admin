@@ -45,8 +45,12 @@ module.exports = {
 
         var def = vow.defer();
         mailer.sendMail(_.extend({}, base, options), function (err) {
-            errors.createError(errors.CODES.COMMON, { err: err }).log();
-            err ? def.reject(err) : def.resolve();
+            if (err) {
+                errors.createError(errors.CODES.COMMON, { err: err }).log();
+                def.reject(err);
+            } else {
+                def.resolve();
+            }
         });
 
         return def.promise();
