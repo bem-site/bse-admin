@@ -4,7 +4,6 @@ var util = require('util'),
     vow = require('vow'),
     vowFs = require('vow-fs'),
 
-    config = require('../config'),
     logger = require('../logger'),
     errors = require('../errors').TaskSwitchSymlink,
     disk = require('../providers/yandex-disk');
@@ -59,11 +58,11 @@ module.exports = function (target) {
                     return vowFs.symLink(util.format('./snapshots/%s', version), symlinkPath, 'dir');
                 })
                 .then(function () {
-                    if (!disk.isInitialized()) {
+                    if (!disk.get().isInitialized()) {
                         return vow.resolve();
                     }
                     logger.debug(util.format('switch symlink on yandex-disk to %s', version), module);
-                    return disk.writeFile(path.join(config.get('disk:namespace'), 'testing'), version);
+                    return disk.get().writeFile(path.join(disk.get().getNamespace(), 'testing'), version);
                 })
                 .then(function () {
                     logger.info(util.format('symlink for %s environment was set to %s version',

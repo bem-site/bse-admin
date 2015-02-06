@@ -2,9 +2,16 @@ var vow = require('vow'),
     YandexDisk = require('yandex-disk').YandexDisk,
 
     errors = require('../errors').YandexDisk,
-    disk;
 
-module.exports = {
+    YD = function (options) {
+        this.init(options);
+    },
+    yd;
+
+YD.prototype = {
+
+    _options: undefined,
+    _disk: undefined,
 
     /**
      * Initialize Yandex Disk module
@@ -17,8 +24,9 @@ module.exports = {
             return vow.resolve();
         }
 
-        disk = new YandexDisk(options.user, options.password);
-        return disk;
+        this._options = options;
+        this._disk = new YandexDisk(options.user, options.password);
+        return this;
     },
 
     /**
@@ -26,7 +34,15 @@ module.exports = {
      * @returns {boolean}
      */
     isInitialized: function () {
-        return !!disk;
+        return !!this._disk;
+    },
+
+    /**
+     * Return namspace (root folder fo snapshots on Yandex Disk)
+     * @returns {*}
+     */
+    getNamespace: function () {
+        return this._options['namespace'];
     },
 
     /**
@@ -36,13 +52,13 @@ module.exports = {
      * @returns {*}
      */
     writeFile: function (filePath, content) {
-        if (!disk) {
+        if (!this.isInitialized()) {
             errors.createError(errors.CODES.NOT_INITIALIZED).log('warn');
             return vow.resolve();
         }
 
         var def = vow.defer();
-        disk.writeFile(filePath, content, 'utf-8', function (err) {
+        this._disk.writeFile(filePath, content, 'utf-8', function (err) {
             if (err) {
                 errors.createError(errors.CODES.WRITE_FILE).log();
                 def.reject(err);
@@ -60,13 +76,13 @@ module.exports = {
      * @returns {*}
      */
     uploadDirectory: function (localDir, remoteDir) {
-        if (!disk) {
+        if (!this.isInitialized()) {
             errors.createError(errors.CODES.NOT_INITIALIZED).log('warn');
             return vow.resolve();
         }
 
         var def = vow.defer();
-        disk.uploadDir(localDir, remoteDir, function (err) {
+        this._disk.uploadDir(localDir, remoteDir, function (err) {
             if (err) {
                 errors.createError(errors.CODES.UPLOAD_DIR).log();
                 def.reject(err);
@@ -75,5 +91,16 @@ module.exports = {
             }
         });
         return def.promise();
+    }
+};
+
+module.exports = {
+    init: function (options) {
+        yd = new YD(options);
+        return yd;
+    },
+
+    get: function () {
+        return yd;
     }
 };

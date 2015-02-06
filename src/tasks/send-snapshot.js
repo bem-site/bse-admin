@@ -71,7 +71,7 @@ function _sendToDisk (target) {
         destinationPath = path.join(config.get('yandex-disk:namespace'), snapshotName);
 
     logger.debug(util.format('send folder %s to yandex disk %s', snapshotPath, destinationPath), module);
-    return disk.uploadDirectory(snapshotPath, destinationPath);
+    return disk.get().uploadDirectory(snapshotPath, destinationPath);
 }
 
 module.exports = function (target) {
@@ -82,7 +82,7 @@ module.exports = function (target) {
         return vow.resolve(target);
     }
 
-    if (disk.isInitialized()) {
+    if (!disk.get().isInitialized()) {
         logger.warn('No configuration for Yandex Disk were found. This step will be skipped', module);
         return vow.resolve(target);
     }
