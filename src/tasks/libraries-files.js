@@ -10,14 +10,14 @@ var util = require('util'),
     constants = require('../constants'),
     logger = require('../logger'),
     errors = require('../errors').TaskLibrariesFiles,
-    storage = require('../providers/mds').get();
+    storage = require('../providers/mds');
 
 /**
  * Returns list of libraries folders from configured remote github repository with compiled libraries data
  * @returns {Object}
  */
 function loadRegistry() {
-    return storage.readP(constants.REGISTRY_KEY).then(function (registry) {
+    return storage.get().readP(constants.REGISTRY_KEY).then(function (registry) {
         try {
             return JSON.parse(registry);
         } catch (err) {
@@ -132,7 +132,7 @@ function getShaOfLocalDataFile(target, lib, version) {
  */
 function downloadFile(target, lib, version) {
     var destinationPath = path.join(target.LIBRARIES_FILE_PATH, lib.name, version, 'data.json');
-    return storage.readP(util.format('%s/%s/data.json', lib.name, version))
+    return storage.get().readP(util.format('%s/%s/data.json', lib.name, version))
         .then(function (content) {
             return vowFs.write(destinationPath, content, 'utf-8');
         });
