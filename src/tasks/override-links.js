@@ -4,7 +4,7 @@ var util = require('util'),
     _ = require('lodash'),
     vow = require('vow'),
 
-    levelDb = require('../level-db'),
+    levelDb = require('../providers/level-db'),
     utility = require('../util'),
     logger = require('../logger'),
 

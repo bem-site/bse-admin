@@ -3,11 +3,11 @@ var util = require('util'),
 
     vow = require('vow'),
     vowFs = require('vow-fs'),
-    YandexDisk = require('yandex-disk').YandexDisk,
 
     config = require('../config'),
+    logger = require('../logger'),
     errors = require('../errors').TaskSwitchSymlink,
-    logger = require('../logger');
+    disk = require('../providers/yandex-disk');
 
 /**
  * Returns name of latest created snapshot
@@ -59,18 +59,11 @@ module.exports = function (target) {
                     return vowFs.symLink(util.format('./snapshots/%s', version), symlinkPath, 'dir');
                 })
                 .then(function () {
-                    if (!config.get('disk')) {
+                    if (!disk.isInitialized()) {
                         return vow.resolve();
                     }
                     logger.debug(util.format('switch symlink on yandex-disk to %s', version), module);
-                    var def = vow.defer(),
-                        destinationPath = path.join(config.get('disk:namespace'), 'testing'),
-                        disk = new YandexDisk(config.get('disk:user'), config.get('disk:user'));
-
-                    disk.writeFile(destinationPath, version, 'utf-8', function (err) {
-                        err ? def.reject(err) : def.resolve();
-                    });
-                    return def.promise();
+                    return disk.writeFile(path.join(config.get('disk:namespace'), 'testing'), version);
                 })
                 .then(function () {
                     logger.info(util.format('symlink for %s environment was set to %s version',

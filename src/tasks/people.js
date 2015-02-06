@@ -5,8 +5,8 @@ var vow = require('vow'),
     errors = require('../errors').TaskPeople,
     logger = require('../logger'),
     config = require('../config'),
-    githubApi = require('../gh-api'),
-    levelDb = require('../level-db'),
+    githubApi = require('../providers/github'),
+    levelDb = require('../providers/level-db'),
 
     repo = (function () {
         var pr = config.get('github:people');

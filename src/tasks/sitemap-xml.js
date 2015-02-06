@@ -5,7 +5,7 @@ var _ = require('lodash'),
     errors = require('../errors').TaskSitemapXML,
     config = require('../config'),
     logger = require('../logger'),
-    levelDb = require('../level-db');
+    levelDb = require('../providers/level-db');
 
 module.exports = function (target) {
     logger.info('Start to build "sitemap.xml" file', module);

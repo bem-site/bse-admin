@@ -8,8 +8,8 @@ var util = require('util'),
 
     errors = require('../errors').TaskDocs,
     logger = require('../logger'),
-    githubApi = require('../gh-api'),
-    levelDb = require('../level-db'),
+    githubApi = require('../providers/github'),
+    levelDb = require('../providers/level-db'),
     utility = require('../util');
 
 /**

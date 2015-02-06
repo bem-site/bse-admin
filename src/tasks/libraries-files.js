@@ -8,10 +8,9 @@ var util = require('util'),
     vowFs = require('vow-fs'),
 
     constants = require('../constants'),
-    config = require('../config'),
     logger = require('../logger'),
     errors = require('../errors').TaskLibrariesFiles,
-    storage = require('../storage').get(config.get('storage'));
+    storage = require('../providers/mds').get();
 
 /**
  * Returns list of libraries folders from configured remote github repository with compiled libraries data

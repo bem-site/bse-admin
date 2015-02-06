@@ -8,9 +8,9 @@ var util = require('util'),
     vow = require('vow'),
     vowFs = require('vow-fs'),
 
-    errors = require('./errors').LevelDB,
-    utility = require('./util'),
-    logger = require('./logger'),
+    errors = require('../errors').LevelDB,
+    utility = require('../util'),
+    logger = require('../logger'),
 
     DB_NAME = 'leveldb',
     DB_OPTIONS = {

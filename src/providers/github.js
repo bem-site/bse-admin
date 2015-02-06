@@ -6,9 +6,8 @@ var util = require('util'),
     vow = require('vow'),
     Api = require('github'),
 
-    errors = require('./errors').GhApi,
-    config = require('./config'),
-    logger = require('./logger'),
+    errors = require('../errors').GhApi,
+    logger = require('../logger'),
 
     gitPublic,
     gitPrivate,
@@ -20,8 +19,8 @@ var util = require('util'),
     },
     isInitialized = false;
 
-function _initPrivate () {
-    var ghConfig = config.get('github'),
+function _initPrivate (options) {
+    var ghConfig = options,
         ghPrivate = ghConfig.private || {},
         conf = {
             host: ghPrivate.host || 'github.yandex-team.ru',
@@ -33,8 +32,8 @@ function _initPrivate () {
     }
 }
 
-function _initPublic () {
-    var ghConfig = config.get('github'),
+function _initPublic (options) {
+    var ghConfig = options,
         ghPublic = ghConfig.public || {},
         conf = {
             host: ghPublic.host || 'api.github.com'
@@ -61,17 +60,18 @@ function _initPublic () {
 module.exports = {
     /**
      * Initialize github api connections to public and private repositories
+     * @param {Object} options for github api initialization
      * with configured credentials
      */
-    init: function () {
+    init: function (options) {
         if (isInitialized) {
             return vow.resolve();
         }
 
         logger.info('Initialize github API module', module);
 
-        _initPublic();
-        _initPrivate();
+        _initPublic(options);
+        _initPrivate(options);
 
         isInitialized = true;
         return vow.resolve();

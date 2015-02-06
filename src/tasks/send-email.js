@@ -3,7 +3,7 @@ var util = require('util'),
     vow = require('vow'),
     trtd = require('trtd'),
 
-    mailer = require('../mailer'),
+    mailer = require('../providers/mailer'),
     config = require('../config'),
     logger = require('../logger'),
 
@@ -125,8 +125,6 @@ module.exports = function (target) {
         logger.warn('No changes were made during this synchronization. This step will be skipped', module);
         return vow.resolve(target);
     }
-
-    mailer.init();
 
     var subject = util.format('bem-site-provider: create new data version %s', target.getSnapshotName());
 

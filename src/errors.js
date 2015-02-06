@@ -125,11 +125,26 @@ module.exports = {
             COMMON: [ 260, 'Libraries synchronization with database failed with error %err%' ]
         }).setLogger(log),
 
-    TaskSendToYandexDisk: Terror
+    TaskSendSnapshot: Terror
         .create('SendToMds', {
             COMMON: [ 270, 'Upload to yandex disk failed with error %err%' ],
-            ARCHIVE: [ 271, 'error %s occur while create archive for %s' ],
-            UPLOAD: [ 272, 'Upload to yandex disk failed with error %err%' ],
-            DISK_NOT_CONFIGURED: [ 273, 'Yandex Disk configuration omitted. This step will be skipped' ]
+            ARCHIVE: [ 271, 'Error %err% occur while create archive for %s' ],
+            UPLOAD: [ 272, 'Upload to yandex disk failed with error %err%' ]
+        }).setLogger(log),
+
+    YandexDisk: Terror
+        .create('SendToMds', {
+            COMMON: [ 280, 'Common error %err% occur for Yandex Disk module' ],
+            NOT_INITIALIZED: [ 281, 'Yandex Disk was not initialized' ],
+            DISK_NOT_CONFIGURED: [ 282, 'Can\'t initialize Yandex Disk module. Configuration was not set'],
+            WRITE_FILE: [ 283, 'Write file %filePath% on Yandex Disk failed with error %err%' ],
+            UPLOAD_DIR: [ 284, 'Upload directory %localDir% to %remoteDir% on Yandex Disk failed with error %err%' ]
+        }).setLogger(log),
+
+    Mailer: Terror
+        .create('Mailer', {
+            COMMON: [ 290, 'Sending e-mail failed with error %err%' ],
+            NOT_INITIALIZED: [ 291, 'Mailer was not initialized' ],
+            MAILER_NOT_CONFIGURED: [ 292, 'Can\'t initialize module for sending e-mails. Configuration was not set']
         }).setLogger(log)
 };

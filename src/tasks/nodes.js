@@ -8,7 +8,7 @@ var util = require('util'),
 
     errors = require('../errors').TaskNodes,
     logger = require('../logger'),
-    levelDb = require('../level-db'),
+    levelDb = require('../providers/level-db'),
     utility = require('../util'),
     Nodes = require('../model/nodes.js'),
     Meta = require('../model/meta');

@@ -4,7 +4,7 @@ var util = require('util'),
 
     errors = require('../errors').TaskDynamicTags,
     logger = require('../logger'),
-    levelDb = require('../level-db'),
+    levelDb = require('../providers/level-db'),
     nodes = require('../model/nodes/index.js');
 
 /**

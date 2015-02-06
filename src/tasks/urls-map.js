@@ -6,7 +6,7 @@ var util = require('util'),
     vow = require('vow'),
 
     errors = require('../errors').TaskUrlsMap,
-    levelDb = require('../level-db'),
+    levelDb = require('../providers/level-db'),
     logger = require('../logger');
 
 module.exports = function (target) {

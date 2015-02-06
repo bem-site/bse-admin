@@ -6,13 +6,13 @@ var fs = require('fs'),
     tar = require('tar'),
     vow = require('vow'),
     fstream = require('fstream'),
-    YandexDisk = require('yandex-disk').YandexDisk,
+
+    errors = require('../errors').TaskSendSnapshot,
+    disk = require('../providers/yandex-disk'),
 
     config = require('../config'),
-    errors = require('../errors').TaskSendToYandexDisk,
     logger = require('../logger'),
     utility = require('../util'),
-
     LEVEL_DB_DIR = 'leveldb';
 
 /**
@@ -66,18 +66,12 @@ function _removeDbFolder (target) {
  * @private
  */
 function _sendToDisk (target) {
-    var def = vow.defer(),
-        snapshotName = target.getSnapshotName(),
+    var snapshotName = target.getSnapshotName(),
         snapshotPath = path.join(target.SNAPSHOTS_DIR, snapshotName),
-        destinationPath = path.join(config.get('disk:namespace'), snapshotName),
-        disk = new YandexDisk(config.get('disk:user'), config.get('disk:user'));
+        destinationPath = path.join(config.get('yandex-disk:namespace'), snapshotName);
 
     logger.debug(util.format('send folder %s to yandex disk %s', snapshotPath, destinationPath), module);
-    disk.uploadDir(snapshotPath, destinationPath, function (err) {
-        err ? def.reject(err) : def.resolve();
-    });
-
-    return def.promise();
+    return disk.uploadDirectory(snapshotPath, destinationPath);
 }
 
 module.exports = function (target) {
@@ -88,8 +82,8 @@ module.exports = function (target) {
         return vow.resolve(target);
     }
 
-    if (!config.get('disk')) {
-        errors.createError(errors.CODES.DISK_NOT_CONFIGURED).warn();
+    if (disk.isInitialized()) {
+        logger.warn('No configuration for Yandex Disk were found. This step will be skipped', module);
         return vow.resolve(target);
     }
 
@@ -101,6 +95,8 @@ module.exports = function (target) {
             return _sendToDisk(target);
         })
         .then(function () {
+            logger.info(util.format('Snapshot files %s have been sent to Yandex Disk successfully',
+                target.getSnapshotName()), module);
             return vow.resolve(target);
         })
         .fail(function (err) {

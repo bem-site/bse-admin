@@ -10,7 +10,7 @@
     },
     "people": ""
   },
-  "storage": {
+  "mds": {
     "namespace": "",
     "get": {
       "host": ""
