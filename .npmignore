@@ -7,3 +7,4 @@ logs
 model
 db
 !src/model
+!src/commands/db
