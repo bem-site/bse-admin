@@ -14,7 +14,7 @@ var util = require('util'),
     common = {
         version: '3.0.0',
         protocol: 'https',
-        timeout: 5000,
+        timeout: 60000,
         debug: false
     },
     isInitialized = false;

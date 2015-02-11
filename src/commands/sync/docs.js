@@ -1,12 +1,12 @@
 var logger = require('../../logger'),
-    Target = require('../../targets/nodes-dev');
+    Target = require('../../targets/docs-dev');
 
 module.exports = function () {
     return this
-        .title('synchronize model declaration')
+        .title('synchronize docs data')
         .helpful()
         .act(function (opts) {
-            logger.info('Try to synchronize model', module);
+            logger.info('Try to synchronize docs', module);
             return (new Target(opts)).execute();
         });
 };
