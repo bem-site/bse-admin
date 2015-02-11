@@ -1,9 +1,9 @@
 bse-admin
 =========
 
-[![Build Status](https://travis-ci.org/bem/bse-admin.svg?branch=master)](https://travis-ci.org/bem/bse-admin)
-[![Dependency Status](https://david-dm.org/bem/bse-admin.svg?style=flat)](https://david-dm.org/bem/bse-admin)
-[![devDependency Status](https://david-dm.org/bem/bse-admin/dev-status.svg?style=flat)](https://david-dm.org/bem/bse-admin#info=devDependencies)
+[![Build Status](https://travis-ci.org/bem-site/bse-admin.svg?branch=master)](https://travis-ci.org/bem-site/bse-admin)
+[![Dependency Status](https://david-dm.org/bem-site/bse-admin.svg?style=flat)](https://david-dm.org/bem-site/bse-admin)
+[![devDependency Status](https://david-dm.org/bem-site/bse-admin/dev-status.svg?style=flat)](https://david-dm.org/bem-site/bse-admin#info=devDependencies)
 
 Сборщик данных для [bem-site-engine](https://github.com/bem/bem-site-engine)
 
