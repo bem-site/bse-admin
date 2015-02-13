@@ -1,13 +1,7 @@
-var fs = require('fs'),
-    util = require('util'),
-
-    _ = require('lodash'),
-    request = require('request'),
+var _ = require('lodash'),
     vow = require('vow'),
     md = require('marked'),
     fsExtra = require('fs-extra'),
-
-    logger = require('./logger'),
     errors = require('./errors').Util;
 
 /**
@@ -52,35 +46,6 @@ exports.copyDir = function (source, target) {
             def.resolve();
         }
     });
-    return def.promise();
-};
-
-/**
- * Loads data from gh to file on local filesystem via https request
- * @param {Object} options
- * @returns {*}
- */
-exports.loadFromRepoToFile = function (options) {
-    var def = vow.defer(),
-        repo = options.repository,
-        file = options.file,
-        getUrl = function (type) {
-            return {
-                'public': 'https://raw.githubusercontent.com/%s/%s/%s/%s',
-                'private': 'https://github.yandex-team.ru/%s/%s/raw/%s/%s'
-            }[type];
-        },
-        url = util.format(getUrl(repo.type), repo.user, repo.repo, repo.ref, repo.path);
-
-    request.get(url).pipe(fs.createWriteStream(file))
-        .on('error', function (err) {
-            errors.createError(errors.LOAD_FROM_URL_TO_FILE, { url: url, file: file }).log();
-            def.reject(err);
-        })
-        .on('close', function () {
-            logger.debug(util.format('Success loading from url %s to file %s', url, file), module);
-            def.resolve();
-        });
     return def.promise();
 };
 
