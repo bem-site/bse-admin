@@ -1,7 +1,7 @@
 bse-admin
 =========
 
-[![NPM](https://nodei.co/npm/mds-wrapper.png)](https://nodei.co/npm/bse-admin/)
+[![NPM](https://nodei.co/npm/bse-admin.png)](https://nodei.co/npm/bse-admin/)
 
 [![Coveralls branch](https://img.shields.io/coveralls/bem-site/bse-admin/master.svg)](https://coveralls.io/r/bem-site/bse-admin?branch=master)
 [![Travis](https://img.shields.io/travis/bem-site/bse-admin.svg)](https://travis-ci.org/bem-site/bse-admin)
