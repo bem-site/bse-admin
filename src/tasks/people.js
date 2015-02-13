@@ -4,33 +4,10 @@ var vow = require('vow'),
 
     errors = require('../errors').TaskPeople,
     logger = require('../logger'),
-    config = require('../config'),
     githubApi = require('../providers/github'),
     levelDb = require('../providers/level-db'),
 
-    repo = (function () {
-        var pr = config.get('github:people');
-        if (!pr) {
-            errors.createError(errors.CODES.PATH_NOT_SET).log('warn');
-            return null;
-        }
-
-        pr = pr.match(/^https?:\/\/(.+?)\/(.+?)\/(.+?)\/(tree|blob)\/(.+?)\/(.+)/);
-        if (!pr) {
-            errors.createError(errors.CODES.PATH_INVALID).log('warn');
-            return null;
-        }
-
-        pr = {
-            host: pr[1],
-            user: pr[2],
-            repo: pr[3],
-            ref:  pr[5],
-            path: pr[6]
-        };
-        pr.type = pr.host.indexOf('github.com') > -1 ? 'public' : 'private';
-        return pr;
-    })();
+    repo;
 
 /**
  * Load people data from remote gh repository
@@ -80,6 +57,31 @@ function updatePeopleData(target, remote) {
 
 module.exports = function (target) {
     logger.info('Check if people data was changed start', module);
+
+    repo = (function () {
+        var pr = target.getOptions()['github']['people'];
+        if (!pr) {
+            errors.createError(errors.CODES.PATH_NOT_SET).log('warn');
+            return null;
+        }
+
+        pr = pr.match(/^https?:\/\/(.+?)\/(.+?)\/(.+?)\/(tree|blob)\/(.+?)\/(.+)/);
+        if (!pr) {
+            errors.createError(errors.CODES.PATH_INVALID).log('warn');
+            return null;
+        }
+
+        pr = {
+            host: pr[1],
+            user: pr[2],
+            repo: pr[3],
+            ref:  pr[5],
+            path: pr[6]
+        };
+        pr.type = pr.host.indexOf('github.com') > -1 ? 'public' : 'private';
+        return pr;
+    })();
+
     if (!repo) {
         logger.warn('People configuration was not recognized. People synchronization will be skipped', module);
         return vow.resolve(target);

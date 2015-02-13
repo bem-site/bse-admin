@@ -4,7 +4,6 @@ var path = require('path'),
 
     _ = require('lodash'),
     intel = require('intel'),
-    config = require('./config'),
     baseHandlerConfig = {
         level: intel.VERBOSE,
         formatter: new intel.Formatter({
@@ -14,7 +13,7 @@ var path = require('path'),
     },
     LOG_DIR = path.join(process.cwd(), 'logs');
 
-intel.setLevel(config.get('logLevel'));
+intel.setLevel('debug');
 intel.addHandler(
     new intel.handlers.Console(_.extend({}, baseHandlerConfig))
 );

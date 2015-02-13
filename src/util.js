@@ -8,15 +8,14 @@ var fs = require('fs'),
     fsExtra = require('fs-extra'),
 
     logger = require('./logger'),
-    errors = require('./errors').Util,
-    config = require('./config');
+    errors = require('./errors').Util;
 
 /**
  * Returns array of available languages
  * @returns {Array}
  */
 exports.getLanguages = function () {
-    return config.get('languages') || [config.get('defaultLanguage') || 'en'];
+    return ['en', 'ru'];
 };
 
 /**
