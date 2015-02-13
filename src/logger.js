@@ -14,7 +14,7 @@ var fs = require('fs'),
     },
     LOG_DIR = path.join(process.cwd(), 'logs');
 
-fs.createFileSync(LOG_DIR);
+fs.mkdirSync(LOG_DIR);
 
 intel.setLevel('debug');
 intel.addHandler(
