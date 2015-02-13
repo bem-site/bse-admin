@@ -6,3 +6,4 @@ require('./targets/nodes.js');
 require('./targets/nodes-dev.js');
 require('./targets/update-model.js');
 
+require('./util.js');

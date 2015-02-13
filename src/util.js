@@ -74,6 +74,11 @@ exports.dateToMilliseconds = function (dateStr) {
         dateParse = dateStr.split(re),
         dateMaskFrom = 'dd-mm-yyyy'.split(re);
 
+    date.setHours(0);
+    date.setMinutes(0);
+    date.setSeconds(0);
+    date.setMilliseconds(0);
+
     dateMaskFrom.forEach(function (elem, indx) {
         switch (elem) {
             case 'dd':
