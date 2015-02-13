@@ -1,23 +1,30 @@
-var TargetBase = require('./base').TargetBase,
-    TargetClearDb = function (options) {
+var TargetBase = require('./base'),
+    Target = function (options) {
         this.init(options);
     };
 
-TargetClearDb.prototype = Object.create(TargetBase.prototype);
-TargetClearDb.prototype.init = function (options) {
-    [
+Target.prototype = Object.create(TargetBase.prototype);
+
+/**
+ * Initialize Target
+ * @param {Object} options
+ */
+Target.prototype.init = function (options) {
+    var tasks = [
         require('../tasks/init'),
         require('../tasks/clear-db'),
         require('../tasks/finalize')
-   ].forEach(function (task) {
+    ];
+
+    tasks.forEach(function (task) {
         this.addTask(task);
     }, this);
 
     TargetBase.prototype.init.call(this, options);
 };
 
-TargetClearDb.prototype.getName = function () {
+Target.prototype.getName = function () {
     return 'CLEAR DATABASE';
 };
 
-exports.TargetClearDb = TargetClearDb;
+module.exports = Target;

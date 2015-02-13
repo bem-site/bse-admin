@@ -1,16 +1,16 @@
 var path = require('path'),
-    TargetBase = require('./base').TargetBase,
-    TargetNodes = function (options) {
+    TargetBase = require('./base'),
+    Target = function (options) {
         this.init(options);
     };
 
-TargetNodes.prototype = Object.create(TargetBase.prototype);
-TargetNodes.prototype.MODEL_CACHE_DIR = path.join(TargetNodes.prototype.CACHE_DIR, 'model');
-TargetNodes.prototype.MODEL_FILE_PATH = path.join(TargetNodes.prototype.CACHE_DIR, 'model', 'model.json');
-TargetNodes.prototype.MODEL_JSPATH = path.join(process.cwd(), 'model', 'index.js');
-TargetNodes.prototype.LIBRARIES_FILE_PATH = path.join(TargetNodes.prototype.CACHE_DIR, 'libraries');
+Target.prototype = Object.create(TargetBase.prototype);
+Target.prototype.MODEL_CACHE_DIR = path.join(Target.prototype.CACHE_DIR, 'model');
+Target.prototype.MODEL_FILE_PATH = path.join(Target.prototype.CACHE_DIR, 'model', 'model.json');
+Target.prototype.MODEL_JSPATH = path.join(process.cwd(), 'model', 'index.js');
+Target.prototype.LIBRARIES_FILE_PATH = path.join(Target.prototype.CACHE_DIR, 'libraries');
 
-TargetNodes.prototype.init = function (options) {
+Target.prototype.init = function (options) {
     var tasks = [
         require('../tasks/init'),
         require('../tasks/nodes'),
@@ -24,7 +24,6 @@ TargetNodes.prototype.init = function (options) {
         require('../tasks/urls-map'),
         require('../tasks/override-links'),
         require('../tasks/sitemap-xml'),
-        // require('../tasks/search-data'),
         require('../tasks/snapshot'),
         require('../tasks/send-snapshot'),
         require('../tasks/switch-symlink'),
@@ -39,8 +38,8 @@ TargetNodes.prototype.init = function (options) {
     TargetBase.prototype.init.call(this, options);
 };
 
-TargetNodes.prototype.getName = function () {
+Target.prototype.getName = function () {
     return 'NODES SYNCHRONIZATION';
 };
 
-exports.TargetNodes = TargetNodes;
+module.exports = Target;

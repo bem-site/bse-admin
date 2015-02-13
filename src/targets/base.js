@@ -20,10 +20,9 @@ TargetBase.prototype = {
         AUTHORS: 'authors',
         TRANSLATORS: 'translators',
         TAGS: 'tags'
-
     },
 
-    tasks: [],
+    tasks: undefined,
     options: undefined,
     changes: undefined,
     snapshot: undefined,
@@ -51,6 +50,7 @@ TargetBase.prototype = {
      * @returns {TargetBase}
      */
     addTask: function (task) {
+        this.tasks = this.tasks || [];
         this.tasks.push(task);
         return this;
     },
@@ -121,4 +121,4 @@ TargetBase.prototype = {
     }
 };
 
-exports.TargetBase = TargetBase;
+module.exports = TargetBase;
