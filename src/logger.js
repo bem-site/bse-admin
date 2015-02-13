@@ -14,7 +14,11 @@ var fs = require('fs'),
     },
     LOG_DIR = path.join(process.cwd(), 'logs');
 
-fs.mkdirSync(LOG_DIR);
+try {
+    fs.mkdirSync(LOG_DIR);
+}catch (err) {
+    err;
+}
 
 intel.setLevel('debug');
 intel.addHandler(

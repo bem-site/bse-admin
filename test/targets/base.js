@@ -1,11 +1,24 @@
-var should = require('should'),
+var vow = require('vow'),
+    should = require('should'),
     Target = require('../../src/targets/base'),
     Changes = require('../../src/model/changes'),
-    target;
+    target,
+    task1,
+    task2;
 
 describe('describe task base', function () {
     before(function () {
         target = new Target({});
+        task1 = function (t) {
+            t.getChanges().getDocs().addAdded(1);
+            t.result = 1;
+            return vow.resolve(t);
+        };
+        task2 = function (t) {
+            t.getChanges().getDocs().addAdded(1);
+            t.result = 2;
+            return vow.resolve(t);
+        };
     });
 
     it('should have valid name', function () {
@@ -41,5 +54,30 @@ describe('describe task base', function () {
 
     it('should have snapshot name after it was set', function () {
         target.getSnapshotName().should.equal('11:2:2015-16:28:54');
+    });
+
+    it('should add tasks', function () {
+        target.addTask(task1);
+        target.addTask(task2);
+        target.getTasks().should.be.ok;
+        target.getTasks().should.be.instanceOf(Array).and.have.length(2);
+    });
+
+    it('should execute tasks', function () {
+        target.execute().then(function (t) {
+            t.result.should.equal(2);
+            t.getChanges().getDocs().getAdded().should.be.instanceOf(Array).and.have.length(2);
+        })
+    });
+
+    it('should clear changes', function () {
+        var r = target.clearChanges();
+        r.should.be.instanceOf(Target);
+        r.getChanges().getDocs().getAdded().should.be.instanceOf(Array).and.have.length(0);
+    });
+
+    it('should init target with empty options if they were not given', function () {
+        var t = new Target();
+        t.getOptions().should.be.empty;
     });
 });
