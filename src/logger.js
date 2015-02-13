@@ -1,6 +1,7 @@
 'use strict';
 
-var path = require('path'),
+var fs = require('fs'),
+    path = require('path'),
 
     _ = require('lodash'),
     intel = require('intel'),
@@ -12,6 +13,8 @@ var path = require('path'),
         })
     },
     LOG_DIR = path.join(process.cwd(), 'logs');
+
+fs.createFileSync(LOG_DIR);
 
 intel.setLevel('debug');
 intel.addHandler(
