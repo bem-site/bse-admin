@@ -4,7 +4,6 @@ var util = require('util'),
     trtd = require('trtd'),
 
     mailer = require('../providers/mailer'),
-    config = require('../config'),
     logger = require('../logger'),
 
     CHANGES_FIELDS = ['_added', '_modified', '_removed'];
@@ -135,8 +134,8 @@ module.exports = function (target) {
        ])
         .spread(function (docs, libraries) {
             return mailer.send({
-                from: config.get('mailer:from'),
-                to: config.get('mailer:to'),
+                from: target.getOptions['mailer']['from'],
+                to: target.getOptions['mailer']['to'],
                 subject: subject,
                 html: docs + libraries
             });

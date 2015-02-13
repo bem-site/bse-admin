@@ -9,15 +9,13 @@ var fs = require('fs'),
 
     errors = require('../errors').TaskSendSnapshot,
     disk = require('../providers/yandex-disk'),
-
-    config = require('../config'),
     logger = require('../logger'),
     utility = require('../util'),
     LEVEL_DB_DIR = 'leveldb';
 
 /**
  * Creates database archive from database folder
- * @param {TargetNodes} target object
+ * @param {TargetBase} target object
  * @returns {*}
  * @private
  */
@@ -49,7 +47,7 @@ function _createDbArchive (target) {
 
 /**
  * Remove database folder
- * @param {TargetNodes} target object
+ * @param {TargetBase} target object
  * @returns {*}
  * @private
  */
@@ -61,14 +59,14 @@ function _removeDbFolder (target) {
 
 /**
  * Sends all files in snapshot folder to Yandex Disk
- * @param {TargetNodes} target object
+ * @param {TargetBase} target object
  * @returns {*}
  * @private
  */
 function _sendToDisk (target) {
     var snapshotName = target.getSnapshotName(),
         snapshotPath = path.join(target.SNAPSHOTS_DIR, snapshotName),
-        destinationPath = path.join(config.get('yandex-disk:namespace'), snapshotName);
+        destinationPath = path.join(target.getOptions['yandex-disk:namespace'], snapshotName);
 
     logger.debug(util.format('send folder %s to yandex disk %s', snapshotPath, destinationPath), module);
     return disk.get().uploadDirectory(snapshotPath, destinationPath);

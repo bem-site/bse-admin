@@ -1,12 +1,12 @@
-var TargetBase = require('./base').TargetBase,
-    TargetNodes = require('./nodes').TargetNodes,
-    TargetNodesDev = function (options) {
+var TargetBase = require('./base'),
+    TargetNodes = require('./nodes'),
+    Target = function (options) {
         this.init(options);
     };
 
-TargetNodesDev.prototype = Object.create(TargetNodes.prototype);
+Target.prototype = Object.create(TargetNodes.prototype);
 
-TargetNodesDev.prototype.init = function (options) {
+Target.prototype.init = function (options) {
     var tasks = [
         require('../tasks/init'),
         require('../tasks/get-jsmodel'),
@@ -30,8 +30,8 @@ TargetNodesDev.prototype.init = function (options) {
     TargetBase.prototype.init.call(this, options);
 };
 
-TargetNodesDev.prototype.getName = function () {
+Target.prototype.getName = function () {
     return 'NODES DEV SYNCHRONIZATION';
 };
 
-module.exports = TargetNodesDev;
+module.exports = Target;

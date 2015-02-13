@@ -1,12 +1,12 @@
-var TargetBase = require('./base').TargetBase,
-    TargetNodes = require('./nodes').TargetNodes,
-    TargetLibrariesDev = function (options) {
+var TargetBase = require('./base'),
+    TargetNodes = require('./nodes'),
+    Target = function (options) {
         this.init(options);
     };
 
-TargetLibrariesDev.prototype = Object.create(TargetNodes.prototype);
+Target.prototype = Object.create(TargetNodes.prototype);
 
-TargetLibrariesDev.prototype.init = function (options) {
+Target.prototype.init = function (options) {
     var tasks = [
         require('../tasks/init'),
         require('../tasks/libraries-files'),
@@ -23,8 +23,8 @@ TargetLibrariesDev.prototype.init = function (options) {
     TargetBase.prototype.init.call(this, options);
 };
 
-TargetLibrariesDev.prototype.getName = function () {
+Target.prototype.getName = function () {
     return 'LIBRARIES DEV SYNCHRONIZATION';
 };
 
-module.exports = TargetLibrariesDev;
+module.exports = Target;

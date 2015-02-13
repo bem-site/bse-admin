@@ -9,19 +9,18 @@ var fs = require('fs'),
     vow = require('vow'),
 
     errors = require('../errors').TaskUpdateModel,
-    config = require('../config'),
     logger = require('../logger');
 
 /**
  * Reads model.json file, compress it and send to configured destination
- * @param {TargetUpdateModel} target object
+ * @param {TargetBase} target object
  * @returns {*}
  */
 function send(target) {
     var def = vow.defer(),
         gzip = zlib.createGzip(),
-        provider = config.get('provider') || { host: '127.0.0.1', port: 3001 },
         options = target.getOptions(),
+        provider = options['provider'] || { host: '127.0.0.1', port: 3001 },
         host = options.host || provider.host,
         port = options.port || provider.port,
         link = url.format({

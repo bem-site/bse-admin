@@ -3,13 +3,12 @@ var _ = require('lodash'),
     js2xml = require('js2xmlparser'),
 
     errors = require('../errors').TaskSitemapXML,
-    config = require('../config'),
     logger = require('../logger'),
     levelDb = require('../providers/level-db');
 
 module.exports = function (target) {
     logger.info('Start to build "sitemap.xml" file', module);
-    var hosts = config.get('hosts') || {};
+    var hosts = target.getOptions['hosts'] || {};
 
     // check if any changes were collected during current synchronization
     // otherwise we should skip this task

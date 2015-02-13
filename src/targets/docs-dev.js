@@ -1,12 +1,12 @@
-var TargetBase = require('./base').TargetBase,
-    TargetNodes = require('./nodes').TargetNodes,
-    TargetDocsDev = function (options) {
+var TargetBase = require('./base'),
+    TargetNodes = require('./nodes'),
+    Target = function (options) {
         this.init(options);
     };
 
-TargetDocsDev.prototype = Object.create(TargetNodes.prototype);
+Target.prototype = Object.create(TargetNodes.prototype);
 
-TargetDocsDev.prototype.init = function (options) {
+Target.prototype.init = function (options) {
     var tasks = [
         require('../tasks/init'),
         require('../tasks/docs'),
@@ -25,8 +25,8 @@ TargetDocsDev.prototype.init = function (options) {
     TargetBase.prototype.init.call(this, options);
 };
 
-TargetDocsDev.prototype.getName = function () {
+Target.prototype.getName = function () {
     return 'DOCS DEV SYNCHRONIZATION';
 };
 
-module.exports = TargetDocsDev;
+module.exports = Target;

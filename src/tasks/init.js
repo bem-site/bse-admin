@@ -1,5 +1,4 @@
 var vow = require('vow'),
-    config = require('../config'),
 
     mds = require('../providers/mds'),
     mailer = require('../providers/mailer'),
@@ -9,12 +8,12 @@ var vow = require('vow'),
 
 module.exports = function (target) {
     return vow.all([
-        mds.init(config.get('mds')),
-        mailer.init(config.get('mailer')),
-        yandexDisk.init(config.get('yandex-disk')),
-        githubApi.init(config.get('github')),
-        levelDb.init()
-   ]).then(function () {
+            mds.init(target.getOptions()['mds']),
+            mailer.init(target.getOptions()['mailer']),
+            yandexDisk.init(target.getOptions()['yandex-disk']),
+            githubApi.init(target.getOptions()['github']),
+            levelDb.init()
+       ]).then(function () {
         return vow.resolve(target);
-    });
+       });
 };
