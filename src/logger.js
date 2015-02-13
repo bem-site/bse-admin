@@ -25,12 +25,14 @@ intel.addHandler(
     new intel.handlers.Console(_.extend({}, baseHandlerConfig))
 );
 
+/*
 intel.addHandler(
     new intel.handlers.Rotating(_.extend({
         file: path.join(LOG_DIR, 'bse.log'),
         maxSize: 1024 * 1024
     }, baseHandlerConfig))
 );
+*/
 
 /**
  * Returns logger by it name
