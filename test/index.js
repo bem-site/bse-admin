@@ -1,0 +1,8 @@
+require('./targets/base.js');
+require('./targets/clear-db.js');
+require('./targets/docs-dev.js');
+require('./targets/libraries-dev.js');
+require('./targets/nodes.js');
+require('./targets/nodes-dev.js');
+require('./targets/update-model.js');
+
