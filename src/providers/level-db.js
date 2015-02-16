@@ -7,57 +7,121 @@ var util = require('util'),
     _ = require('lodash'),
     vow = require('vow'),
     vowFs = require('vow-fs'),
-
-    errors = require('../errors').LevelDB,
-    utility = require('../util'),
     logger = require('../logger'),
+    utility = require('../util'),
 
-    DB_NAME = 'leveldb',
-    DB_OPTIONS = {
-        keyEncoding: 'utf-8',
-        valueEncoding: {
-            encode: JSON.stringify,
-            decode: function (val) {
-                try {
-                    return JSON.parse(val);
-                } catch (err) {
-                    return val;
-                }
-            },
-            buffer: false,
-            type: 'custom'
+    /**
+     * Initialize database
+     * @param {String} dbPath - database files location
+     * @param {Object} dbOptions - database initialization options
+     * @param {Object} options - general options
+     * @returns {*}
+     */
+    LevelDB = function (dbPath, dbOptions, options) {
+        this._dbPath = dbPath;
+        this._dbOptions = dbOptions;
+        this._options = options || { debug: false };
+    },
+    db;
+
+LevelDB.prototype = {
+
+    _DB_NAME: 'leveldb',
+
+    _dbPath: undefined,
+    _dbOptions: undefined,
+    _options: undefined,
+    _isInitialized: undefined,
+    _db: undefined,
+
+    /**
+     * Creates log message in console
+     * @param {String} message - log message
+     * @private
+     */
+    _log: function (message) {
+        if (this._options.debug) {
+            console.log(message);
         }
     },
 
-    db = null,
-    isInitialized = false;
+    /**
+     * Returns data by criteria
+     * @param {Function} criteria function
+     * @param {Object} config object for set type of data that should be returned
+     * @returns {*}
+     */
+    _getByCriteria: function (criteria, config) {
+        var def = vow.defer(),
+            result = [];
+        this._db.createReadStream(_.extend(this._dbOptions, config))
+            .on('data', function (data) {
+                if (criteria(data)) {
+                    result.push(data);
+                }
+            })
+            .on('error', function (err) {
+                def.reject(err);
+            })
+            .on('close', function () {
+                def.resolve(result);
+            })
+            .on('end', function () {
+                def.resolve(result);
+            });
+        return def.promise();
+    },
 
-module.exports = {
     /**
      * Initialize database
+     * @returns {*}
      */
     init: function () {
         var def = vow.defer();
-
-        if (isInitialized) {
+        if (this.isInitialized()) {
             return vow.resolve();
         }
 
-        logger.info('Initialize leveldb database', module);
+        this._log('Initialize leveldb database');
         return vowFs
-            .makeDir(path.join(process.cwd(), 'db'))
+            .makeDir(this._dbPath)
             .then(function () {
                 try {
-                    db = levelup(path.join('db', DB_NAME));
-                    logger.info('Database was initialized successfully', module);
-                    isInitialized = true;
+                    this._db = levelup(path.join(this._dbPath, this._DB_NAME));
+                    this._log('Database was initialized successfully');
+                    this._isInitialized = true;
                     def.resolve();
                 } catch (err) {
-                    errors.createError(errors.INIT, { err: err }).log();
                     def.reject(err);
                 }
                 return def.promise();
-            });
+            }, this);
+    },
+
+    isInitialized: function () {
+        return !!this._isInitialized;
+    },
+
+    /**
+     * Returns value by key
+     * @param {String} key of record
+     * @returns {Object} value of record
+     */
+    get: function (key) {
+        var def = vow.defer();
+
+        this._log(util.format('get: %s', key));
+        this._db.get(key, this._dbOptions, function (err, value) {
+            if (err) {
+                if (err.type === 'NotFoundError') {
+                    def.resolve();
+                } else {
+                    def.reject();
+                }
+            }
+            def.resolve(value);
+        });
+        return def.promise();
     },
 
     /**
@@ -67,39 +131,11 @@ module.exports = {
      * @returns {*}
      */
     put: function (key, value) {
-        logger.verbose(util.format('put: %s %s', key, value), module);
-
         var def = vow.defer();
-        db.put(key, value, DB_OPTIONS, function (err) {
-            if (err) {
-                errors.createError(errors.PUT, { key: key, err: err }).log();
-                def.reject(err);
-            } else {
-                def.resolve();
-            }
-        });
-        return def.promise();
-    },
 
-    /**
-     * Returns value by key
-     * @param {String} key of record
-     * @returns {Object} value of record
-     */
-    get: function (key) {
-        logger.verbose(util.format('get: %s', key), module);
-
-        var def = vow.defer();
-        db.get(key, DB_OPTIONS, function (err, value) {
-            if (err) {
-                if (err.type === 'NotFoundError') {
-                    def.resolve();
-                } else {
-                    errors.createError(errors.GET, { key: key, err: err }).log();
-                    def.reject();
-                }
-            }
-            def.resolve(value);
+        this._log(util.format('put: %s %s', key, value));
+        this._db.put(key, value, this._dbOptions, function (err) {
+            err ? def.reject(err) : def.resolve();
         });
         return def.promise();
     },
@@ -110,16 +146,11 @@ module.exports = {
      * @returns {*}
      */
     del: function (key) {
-        logger.verbose(util.format('del: %s', key), module);
-
         var def = vow.defer();
-        db.del(key, function (err) {
-            if (err) {
-                errors.createError(errors.DEL, { key: key, err: err }).log();
-                def.reject(err);
-            } else {
-                def.resolve();
-            }
+
+        this._log(util.format('del: %s', key));
+        this._db.del(key, function (err) {
+            err ? def.reject(err) : def.resolve();
         });
         return def.promise();
     },
@@ -135,42 +166,9 @@ module.exports = {
         }
 
         var def = vow.defer();
-        db.batch(operations, DB_OPTIONS, function (err) {
-            if (err) {
-                errors.createError(errors.BATCH, { err: err }).log();
-                def.reject(err);
-            } else {
-                def.resolve();
-            }
+        this._db.batch(operations, this._dbOptions, function (err) {
+            err ? def.reject(err) : def.resolve();
         });
-        return def.promise();
-    },
-
-    /**
-     * Returns data by criteria
-     * @param {Function} criteria function
-     * @param {Object} config object for set type of data that should be returned
-     * @returns {*}
-     */
-    _getByCriteria: function (criteria, config) {
-        var def = vow.defer(),
-            result = [];
-        db.createReadStream(_.extend(DB_OPTIONS, config))
-            .on('data', function (data) {
-                if (criteria(data)) {
-                    result.push(data);
-                }
-            })
-            .on('error', function (err) {
-                errors.createError(errors.GET_BY_CRITERIA, { err: err }).log();
-                def.reject(err);
-            })
-            .on('close', function () {
-                def.resolve(result);
-            })
-            .on('end', function () {
-                def.resolve(result);
-            });
         return def.promise();
     },
 
@@ -246,7 +244,7 @@ module.exports = {
      * @returns {*}
      */
     removeByKeyPrefix: function (prefix) {
-        logger.verbose(util.format('Remove existed data for prefix %s', prefix), module);
+        this._log(util.format('Remove existed data for prefix %s', prefix));
 
         return this.getKeysByCriteria(function (key) {
                 return key.indexOf(prefix) > -1;
@@ -264,6 +262,67 @@ module.exports = {
      * @returns {*}
      */
     copy: function (snapshotPath) {
-        return utility.copyDir(path.join('db', DB_NAME), path.join(snapshotPath, DB_NAME));
+        return utility.copyDir(path.join(this._dbPath, this._DB_NAME), path.join(snapshotPath, this._DB_NAME));
+    },
+
+    /**
+     * Disconnect from leveldb database
+     * @returns {*}
+     */
+    disconnect: function () {
+        var def = vow.defer();
+        if (!this.isInitialized()) {
+            this._log('database was not initialized yet');
+            return vow.resolve();
+        }
+
+        if (!this._db.isOpen()) {
+            this._log('database was already closed');
+        }
+
+        this._db.close(function (err) {
+            if (err) {
+                def.reject(err);
+            } else {
+                // this._isInitialized = false;
+                def.resolve();
+            }
+        });
+        return def.promise();
+    }
+};
+
+module.exports = {
+    /**
+     * Initialize mds storage
+     * @param {String} dbPath path to level db files
+     * @returns {LevelDB}
+     */
+    init: function (dbPath) {
+        logger.info('Initialize mds API module', module);
+        db = new LevelDB(dbPath, {
+            keyEncoding: 'utf-8',
+            valueEncoding: {
+                encode: JSON.stringify,
+                decode: function (val) {
+                    try {
+                        return JSON.parse(val);
+                    } catch (err) {
+                        return val;
+                    }
+                },
+                buffer: false,
+                type: 'custom'
+            }
+        }, { debug: true });
+        return db.init();
+    },
+
+    /**
+     * Returns media storage
+     * @returns {LevelDB} media storage wrapper
+     */
+    get: function () {
+        return db;
     }
 };
