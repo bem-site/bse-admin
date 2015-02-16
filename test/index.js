@@ -7,3 +7,4 @@ require('./targets/nodes-dev.js');
 require('./targets/update-model.js');
 
 require('./util.js');
+require('./providers/level-db.js');
