@@ -58,12 +58,12 @@ exports.TargetFoo = TargetFoo;
 
 ### Готовые сценарии
 
-* [Очистка базы данных](./docs/clear-db.md)
-* [Публикация модели](./docs/update-model.md)
-* [Полная сборка модели](./docs/nodes.md)
-* [Сборка модели в режиме разработки](./docs/nodes-dev.md)
-* [Обновление документации в режиме разработки](./docs/docs-dev.md)
-* [Обновление библиотек в режиме разработки](./docs/libraries-dev.md)
+* [Очистка базы данных](./docs/targets/clear-db.md)
+* [Публикация модели](./docs/targets/update-model.md)
+* [Полная сборка модели](./docs/targets/nodes.md)
+* [Сборка модели в режиме разработки](./docs/targets/nodes-dev.md)
+* [Обновление документации в режиме разработки](./docs/targets/docs-dev.md)
+* [Обновление библиотек в режиме разработки](./docs/targets/libraries-dev.md)
 
 ### Тестирование
 
