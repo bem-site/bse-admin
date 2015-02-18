@@ -2,7 +2,7 @@ var _ = require('lodash'),
 
     susanin = require('susanin'),
 
-    levelDb = require('../../providers/level-db').get(),
+    levelDb = require('../../providers/level-db'),
     BaseNode = require('./base').BaseNode,
 
     /**
@@ -111,7 +111,7 @@ DynamicNode.prototype.processRoute = function (parent, params) {
  */
 DynamicNode.prototype.saveToDb = function () {
     this.parent = this.parent.id;
-    return levelDb.put(this.generateKey(), this);
+    return levelDb.get().put(this.generateKey(), this);
 };
 
 /**

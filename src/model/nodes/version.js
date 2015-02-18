@@ -2,7 +2,7 @@ var util = require('util'),
     vow = require('vow'),
 
     logger = require('../../logger'),
-    levelDb = require('../../providers/level-db').get(),
+    levelDb = require('../../providers/level-db'),
     utility = require('../../util'),
     nodes = require('./index'),
 
@@ -151,8 +151,7 @@ VersionNode.prototype.addItems = function (version) {
 };
 
 VersionNode.prototype.saveToDb = function () {
-    return levelDb
-        .batch(this.items.reduce(function (prev, item, index) {
+    return levelDb.get().batch(this.items.reduce(function (prev, item, index) {
             item.order = index;
             prev = prev.concat(prev, item.saveToDb());
             return prev;
