@@ -5,7 +5,7 @@ var util = require('util'),
     vowFs = require('vow-fs'),
 
     errors = require('../errors').TaskSnapshot,
-    levelDb = require('../providers/level-db'),
+    levelDb = require('../providers/level-db').get(),
     utility = require('../util'),
     logger = require('../logger');
 

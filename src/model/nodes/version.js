@@ -2,7 +2,7 @@ var util = require('util'),
     vow = require('vow'),
 
     logger = require('../../logger'),
-    levelDb = require('../../providers/level-db'),
+    levelDb = require('../../providers/level-db').get(),
     utility = require('../../util'),
     nodes = require('./index'),
 

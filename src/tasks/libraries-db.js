@@ -10,7 +10,7 @@ var util = require('util'),
 
     errors = require('../errors').TaskLibrariesDb,
     logger = require('../logger'),
-    levelDb = require('../providers/level-db'),
+    levelDb = require('../providers/level-db').get(),
     nodes = require('../model/nodes/index.js');
 
 /**
@@ -24,7 +24,7 @@ function getDbHints(target) {
 
 /**
  * Returns array of library nodes from database
- * @param {TargetLibraries} target object
+ * @param {TargetBase} target object
  * @returns {*}
  */
 function getLibraryNodesFromDb(target) {
@@ -44,7 +44,7 @@ function getLibraryNodesFromDb(target) {
 
 /**
  * Returns array of library version folders for current library
- * @param {TargetLibraries} target object
+ * @param {TargetNodes} target object
  * @param {Object} value - database record of library node
  * @returns {*}
  */
@@ -54,7 +54,7 @@ function getLibraryVersionsFromCache(target, value) {
 
 /**
  * Returns array of library version nodes from database
- * @param {TargetLibraries} target object
+ * @param {TargetNodes} target object
  * @param {Object} lib - database record of library node
  * @returns {*}
  */
@@ -75,7 +75,7 @@ function getLibraryVersionNodesFromDb(target, lib) {
 
 /**
  * Collect map of contents of {lib}/{version}/_data.json files
- * @param {TargetLibraries} target object
+ * @param {TargetNodes} target object
  * @returns {*}
  */
 function getPreviousStateMap(target) {

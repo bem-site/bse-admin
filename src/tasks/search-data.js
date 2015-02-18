@@ -5,7 +5,7 @@ var path = require('path'),
     vowFs = require('vow-fs'),
 
     errors = require('../errors').TaskSearchData,
-    levelDb = require('../providers/level-db'),
+    levelDb = require('../providers/level-db').get(),
     logger = require('../logger'),
     utility = require('../util'),
     nodes = require('../model/nodes/index.js');

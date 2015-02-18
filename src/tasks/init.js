@@ -1,4 +1,5 @@
-var vow = require('vow'),
+var path = require('path'),
+    vow = require('vow'),
 
     mds = require('../providers/mds'),
     mailer = require('../providers/mailer'),
@@ -12,7 +13,7 @@ module.exports = function (target) {
             mailer.init(target.getOptions()['mailer']),
             yandexDisk.init(target.getOptions()['yandex-disk']),
             githubApi.init(target.getOptions()['github']),
-            levelDb.init()
+            levelDb.init(path.join(process.cwd(), 'db'))
        ]).then(function () {
         return vow.resolve(target);
        });

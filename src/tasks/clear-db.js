@@ -3,7 +3,7 @@
 var util = require('util'),
     vow = require('vow'),
 
-    levelDb = require('../providers/level-db'),
+    levelDb = require('../providers/level-db').get(),
     errors = require('../errors').TaskClearDB,
     logger = require('../logger');
 

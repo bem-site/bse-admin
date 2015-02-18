@@ -5,7 +5,7 @@ var vow = require('vow'),
     errors = require('../errors').TaskPeople,
     logger = require('../logger'),
     githubApi = require('../providers/github'),
-    levelDb = require('../providers/level-db'),
+    levelDb = require('../providers/level-db').get(),
 
     repo;
 

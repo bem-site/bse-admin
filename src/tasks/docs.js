@@ -9,7 +9,7 @@ var util = require('util'),
     errors = require('../errors').TaskDocs,
     logger = require('../logger'),
     githubApi = require('../providers/github'),
-    levelDb = require('../providers/level-db'),
+    levelDb = require('../providers/level-db').get(),
     utility = require('../util');
 
 /**

@@ -2,7 +2,7 @@ var _ = require('lodash'),
 
     susanin = require('susanin'),
 
-    levelDb = require('../../providers/level-db'),
+    levelDb = require('../../providers/level-db').get(),
     BaseNode = require('./base').BaseNode,
 
     /**
