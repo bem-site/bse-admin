@@ -4,7 +4,7 @@ var util = require('util'),
     _ = require('lodash'),
     vow = require('vow'),
 
-    levelDb = require('../providers/level-db').get(),
+    levelDb = require('../providers/level-db'),
     utility = require('../util'),
     logger = require('../logger'),
 
@@ -277,8 +277,8 @@ function collectUrls(target) {
     }
 
     return vow.all([
-        levelDb.getByKeyRange(target.KEY.NODE_PREFIX, target.KEY.PEOPLE_PREFIX),
-        levelDb.getByKeyRange(target.KEY.DOCS_PREFIX, target.KEY.NODE_PREFIX)
+        levelDb.get().getByKeyRange(target.KEY.NODE_PREFIX, target.KEY.PEOPLE_PREFIX),
+        levelDb.get().getByKeyRange(target.KEY.DOCS_PREFIX, target.KEY.NODE_PREFIX)
    ]).spread(function (nodeRecords, docRecords) {
         return nodeRecords.reduce(function (prev, nodeRecord) {
             var nodeValue = nodeRecord.value,
@@ -309,7 +309,7 @@ module.exports = function (target) {
 
     var languages = utility.getLanguages();
     return vow.all([
-            levelDb.getByKeyRange(target.KEY.NODE_PREFIX, target.KEY.PEOPLE_PREFIX),
+            levelDb.get().getByKeyRange(target.KEY.NODE_PREFIX, target.KEY.PEOPLE_PREFIX),
             collectUrls(target)
        ])
         .spread(function (nodeRecords, urlsHash) {
@@ -317,7 +317,7 @@ module.exports = function (target) {
                 var nodeValue = nodeRecord.value;
 
                 if (nodeValue.source && nodeValue.source.data) {
-                    return levelDb.get(nodeValue.source.data).then(function (blockValue) {
+                    return levelDb.get().get(nodeValue.source.data).then(function (blockValue) {
                         if (!blockValue) {
                             return vow.resolve();
                         }
@@ -351,19 +351,19 @@ module.exports = function (target) {
                             }
                         });
 
-                        return levelDb.put(nodeValue.source.data, blockValue);
+                        return levelDb.get().put(nodeValue.source.data, blockValue);
                     });
                 }
 
                 return vow.all(languages.map(function (lang) {
                     var docKey = util.format('%s%s:%s', target.KEY.DOCS_PREFIX, nodeValue.id, lang);
-                    return levelDb.get(docKey)
+                    return levelDb.get().get(docKey)
                         .then(function (docValue) {
                             if (!docValue || !docValue.content) {
                                 return vow.resolve();
                             }
                             docValue.content = overrideLinks(docValue.content, nodeValue, urlsHash, lang, docValue);
-                            return levelDb.put(docKey, docValue);
+                            return levelDb.get().put(docKey, docValue);
                         });
                 }));
             }));

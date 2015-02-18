@@ -3,13 +3,13 @@
 var util = require('util'),
     vow = require('vow'),
 
-    levelDb = require('../providers/level-db').get(),
+    levelDb = require('../providers/level-db'),
     errors = require('../errors').TaskClearDB,
     logger = require('../logger');
 
 module.exports = function (target) {
     var keysForRemove = target.getOptions().keys || [];
-    return levelDb.getKeysByCriteria(function (key) {
+    return levelDb.get().getKeysByCriteria(function (key) {
             if (!keysForRemove.length) {
                 return true;
             }
@@ -23,7 +23,7 @@ module.exports = function (target) {
             });
         })
         .then(function (operations) {
-            return levelDb.batch(operations);
+            return levelDb.get().batch(operations);
         })
         .then(function () {
             logger.info(util.format('Database has been cleared successfully'), module);

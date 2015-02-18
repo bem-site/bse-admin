@@ -8,7 +8,7 @@ var util = require('util'),
 
     errors = require('../errors').TaskNodes,
     logger = require('../logger'),
-    levelDb = require('../providers/level-db').get(),
+    levelDb = require('../providers/level-db'),
     utility = require('../util'),
     Nodes = require('../model/nodes.js'),
     Meta = require('../model/meta');
@@ -54,7 +54,7 @@ function analyzeMeta(collected, node) {
 function saveMeta(target, nodes) {
     // get array of data.source[lang] objects
     // also add nodeId and lang fields
-    return levelDb.batch(nodes.reduce(function (prev, node) {
+    return levelDb.get().batch(nodes.reduce(function (prev, node) {
             utility.getLanguages().forEach(function (lang) {
                 if (node.source[lang]) {
                     node.source[lang].nodeId = node.id;
@@ -92,9 +92,9 @@ function separateSource(target, nodes) {
                 tags: {}
             });
         return vow.all([
-            levelDb.put(target.KEY.AUTHORS, _.uniq(collected.authors)),
-            levelDb.put(target.KEY.TRANSLATORS, _.uniq(collected.translators)),
-            levelDb.put(target.KEY.TAGS, collected.tags),
+            levelDb.get().put(target.KEY.AUTHORS, _.uniq(collected.authors)),
+            levelDb.get().put(target.KEY.TRANSLATORS, _.uniq(collected.translators)),
+            levelDb.get().put(target.KEY.TAGS, collected.tags),
             saveMeta(target, nodesWithSource)
        ]);
 }
@@ -104,7 +104,7 @@ function separateSource(target, nodes) {
  * @returns {*}
  */
 function clearDb() {
-    return levelDb.getKeysByCriteria(function () {
+    return levelDb.get().getKeysByCriteria(function () {
             return true;
         }, undefined)
         .then(function (keys) {
@@ -113,12 +113,12 @@ function clearDb() {
             });
         })
         .then(function (operations) {
-            return levelDb.batch(operations);
+            return levelDb.get().batch(operations);
         });
 }
 
 function saveNodes(target, nodes) {
-    return levelDb.batch(nodes.getAll().map(function (item) {
+    return levelDb.get().batch(nodes.getAll().map(function (item) {
         return {
             type: 'put',
             key: util.format('%s%s', target.KEY.NODE_PREFIX, item.id),

@@ -4,7 +4,7 @@ var _ = require('lodash'),
 
     errors = require('../errors').TaskSitemapXML,
     logger = require('../logger'),
-    levelDb = require('../providers/level-db').get();
+    levelDb = require('../providers/level-db');
 
 module.exports = function (target) {
     logger.info('Start to build "sitemap.xml" file', module);
@@ -54,7 +54,7 @@ module.exports = function (target) {
         })
         .then(function (records) {
             // convert json model to xml format
-            return levelDb.put('sitemapXml', js2xml('urlset', { url: records }));
+            return levelDb.get().put('sitemapXml', js2xml('urlset', { url: records }));
         })
         .then(function () {
             logger.info('Successfully create sitemap.xml file', module);

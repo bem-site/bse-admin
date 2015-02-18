@@ -4,7 +4,7 @@ var util = require('util'),
 
     errors = require('../errors').TaskDynamicTags,
     logger = require('../logger'),
-    levelDb = require('../providers/level-db').get(),
+    levelDb = require('../providers/level-db'),
     nodes = require('../model/nodes/index.js');
 
 /**
@@ -14,13 +14,12 @@ var util = require('util'),
  * @returns {*}
  */
 function removeTagNodes(target, key) {
-    return levelDb
-        .getByCriteria(function (record) {
+    return levelDb.get().getByCriteria(function (record) {
             return record.value.dynamic === key;
         }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true })
         .then(function (dynamicRecords) {
             return vow.all(dynamicRecords.map(function (dynamicRecord) {
-                return levelDb.removeByCriteria(function (record) {
+                return levelDb.get().removeByCriteria(function (record) {
                     return record.value.parent === dynamicRecord.value.id;
                 });
             }));
@@ -35,10 +34,10 @@ function removeTagNodes(target, key) {
 function addTagNodes(target, key) {
     var lang = key.split(':')[1];
     return vow.all([
-            levelDb.getByCriteria(function (record) {
+            levelDb.get().getByCriteria(function (record) {
                 return record.value.dynamic === key;
             }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true }),
-            levelDb.get(target.KEY.TAGS)
+            levelDb.get().get(target.KEY.TAGS)
        ])
         .spread(function (dynamicRecords, tags) {
             if (!dynamicRecords.length) {

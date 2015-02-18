@@ -9,7 +9,7 @@ var util = require('util'),
     errors = require('../errors').TaskDocs,
     logger = require('../logger'),
     githubApi = require('../providers/github'),
-    levelDb = require('../providers/level-db').get(),
+    levelDb = require('../providers/level-db'),
     utility = require('../util');
 
 /**
@@ -18,7 +18,7 @@ var util = require('util'),
  * @returns {*}
  */
 function getDocsFromDb(target) {
-    return levelDb.getByCriteria(function (record) {
+    return levelDb.get().getByCriteria(function (record) {
         return record.key.indexOf(target.KEY.DOCS_PREFIX) > -1 && record.value.repo;
     }, { gte: target.KEY.DOCS_PREFIX, lt: target.KEY.NODE_PREFIX, fillCache: true });
 }
@@ -173,7 +173,7 @@ function syncDoc(target, record) {
                     return checkForBranch(value, isFirstLoad);
                 })
                 .then(function (value) {
-                    return levelDb.put(key, value);
+                    return levelDb.get().put(key, value);
                 });
         })
         .fail(function () {

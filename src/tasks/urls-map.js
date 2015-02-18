@@ -6,7 +6,7 @@ var util = require('util'),
     vow = require('vow'),
 
     errors = require('../errors').TaskUrlsMap,
-    levelDb = require('../providers/level-db').get(),
+    levelDb = require('../providers/level-db'),
     logger = require('../logger');
 
 module.exports = function (target) {
@@ -17,9 +17,9 @@ module.exports = function (target) {
         return vow.resolve(target);
     }
 
-    return levelDb.removeByKeyPrefix(target.KEY.URL_PREFIX)
+    return levelDb.get().removeByKeyPrefix(target.KEY.URL_PREFIX)
         .then(function () {
-            return levelDb.getByKeyRange(target.KEY.NODE_PREFIX, target.KEY.PEOPLE_PREFIX);
+            return levelDb.get().getByKeyRange(target.KEY.NODE_PREFIX, target.KEY.PEOPLE_PREFIX);
         })
         .then(function (records) {
             return records.reduce(function (prev, record) {
@@ -38,7 +38,7 @@ module.exports = function (target) {
             });
         })
         .then(function (operations) {
-            return levelDb.batch(operations);
+            return levelDb.get().batch(operations);
         })
         .then(function () {
             logger.info('Creating url - id map was finished successfully', module);

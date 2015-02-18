@@ -5,7 +5,7 @@ var vow = require('vow'),
     errors = require('../errors').TaskPeople,
     logger = require('../logger'),
     githubApi = require('../providers/github'),
-    levelDb = require('../providers/level-db').get(),
+    levelDb = require('../providers/level-db'),
 
     repo;
 
@@ -24,7 +24,7 @@ function loadFromRemote() {
  * @returns {Object|String}
  */
 function loadFromLocal(target) {
-    return levelDb.get(target.KEY.VERSIONS_PEOPLE).fail(function () {
+    return levelDb.get().get(target.KEY.VERSIONS_PEOPLE).fail(function () {
         return null;
     });
 }
@@ -38,10 +38,10 @@ function updatePeopleData(target, remote) {
         return vow.reject();
     }
 
-    return levelDb.removeByKeyPrefix(target.KEY.PEOPLE_PREFIX)
+    return levelDb.get().removeByKeyPrefix(target.KEY.PEOPLE_PREFIX)
         .then(function () {
             // create and execute batch task for add new people data into database
-            return levelDb.batch(Object.keys(content).map(function (key) {
+            return levelDb.get().batch(Object.keys(content).map(function (key) {
                     return {
                         type: 'put',
                         key: target.KEY.PEOPLE_PREFIX + key,
@@ -51,7 +51,7 @@ function updatePeopleData(target, remote) {
         })
         .then(function () {
             // save updated versions object into database
-            return levelDb.put(target.KEY.VERSIONS_PEOPLE, remote.sha);
+            return levelDb.get().put(target.KEY.VERSIONS_PEOPLE, remote.sha);
         });
 }
 

@@ -5,7 +5,7 @@ var path = require('path'),
     vowFs = require('vow-fs'),
 
     errors = require('../errors').TaskSearchData,
-    levelDb = require('../providers/level-db').get(),
+    levelDb = require('../providers/level-db'),
     logger = require('../logger'),
     utility = require('../util'),
     nodes = require('../model/nodes/index.js');
@@ -24,7 +24,7 @@ function getDbHints(target) {
  * @returns {*}
  */
 function getLibraries(target) {
-    return levelDb.getValuesByCriteria(function (value) {
+    return levelDb.get().getValuesByCriteria(function (value) {
         return value.lib;
     }, getDbHints(target));
 }
@@ -34,7 +34,7 @@ function getLibraries(target) {
  * @returns {*}
  */
 function getVersions(target) {
-    return levelDb.getValuesByCriteria(function (value) {
+    return levelDb.get().getValuesByCriteria(function (value) {
         return value.class === 'version';
     }, getDbHints(target));
 }
@@ -44,7 +44,7 @@ function getVersions(target) {
  * @returns {*}
  */
 function getLevels(target) {
-    return levelDb.getValuesByCriteria(function (value) {
+    return levelDb.get().getValuesByCriteria(function (value) {
         return value.class === 'level';
     }, getDbHints(target));
 }
@@ -54,7 +54,7 @@ function getLevels(target) {
  * @returns {*}
  */
 function getBlocks(target) {
-    return levelDb.getValuesByCriteria(function (value) {
+    return levelDb.get().getValuesByCriteria(function (value) {
         return value.class === 'block';
     }, getDbHints(target));
 }
@@ -112,12 +112,12 @@ function loadDataForLibraries(libraries) {
  */
 function loadDataForBlocks(blocks) {
     return vow.all(blocks.map(function (item) {
-        var setLoadedData = levelDb.get(item.data)
+        var setLoadedData = levelDb.get().get(item.data)
                 .then(function (data) {
                     item.processData(data);
                     return item;
                 }),
-            setLoadedJsDoc = levelDb.get(item.jsdoc)
+            setLoadedJsDoc = levelDb.get().get(item.jsdoc)
                 .then(function (jsdoc) {
                     item.jsdoc = jsdoc;
                     return item;

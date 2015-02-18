@@ -10,7 +10,7 @@ var util = require('util'),
 
     errors = require('../errors').TaskLibrariesDb,
     logger = require('../logger'),
-    levelDb = require('../providers/level-db').get(),
+    levelDb = require('../providers/level-db'),
     nodes = require('../model/nodes/index.js');
 
 /**
@@ -29,7 +29,7 @@ function getDbHints(target) {
  */
 function getLibraryNodesFromDb(target) {
     return levelDb
-        .getByCriteria(function (record) {
+        .get().getByCriteria(function (record) {
             var key = record.key,
                 value = record.value;
 
@@ -117,7 +117,7 @@ function removeLibraryVersionNodesFromDb(target, lib, version) {
                 (version ? route.conditions.version === version : true);
         }, getDbHints(target))
         .then(function (result) {
-            return levelDb.batch(result.map(function (record) {
+            return levelDb.get().batch(result.map(function (record) {
                 return { type: 'del', key: record.key };
             }));
         });
@@ -163,7 +163,7 @@ function syncLibraryVersions(target, record, stateMap) {
                 });
                 return vow.all([
                     removeLibraryVersionNodesFromDb(target, value.lib),
-                    levelDb.put(key, value)
+                    levelDb.get().put(key, value)
                ]);
             }
 
@@ -247,7 +247,7 @@ function sortLibraryVersions(target, record) {
     var value = record.value;
     return getLibraryVersionNodesFromDb(target, value)
         .then(function (records) {
-            return levelDb.batch(records
+            return levelDb.get().batch(records
                 .sort(function (a, b) {
                     a = a.value.route.conditions.version;
                     b = b.value.route.conditions.version;
