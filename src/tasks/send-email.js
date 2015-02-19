@@ -134,8 +134,8 @@ module.exports = function (target) {
        ])
         .spread(function (docs, libraries) {
             return mailer.send({
-                from: target.getOptions['mailer']['from'],
-                to: target.getOptions['mailer']['to'],
+                from: target.getOptions()['mailer']['from'],
+                to: target.getOptions()['mailer']['to'],
                 subject: subject,
                 html: docs + libraries
             });
