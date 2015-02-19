@@ -1,8 +1,13 @@
 var path = require('path'),
+
+    vow = require('vow'),
+    vowFs = require('vow-fs'),
+
     utility = require('../../src/util.js'),
     levelDb = require('../../src/providers/level-db'),
 
     TEST_DB_PATH = path.join(process.cwd(), 'test', 'testDb'),
+    TEST_SNAPSHOT_PATH = path.join(process.cwd(), 'test', 'testDb1'),
 
     testKey1 = 'test_key_1',
     testData1 = { name: 'test_data_1' },
@@ -89,10 +94,72 @@ describe('level database provider', function () {
         });
     });
 
-    after(function (done) {
+    it('should remove records by criteria', function (done) {
+        return levelDb.get().removeByCriteria(function (record) {
+            return record.key.indexOf('batchKey1') > -1;
+        }, {}).then(function () {
+            return levelDb.get().getByCriteria(function (record) {
+                return record.key.indexOf('batch') > -1 || record.value.name.indexOf('batch') > -1;
+            }, {}).then(function (data) {
+                data.should.be.ok;
+                data.should.be.instanceOf(Array).and.have.length(4);
+                done();
+            });
+        });
+    });
+
+    it('should get by key range', function (done) {
+        return levelDb.get().getByKeyRange('batch', 'catch').then(function (data) {
+            data.should.be.ok;
+            data.should.be.instanceOf(Array).and.have.length(4);
+            done();
+        });
+    });
+
+    it('should remove by key range', function (done) {
+        return levelDb.get().removeByKeyPrefix('batch').then(function () {
+            return levelDb.get().getByCriteria(function (record) {
+                return record.key.indexOf('batch') > -1;
+            }, {}).then(function (data) {
+                data.should.be.ok;
+                data.should.be.instanceOf(Array).and.have.length(0);
+                done();
+            });
+        });
+    });
+
+    it('should copy', function (done) {
+        return levelDb.get().copy(TEST_SNAPSHOT_PATH).then(function () {
+            return vowFs.exists(TEST_SNAPSHOT_PATH).then(function (exists) {
+                exists.should.be.ok;
+                return vow.all([
+                    vowFs.listDir(path.join(TEST_DB_PATH, 'leveldb')),
+                    vowFs.listDir(path.join(TEST_SNAPSHOT_PATH, 'leveldb'))
+                ]).spread(function (files1, files2) {
+                    files1.should.be.instanceOf(Array);
+                    files2.should.be.instanceOf(Array);
+                    files1.length.should.be.above(0);
+                    files2.length.should.be.above(0);
+                    files1.length.should.equal(files2.length);
+                    done();
+                });
+            });
+        });
+    });
+
+    it('should disconnect', function (done) {
         return levelDb.get().disconnect().then(function () {
-            return utility.removeDir(TEST_DB_PATH);
-        }).then(function () {
+            levelDb.get().isInitialized().should.not.be.ok;
+            done();
+        });
+    });
+
+    after(function (done) {
+        return vow.all([
+            utility.removeDir(TEST_DB_PATH),
+            utility.removeDir(TEST_SNAPSHOT_PATH)
+        ])
+        .then(function () {
             done();
         });
     });

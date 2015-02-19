@@ -270,7 +270,8 @@ LevelDB.prototype = {
      * @returns {*}
      */
     disconnect: function () {
-        var def = vow.defer();
+        var _this = this,
+            def = vow.defer();
         if (!this.isInitialized()) {
             this._log('database was not initialized yet');
             return vow.resolve();
@@ -284,7 +285,7 @@ LevelDB.prototype = {
             if (err) {
                 def.reject(err);
             } else {
-                // this._isInitialized = false;
+                _this._isInitialized = false;
                 def.resolve();
             }
         });
