@@ -17,7 +17,8 @@ module.exports = {
         logger.info('Initialize e-mail sending module', module);
 
         if (!options) {
-            errors.createError(errors.CODES.MAILER_NOT_CONFIGURED).log('warn');
+            logger.warn('Can\'t initialize module for sending e-mails. Configuration was not set', module);
+            //errors.createError(errors.CODES.MAILER_NOT_CONFIGURED).log('warn');
             return vow.resolve();
         }
 

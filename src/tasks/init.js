@@ -15,6 +15,6 @@ module.exports = function (target) {
             githubApi.init(target.getOptions()['github']),
             levelDb.init(path.join(process.cwd(), 'db'))
        ]).then(function () {
-        return vow.resolve(target);
+          return vow.resolve(target);
        });
 };

@@ -1,6 +1,7 @@
 var vow = require('vow'),
     YandexDisk = require('yandex-disk').YandexDisk,
 
+    logger = require('./../logger'),
     errors = require('../errors').YandexDisk,
 
     YD = function (options) {
@@ -20,7 +21,8 @@ YD.prototype = {
      */
     init: function (options) {
         if (!options) {
-            errors.createError(errors.CODES.DISK_NOT_CONFIGURED).log('warn');
+            logger.warn('Can\'t initialize Yandex Disk module. Configuration was not set', module);
+            // errors.createError(errors.CODES.DISK_NOT_CONFIGURED).log('warn');
             return vow.resolve();
         }
 

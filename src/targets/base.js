@@ -1,6 +1,7 @@
 'use strict';
 
 var path = require('path'),
+    vow = require('vow'),
     Changes = require('../model/changes'),
     TargetBase = function (options) {
         this.init(options);
@@ -84,13 +85,12 @@ TargetBase.prototype = {
      * @returns {*}
      */
     execute: function () {
-        var _this = this,
-            initial = this.getTasks()[0];
+        var _this = this;
         return this.getTasks().reduce(function (prev, item) {
             return prev.then(function () {
                 return item(_this);
             });
-        }, initial(_this));
+        }, vow.resolve(_this));
     },
 
     /**

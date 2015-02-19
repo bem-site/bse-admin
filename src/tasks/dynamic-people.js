@@ -14,7 +14,7 @@ var util = require('util'),
  * @returns {*}
  */
 function removePeopleNodes(target, key) {
-    return levelDb
+    return levelDb.get()
         .getByCriteria(function (record) {
             return record.value.dynamic === key;
         }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true })

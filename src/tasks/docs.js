@@ -38,7 +38,7 @@ function onError(md, url) {
         errors.createError(errors.CODES.MARKDOWN_NOT_EXISTS, { url: url }) :
         errors.createError(errors.CODES.MARKDOWN_INVALID, { url: url });
 
-    error.log();
+    error.log('warn');
     return vow.reject(error);
 }
 

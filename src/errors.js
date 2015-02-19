@@ -133,7 +133,7 @@ module.exports = {
         }).setLogger(log),
 
     YandexDisk: Terror
-        .create('SendToMds', {
+        .create('Yandex Disk', {
             COMMON: [280, 'Common error %err% occur for Yandex Disk module'],
             NOT_INITIALIZED: [281, 'Yandex Disk was not initialized'],
             DISK_NOT_CONFIGURED: [282, 'Can\'t initialize Yandex Disk module. Configuration was not set'],

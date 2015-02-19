@@ -60,7 +60,7 @@ function getLibraryVersionsFromCache(target, value) {
  */
 function getLibraryVersionNodesFromDb(target, lib) {
     return levelDb
-        .getByCriteria(function (record) {
+        .get().getByCriteria(function (record) {
             var key = record.key,
                 value = record.value;
 

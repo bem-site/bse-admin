@@ -299,7 +299,7 @@ module.exports = {
      * @returns {LevelDB}
      */
     init: function (dbPath) {
-        logger.info('Initialize mds API module', module);
+        logger.info('Initialize level-db API module', module);
         db = new LevelDB(dbPath, {
             keyEncoding: 'utf-8',
             valueEncoding: {
@@ -314,7 +314,7 @@ module.exports = {
                 buffer: false,
                 type: 'custom'
             }
-        }, { debug: true });
+        }, { debug: false });
         return db.init();
     },
 

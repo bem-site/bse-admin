@@ -108,10 +108,8 @@ module.exports = {
 
         this.getGit(cr).repos.getContent(c, function (err, res) {
             if (err || !res) {
-                logger.error(util.format('Load data from %s %s %s %s',
+                logger.warn(util.format('Load data from %s %s %s %s failed',
                     cr.user, cr.repo, cr.ref, cr.path), module);
-                errors.createError(errors.CODES.LOAD,
-                    { path: cr.path, user: cr.user, repo: cr.repo, ref: cr.ref, err: err }).log();
                 def.reject({ res: null, repo: cr });
             }else {
                 def.resolve({ res: res, repo: cr });

@@ -61,7 +61,7 @@ module.exports = function (target) {
     repo = (function () {
         var pr = target.getOptions()['github']['people'];
         if (!pr) {
-            errors.createError(errors.CODES.PATH_NOT_SET).log('warn');
+            logger.warn('Path to people data file has not been set in application configuration', module);
             return null;
         }
 
