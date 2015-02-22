@@ -83,6 +83,35 @@ VersionNode.prototype.setClass = function () {
 };
 
 /**
+ * Creates meta-information for search engines
+ * @returns {VersionNode}
+ */
+VersionNode.prototype.createMeta = function () {
+    this.prototype.createMeta.apply(this);
+    var conditions = this.route.conditions;
+    this.meta.fields = utility.getLanguages().reduce(function (prev, item) {
+        prev[item] = {
+            type: 'library',
+            keywords: [
+                'bem',
+                'library',
+                conditions.lib,
+                conditions.version,
+                'description'
+            ],
+            block: {
+                name: conditions.lib,
+                version: conditions.version,
+                status: 'current',
+                page: 'description'
+            }
+        };
+        return prev;
+    }, {});
+    return this;
+};
+
+/**
  * Adds items for node
  * @param {Object} version of library
  * @returns {VersionNode}
