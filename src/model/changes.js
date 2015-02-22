@@ -8,6 +8,12 @@ Changes.prototype = {
     _nodes: undefined,
     _libraries: undefined,
 
+    init: function () {
+        this._docs = new ChangeType('docs');
+        this._nodes = new ChangeType('nodes');
+        this._libraries = new ChangeType('libraries');
+    },
+
     areModified: function () {
         return this.getDocs().areModified() ||
             this.getNodes().areModified() ||
@@ -24,12 +30,6 @@ Changes.prototype = {
 
     getLibraries: function () {
         return this._libraries;
-    },
-
-    init: function () {
-        this._docs = new ChangeType('docs');
-        this._nodes = new ChangeType('nodes');
-        this._libraries = new ChangeType('libraries');
     }
 };
 
