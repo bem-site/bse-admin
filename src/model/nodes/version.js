@@ -23,9 +23,9 @@ var util = require('util'),
             })
             .init(parent)
             .addItems(version)
-            .createMeta()
             .createBreadcrumbs();
 
+        this.createMeta();
         this.cacheVersion = cacheVersion;
     };
 
@@ -100,7 +100,7 @@ VersionNode.prototype.createMeta = function () {
                 conditions.version,
                 'description'
             ],
-            block: {
+            library: {
                 name: conditions.lib,
                 version: conditions.version,
                 status: 'current',

@@ -276,6 +276,7 @@ BaseNode.prototype = {
     createMeta: function () {
         var _this = this;
         this.meta = { breadcrumbs: utility.getLanguages().reduce(function (prevL, lang) {
+            _this.breadcrumbs = _this.breadcrumbs || [];
             prevL[lang] = _this.breadcrumbs.reduce(function (prevB, breadcrumb) {
                 prevB.push({ title: breadcrumb.title[lang], url: breadcrumb.url });
                 return prevB;

@@ -23,8 +23,8 @@ var util = require('util'),
                 }
             })
             .init(parent)
-            .createBreadcrumbs()
-            .createMeta();
+            .createBreadcrumbs();
+        this.createMeta();
     };
 
 BlockNode.prototype = Object.create(nodes.dynamic.DynamicNode.prototype);

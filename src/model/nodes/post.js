@@ -21,8 +21,8 @@ var util = require('util'),
                 }
             })
             .init(parent)
-            .createMeta(id)
             .createBreadcrumbs();
+        this.createMeta(id);
     };
 
 PostNode.prototype = Object.create(nodes.dynamic.DynamicNode.prototype);
@@ -81,7 +81,7 @@ PostNode.prototype.createMeta = function (docType) {
                 conditions.version,
                 docType
             ],
-            block: {
+            library: {
                 name: conditions.lib,
                 version: conditions.version,
                 status: 'current',
