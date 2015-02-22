@@ -21,8 +21,8 @@ var util = require('util'),
                 }
             })
             .init(parent)
-            .createBreadcrumbs()
-            .createMeta(id);
+            .createMeta(id)
+            .createBreadcrumbs();
     };
 
 PostNode.prototype = Object.create(nodes.dynamic.DynamicNode.prototype);
@@ -69,7 +69,7 @@ PostNode.prototype.setClass = function () {
  * @returns {PostNode}
  */
 PostNode.prototype.createMeta = function (docType) {
-    this.prototype.createMeta.apply(this);
+    nodes.base.BaseNode.prototype.createMeta.apply(this);
     var conditions = this.route.conditions;
     this.meta.fields = utility.getLanguages().reduce(function (prev, item) {
         prev[item] = {

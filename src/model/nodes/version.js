@@ -23,6 +23,7 @@ var util = require('util'),
             })
             .init(parent)
             .addItems(version)
+            .createMeta()
             .createBreadcrumbs();
 
         this.cacheVersion = cacheVersion;
@@ -87,7 +88,7 @@ VersionNode.prototype.setClass = function () {
  * @returns {VersionNode}
  */
 VersionNode.prototype.createMeta = function () {
-    this.prototype.createMeta.apply(this);
+    nodes.base.BaseNode.prototype.createMeta.apply(this);
     var conditions = this.route.conditions;
     this.meta.fields = utility.getLanguages().reduce(function (prev, item) {
         prev[item] = {

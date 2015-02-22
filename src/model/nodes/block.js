@@ -85,7 +85,7 @@ BlockNode.prototype.setClass = function () {
  * @returns {BlockNode}
  */
 BlockNode.prototype.createMeta = function () {
-    this.prototype.createMeta.apply(this);
+    nodes.base.BaseNode.prototype.createMeta.apply(this);
     var _this = this,
         conditions = this.route.conditions;
 
