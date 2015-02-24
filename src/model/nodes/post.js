@@ -78,8 +78,10 @@ PostNode.prototype.createMeta = function (docType) {
                 'bem',
                 'library',
                 conditions.lib,
-                conditions.version,
-                docType
+                // islands v2.0.0
+                [conditions.lib, conditions.version].join(' '),
+                // islands v2.0.0 changelog|migration|...
+                [conditions.lib, conditions.version, docType].join(' ')
             ],
             library: {
                 name: conditions.lib,

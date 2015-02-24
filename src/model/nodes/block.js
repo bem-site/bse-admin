@@ -95,10 +95,12 @@ BlockNode.prototype.createMeta = function () {
             keywords: [
                 'bem',
                 'block',
-                _this.title[item],
-                conditions.lib,
-                conditions.version,
-                conditions.level
+                // islands button
+                [conditions.lib, _this.title[item]].join(' '),
+                // islands v2.0.0 button
+                [conditions.lib, conditions.version, _this.title[item]].join(' '),
+                // islands v2.0.0 button desktop
+                [conditions.lib, conditions.version, _this.title[item], conditions.level].join(' ')
             ],
             block: {
                 name: _this.title[item],

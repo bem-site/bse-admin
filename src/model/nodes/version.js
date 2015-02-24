@@ -97,8 +97,12 @@ VersionNode.prototype.createMeta = function () {
                 'bem',
                 'library',
                 conditions.lib,
-                conditions.version,
-                'description'
+                // islands v2.0.0
+                [conditions.lib, conditions.version].join(' '),
+                // islands v2.0.0 description
+                [conditions.lib, conditions.version, item === 'ru' ? 'описание': 'description'].join(' '),
+                // islands v2.0.0 readme
+                [conditions.lib, conditions.version, 'readme'].join(' ')
             ],
             library: {
                 name: conditions.lib,
