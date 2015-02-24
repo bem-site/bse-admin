@@ -4,6 +4,7 @@ var util = require('util'),
     susanin = require('susanin'),
     uuid = require('node-uuid'),
     sha = require('sha1'),
+    utility = require('../../util'),
 
     /**
      * Base class for nodes with common nodes methods
@@ -243,10 +244,6 @@ BaseNode.prototype = {
         return this;
     },
 
-    isDifferentFromDb: function (dbRecord) {
-        return _.isEqual(this, dbRecord);
-    },
-
     markAsCategory: function () {
         this.isCategory = true;
         return this;
@@ -269,6 +266,30 @@ BaseNode.prototype = {
 
     removeItemsField: function () {
         delete this.items;
+        return this;
+    },
+
+    /**
+     * Creates advanced meta-information for search engines
+     * @returns {BaseNode}
+     */
+    createMeta: function () {
+        var _this = this;
+        this.meta = { breadcrumbs: utility.getLanguages().reduce(function (prevL, lang) {
+            _this.breadcrumbs = _this.breadcrumbs || [];
+            prevL[lang] = _this.breadcrumbs.reduce(function (prevB, breadcrumb) {
+                prevB.push({ title: breadcrumb.title[lang], url: breadcrumb.url });
+                return prevB;
+            }, []);
+            return prevL;
+        }, {}) };
+        this.meta.fields = utility.getLanguages().reduce(function (prev, item) {
+            prev[item] = { type: 'doc', keywords: [] };
+            if (_this.source[item] && _this.source[item].tags) {
+                prev[item].keywords = _this.source[item].tags;
+            }
+            return prev;
+        }, {});
         return this;
     },
 

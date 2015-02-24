@@ -25,6 +25,7 @@ var util = require('util'),
             .addItems(version)
             .createBreadcrumbs();
 
+        this.createMeta();
         this.cacheVersion = cacheVersion;
     };
 
@@ -79,6 +80,39 @@ VersionNode.prototype.setSource = function (version) {
  */
 VersionNode.prototype.setClass = function () {
     this.class = 'version';
+    return this;
+};
+
+/**
+ * Creates meta-information for search engines
+ * @returns {VersionNode}
+ */
+VersionNode.prototype.createMeta = function () {
+    nodes.base.BaseNode.prototype.createMeta.apply(this);
+    var conditions = this.route.conditions;
+    this.meta.fields = utility.getLanguages().reduce(function (prev, item) {
+        prev[item] = {
+            type: 'library',
+            keywords: [
+                'bem',
+                'library',
+                conditions.lib,
+                // islands v2.0.0
+                [conditions.lib, conditions.version].join(' '),
+                // islands v2.0.0 description
+                [conditions.lib, conditions.version, item === 'ru' ? 'описание': 'description'].join(' '),
+                // islands v2.0.0 readme
+                [conditions.lib, conditions.version, 'readme'].join(' ')
+            ],
+            library: {
+                name: conditions.lib,
+                version: conditions.version,
+                status: 'current',
+                page: 'description'
+            }
+        };
+        return prev;
+    }, {});
     return this;
 };
 

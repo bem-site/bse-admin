@@ -84,8 +84,9 @@ Nodes.prototype._makePlainModel = function () {
 Nodes.prototype.removeSources = function () {
     this._data = this._data.map(function (item) {
         if (item.source) {
-            item.markAsHasSource();
-            delete item.source;
+            item.createMeta()
+                .markAsHasSource()
+                .removeSourceField();
         }
         return item;
     });

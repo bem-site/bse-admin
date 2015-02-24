@@ -22,6 +22,7 @@ var util = require('util'),
             })
             .init(parent)
             .createBreadcrumbs();
+        this.createMeta(id);
     };
 
 PostNode.prototype = Object.create(nodes.dynamic.DynamicNode.prototype);
@@ -59,6 +60,38 @@ PostNode.prototype.setSource = function (doc) {
  */
 PostNode.prototype.setClass = function () {
     this.class = 'post';
+    return this;
+};
+
+/**
+ * Creates meta-information for search engines
+ * @param {String} docType - type of document
+ * @returns {PostNode}
+ */
+PostNode.prototype.createMeta = function (docType) {
+    nodes.base.BaseNode.prototype.createMeta.apply(this);
+    var conditions = this.route.conditions;
+    this.meta.fields = utility.getLanguages().reduce(function (prev, item) {
+        prev[item] = {
+            type: 'library',
+            keywords: [
+                'bem',
+                'library',
+                conditions.lib,
+                // islands v2.0.0
+                [conditions.lib, conditions.version].join(' '),
+                // islands v2.0.0 changelog|migration|...
+                [conditions.lib, conditions.version, docType].join(' ')
+            ],
+            library: {
+                name: conditions.lib,
+                version: conditions.version,
+                status: 'current',
+                page: docType
+            }
+        };
+        return prev;
+    }, {});
     return this;
 };
 

@@ -22,7 +22,9 @@ var util = require('util'),
                     block: block.name
                 }
             })
-            .init(parent);
+            .init(parent)
+            .createBreadcrumbs();
+        this.createMeta();
     };
 
 BlockNode.prototype = Object.create(nodes.dynamic.DynamicNode.prototype);
@@ -75,6 +77,41 @@ BlockNode.prototype.setView = function () {
  */
 BlockNode.prototype.setClass = function () {
     this.class = 'block';
+    return this;
+};
+
+/**
+ * Creates meta-information for search engines
+ * @returns {BlockNode}
+ */
+BlockNode.prototype.createMeta = function () {
+    nodes.base.BaseNode.prototype.createMeta.apply(this);
+    var _this = this,
+        conditions = this.route.conditions;
+
+    this.meta.fields = utility.getLanguages().reduce(function (prev, item) {
+        prev[item] = {
+            type: 'block',
+            keywords: [
+                'bem',
+                'block',
+                // islands button
+                [conditions.lib, _this.title[item]].join(' '),
+                // islands v2.0.0 button
+                [conditions.lib, conditions.version, _this.title[item]].join(' '),
+                // islands v2.0.0 button desktop
+                [conditions.lib, conditions.version, _this.title[item], conditions.level].join(' ')
+            ],
+            block: {
+                name: _this.title[item],
+                library: conditions.lib,
+                version: conditions.version,
+                level: conditions.level,
+                status: 'current'
+            }
+        };
+        return prev;
+    }, {});
     return this;
 };
 
