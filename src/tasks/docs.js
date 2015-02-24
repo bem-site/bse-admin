@@ -39,7 +39,7 @@ function onError(md, url) {
         errors.createError(errors.CODES.MARKDOWN_INVALID, { url: url });
 
     error.log('warn');
-    return vow.reject(error);
+    return vow.resolve(error);
 }
 
 /**
@@ -188,9 +188,15 @@ function syncDoc(target, record) {
  * @returns {*}
  */
 function syncDocs(target, records) {
-    return vow.allResolved(records.map(function (item) {
-        return syncDoc(target, item);
-    }));
+    var portions = utility.separateArrayOnChunks(records, 10);
+    return portions.reduce(function (prev, item) {
+        prev = prev.then(function () {
+            return vow.allResolved(item.map(function (_item) {
+                return syncDoc(target, _item);
+            }));
+        });
+        return prev;
+    }, vow.resolve());
 }
 
 module.exports = function (target) {
