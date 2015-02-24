@@ -135,7 +135,7 @@ function syncDoc(target, record) {
             */
 
             if (result.meta.status === '304 Not Modified') {
-                logger.debug(util.format('Document was not changed: %s', getTitle(value) || value.url), module);
+                logger.verbose(util.format('Document was not changed: %s', getTitle(value) || value.url), module);
                 return vow.resolve();
             }
 
@@ -188,9 +188,12 @@ function syncDoc(target, record) {
  * @returns {*}
  */
 function syncDocs(target, records) {
-    var portions = utility.separateArrayOnChunks(records, 10);
-    return portions.reduce(function (prev, item) {
+    var portionSize = 10,
+        portions = utility.separateArrayOnChunks(records, portionSize);
+    return portions.reduce(function (prev, item, index) {
         prev = prev.then(function () {
+            logger.debug(util.format('synchronize portion of markdown files in range %s - %s',
+                index * portionSize, (index + 1) * portionSize), module);
             return vow.allResolved(item.map(function (_item) {
                 return syncDoc(target, _item);
             }));
