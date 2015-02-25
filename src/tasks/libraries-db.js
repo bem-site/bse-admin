@@ -98,7 +98,7 @@ function getPreviousStateMap(target) {
 }
 
 function removeLibraryVersionNodesFromDb(target, lib, version) {
-    return levelDb
+    return levelDb.get()
         .getByCriteria(function (record) {
             var key = record.key,
                 value = record.value,
