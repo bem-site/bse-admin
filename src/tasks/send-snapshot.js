@@ -66,7 +66,7 @@ function _removeDbFolder (target) {
 function _sendToDisk (target) {
     var snapshotName = target.getSnapshotName(),
         snapshotPath = path.join(target.SNAPSHOTS_DIR, snapshotName),
-        destinationPath = path.join(target.getOptions['yandex-disk:namespace'], snapshotName);
+        destinationPath = path.join(target.getOptions()['yandex-disk']['namespace'], snapshotName);
 
     logger.debug(util.format('send folder %s to yandex disk %s', snapshotPath, destinationPath), module);
     return disk.get().uploadDirectory(snapshotPath, destinationPath);
