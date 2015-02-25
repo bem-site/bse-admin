@@ -1,9 +1,12 @@
 'use strict';
 
 var util = require('util'),
+    path = require('path'),
 
+    sha = require('sha1'),
     _ = require('lodash'),
     vow = require('vow'),
+    vowFs = require('vow-fs'),
     renderer = require('bem-md-renderer'),
 
     errors = require('../errors').TaskDocs,
@@ -108,6 +111,22 @@ function checkForBranch(value, isFirstLoad) {
         });
 }
 
+function getDataFromCachedFile(target, value, isFirstLoad) {
+    if (!isFirstLoad) {
+        return vow.resolve(null);
+    }
+    var fileCachePath = path.join(target.CACHE_DIR, 'docs', sha(value.content));
+    return vowFs.exists(fileCachePath)
+        .then(function (exists) {
+            if (!exists) {
+                return null;
+            }
+            return vowFs.read(fileCachePath, 'utf-8').then(function (content) {
+                return JSON.parse(content);
+            });
+        });
+}
+
 /**
  * Synchronize single record
  * @param {TargetBase} target object
@@ -116,10 +135,20 @@ function checkForBranch(value, isFirstLoad) {
  */
 function syncDoc(target, record) {
     var key = record.key,
-        value = record.value,
-        isFirstLoad = !value.etag;
+        value = record.value;
 
-    return getRemoteData(value, isFirstLoad)
+    return getDataFromCachedFile(target, value, !value.etag)
+        .then(function (cachedValue) {
+            if (cachedValue) {
+                value.etag = cachedValue.etag;
+                value.sha = cachedValue.sha;
+                value.url = cachedValue.url;
+                value.content = cachedValue.content;
+                value.editDate = cachedValue.editDate;
+                value.repo = cachedValue.repo;
+            }
+            return getRemoteData(value, !value.etag);
+        })
         .then(function (response) {
             var result = response.res,
                 rSha,
@@ -128,11 +157,6 @@ function syncDoc(target, record) {
             if (!result) {
                 return onError(response, value.content);
             }
-
-            /*
-            console.log('isFirstLoad: %s status: %s', isFirstLoad, result.meta.status);
-            console.log('value.etag %s result.meta.etag %s', value.etag, result.meta.etag);
-            */
 
             if (result.meta.status === '304 Not Modified') {
                 logger.verbose(util.format('Document was not changed: %s', getTitle(value) || value.url), module);
@@ -168,12 +192,23 @@ function syncDoc(target, record) {
                 return onError(response);
             }
 
-            return setUpdateDate(value, isFirstLoad)
+            return setUpdateDate(value, !value.etag)
                 .then(function (value) {
-                    return checkForBranch(value, isFirstLoad);
+                    return checkForBranch(value, !value.etag);
                 })
                 .then(function (value) {
-                    return levelDb.get().put(key, value);
+                    return vow.all([
+                        vowFs.write(path.join(target.CACHE_DIR, 'docs', sha(value.url)),
+                            JSON.stringify({
+                                etag: value.etag,
+                                sha: value.sha,
+                                url: value.url,
+                                content: value.content,
+                                editDate: value.editDate,
+                                repo: value.repo
+                            }), 'utf-8'),
+                        levelDb.get().put(key, value)
+                    ]);
                 });
         })
         .fail(function () {
@@ -203,7 +238,10 @@ function syncDocs(target, records) {
 }
 
 module.exports = function (target) {
-    return getDocsFromDb(target)
+    return vowFs.makeDir(path.join(target.CACHE_DIR, 'docs'))
+        .then(function () {
+            return getDocsFromDb(target);
+        })
         .then(function (records) {
             return syncDocs(target, records);
         })
