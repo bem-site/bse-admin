@@ -65,7 +65,8 @@ function setUpdateDate(value, isFirstLoad) {
         return vow.resolve(value);
     }
 
-    return githubApi.getCommits({
+    return githubApi
+        .getCommits({
             repository: _.extend(repository, { sha: repository.ref }),
             headers: !isFirstLoad ? { 'If-None-Match': value.etag } : null
         })
@@ -88,7 +89,8 @@ function checkForBranch(value, isFirstLoad) {
         return vow.resolve(value);
     }
 
-    return githubApi.isBranchExists({
+    return githubApi
+        .isBranchExists({
             repository: _.extend(repository, { branch: repository.ref }),
             headers: !isFirstLoad ? { 'If-None-Match': value.etag } : null
         })
@@ -97,7 +99,8 @@ function checkForBranch(value, isFirstLoad) {
                 return vow.resolve(value);
             }
 
-            return githubApi.getDefaultBranch({
+            return githubApi
+                .getDefaultBranch({
                     repository: repository,
                     headers: !isFirstLoad ? { 'If-None-Match': value.etag } : null
                 })
@@ -139,14 +142,21 @@ function syncDoc(target, record) {
 
     return getDataFromCachedFile(target, value, !value.etag)
         .then(function (cachedValue) {
-            if (cachedValue) {
-                value.etag = cachedValue.etag;
-                value.sha = cachedValue.sha;
-                value.url = cachedValue.url;
-                value.content = cachedValue.content;
-                value.editDate = cachedValue.editDate;
-                value.repo = cachedValue.repo;
+            if (!cachedValue) {
+                return value;
             }
+
+            value.etag = cachedValue.etag;
+            value.sha = cachedValue.sha;
+            value.url = cachedValue.url;
+            value.content = cachedValue.content;
+            value.editDate = cachedValue.editDate;
+            value.repo = cachedValue.repo;
+            return levelDb.get().put(key, value).then(function () {
+                return value;
+            });
+        })
+        .then(function (value) {
             return getRemoteData(value, !value.etag);
         })
         .then(function (response) {
