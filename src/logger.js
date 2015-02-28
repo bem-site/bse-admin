@@ -1,10 +1,9 @@
 'use strict';
 
-var _ = require('lodash'),
-    intel = require('intel'),
-
-    Logger = function (mode, level, options) {
-        this._init(mode, level, options);
+var chalk = require('chalk'),
+    moment = require('moment'),
+    Logger = function (mode, level) {
+        this._init(mode, level);
     };
 
 Logger.prototype = {
@@ -15,68 +14,63 @@ Logger.prototype = {
     _mode: undefined,
     _level: undefined,
     _options: undefined,
-
-    _baseHandlerConfiguration: {
-        level: intel.VERBOSE,
-        formatter: new intel.Formatter({
-            format: '[%(date)s] %(levelname)s %(name)s: %(message)s',
-            colorize: true
-        })
-    },
+    _logger: undefined,
+    _prefixString: undefined,
+    _styleString: undefined,
 
     /**
      * Logger initialization function
      * @param {String} mode - logger mode (development|testing|production)
      * @param {String} level - logger level (verbose|debug|info|warn|error)
-     * @param {Object} options - advanced logger options
      * @private
      */
-    _init: function (mode, level, options) {
+    _init: function (mode, level) {
         this._mode = mode || this._DEFAULT_LOG_MODE;
         this._level = level || this._DEFAULT_LOG_LEVEL;
-        this._options = options;
+        this._options = {};
 
-        if (this._mode === 'development') {
-            intel.setLevel(this._level);
-            intel.addHandler(
-                new intel.handlers.Console(_.extend({}, this._baseHandlerConfiguration))
-            );
-        }
-    },
-
-    /**
-     * Returns logger by current mode and log level
-     * @returns {Object} logger
-     * @private
-     */
-    _getLogger: function () {
-        var _this = this,
-            getLFD = function () {
-                var parent = module.parent;
-                return intel.getLogger(parent.filename.split('/').slice(-2).join('/'));
-            },
-            getLFT = function () {
-                return {
-                    verbose: function () {},
-                    debug: function () {},
-                    info: function () {},
-                    warn: console.warn,
-                    error: console.error
-                };
-            },
-            getLFP = function () {
-                return ['verbose', 'debug', 'info', 'warn', 'error'].reduce(function (prev, item, index, arr) {
-                    prev[item] = arr.slice(0, index + 1).indexOf(_this._level) > -1 ?
-                        (console[item] || console.log) : function () {};
-                    return prev;
-                }, {});
+        if (this._mode === 'testing') {
+            this._logger = {
+                verbose: function () {},
+                debug: function () {},
+                info: function () {},
+                warn: console.warn,
+                error: console.error
             };
+        } else {
+            var _this = this;
+            this._logger = ['verbose', 'debug', 'info', 'warn', 'error'].reduce(function (prev, item, index, arr) {
+                prev[item] = arr.slice(0, index + 1).indexOf(_this._level) > -1 ?
+                    (console[item] || console.log) : function () {};
+                return prev;
+            }, {});
 
-        return {
-            development: getLFD(),
-            testing: getLFT(),
-            production: getLFP()
-        }[this._mode];
+            if (this._mode === 'development') {
+                this._options.color = true;
+                this._options.useDate = true;
+            }
+        }
+
+        this._prefixString = function (level) {
+            var prefix = '';
+            if (this._options.useDate) {
+                prefix = '[' + moment().format('YYYY-MM-DD HH:mm:SS') + ']';
+            }
+            prefix += ' ' + level.toUpperCase() + ' ';
+            prefix += module.parent.filename.split('/').slice(-2).join('/') + ': ';
+            return prefix;
+        };
+
+        this._styleString = function (str, styles) {
+            if (!this._options.color) {
+                return str;
+            }
+            var f = styles.reduce(function (prev, item) {
+                prev = prev[item];
+                return prev;
+            }, chalk);
+            return f(str);
+        };
     },
 
     /**
@@ -85,7 +79,9 @@ Logger.prototype = {
      * @returns {*}
      */
     verbose: function (str) {
-        return this._getLogger().verbose(str);
+        str = this._prefixString('verbose') + str;
+        str = this._styleString(str, ['magenta']);
+        return this._logger.verbose(str);
     },
 
     /**
@@ -94,7 +90,9 @@ Logger.prototype = {
      * @returns {*}
      */
     debug: function (str) {
-        return this._getLogger().debug(str);
+        str = this._prefixString('debug') + str;
+        str = this._styleString(str, ['cyan']);
+        return this._logger.debug(str);
     },
 
     /**
@@ -103,7 +101,9 @@ Logger.prototype = {
      * @returns {*}
      */
     info: function (str) {
-        return this._getLogger(module).info(str);
+        str = this._prefixString('info') + str;
+        str = this._styleString(str, ['green']);
+        return this._logger.info(str);
     },
 
     /**
@@ -112,7 +112,9 @@ Logger.prototype = {
      * @returns {*}
      */
     warn: function (str) {
-        return this._getLogger().warn(str);
+        str = this._prefixString('warn') + str;
+        str = this._styleString(str, ['bold', 'yellow']);
+        return this._logger.warn(str);
     },
 
     /**
@@ -121,7 +123,9 @@ Logger.prototype = {
      * @returns {*}
      */
     error: function (str) {
-        return this._getLogger().error(str);
+        str = this._prefixString('error') + str;
+        str = this._styleString(str, ['bold', 'red']);
+        return this._logger.error(str);
     }
 };
 

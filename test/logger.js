@@ -71,7 +71,7 @@ describe('logger', function () {
     });
 
     it('should can verbose in production mode', function () {
-        loggerP.verbose('test testing production message');
+        loggerP.verbose('test production verbose message');
     });
 
     it('should can debug in production mode', function () {
