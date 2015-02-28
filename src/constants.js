@@ -1,6 +1,9 @@
+var path = require('path');
+
 module.exports = {
     DIRECTORY: {
-        MODEL: 'model'
+        CACHE: path.join(process.cwd(), 'cache'),
+        MODEL: path.join(process.cwd(), 'model')
     },
     GITHUB: {
         PRIVATE: 'github.yandex-team.ru',
