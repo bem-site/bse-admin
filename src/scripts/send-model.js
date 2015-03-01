@@ -44,9 +44,6 @@ var fs = require('fs'),
     };
 
 SendModel.prototype = {
-    _link: undefined,
-    _logger: undefined,
-
     /**
      * Executes current script
      * @param {Function} callback function
