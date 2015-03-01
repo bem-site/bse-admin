@@ -5,6 +5,9 @@ module.exports = {
         CACHE: path.join(process.cwd(), 'cache'),
         MODEL: path.join(process.cwd(), 'model')
     },
+    FILE: {
+        MODEL: 'model.json'
+    },
     GITHUB: {
         PRIVATE: 'github.yandex-team.ru',
         PUBLIC: 'github.com'

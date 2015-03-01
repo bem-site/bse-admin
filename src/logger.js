@@ -1,6 +1,7 @@
-'use strict';
+'use sict';
 
-var chalk = require('chalk'),
+var util = require('util'),
+    chalk = require('chalk'),
     moment = require('moment'),
     Logger = function (mode, level) {
         this._init(mode, level);
@@ -20,12 +21,11 @@ Logger.prototype = {
 
     /**
      * Logger initialization function
-     * @param {String} mode - logger mode (development|testing|production)
      * @param {String} level - logger level (verbose|debug|info|warn|error)
      * @private
      */
-    _init: function (mode, level) {
-        this._mode = mode || this._DEFAULT_LOG_MODE;
+    _init: function (level) {
+        this._mode = process.env.NODE_ENV || this._DEFAULT_LOG_MODE;
         this._level = level || this._DEFAULT_LOG_LEVEL;
         this._options = {};
 
@@ -61,71 +61,71 @@ Logger.prototype = {
             return prefix;
         };
 
-        this._styleString = function (str, styles) {
+        this._styleString = function (s, styles) {
             if (!this._options.color) {
-                return str;
+                return s;
             }
             var f = styles.reduce(function (prev, item) {
                 prev = prev[item];
                 return prev;
             }, chalk);
-            return f(str);
+            return f(s);
         };
     },
 
     /**
      * Alias for logging verbose messages
-     * @param {String} str (string) for logging
      * @returns {*}
      */
-    verbose: function (str) {
-        str = this._prefixString('verbose') + str;
-        str = this._styleString(str, ['magenta']);
-        return this._logger.verbose(str);
+    verbose: function () {
+        var s = util.format.apply(null, arguments);
+        s = this._prefixString('verbose') + s;
+        s = this._styleString(s, ['magenta']);
+        return this._logger.verbose(s);
     },
 
     /**
      * Alias for logging debug messages
-     * @param {String} str (string) for logging
      * @returns {*}
      */
-    debug: function (str) {
-        str = this._prefixString('debug') + str;
-        str = this._styleString(str, ['cyan']);
-        return this._logger.debug(str);
+    debug: function () {
+        var s = util.format.apply(null, arguments);
+        s = this._prefixString('debug') + s;
+        s = this._styleString(s, ['cyan']);
+        return this._logger.debug(s);
     },
 
     /**
      * Alias for logging info messages
-     * @param {String} str (string) for logging
      * @returns {*}
      */
-    info: function (str) {
-        str = this._prefixString('info') + str;
-        str = this._styleString(str, ['green']);
-        return this._logger.info(str);
+    info: function () {
+        var s = util.format.apply(null, arguments);
+        s = this._prefixString('info') + s;
+        s = this._styleString(s, ['green']);
+        return this._logger.info(s);
     },
 
     /**
      * Alias for logging warn messages
-     * @param {String} str (string) for logging
      * @returns {*}
      */
-    warn: function (str) {
-        str = this._prefixString('warn') + str;
-        str = this._styleString(str, ['bold', 'yellow']);
-        return this._logger.warn(str);
+    warn: function () {
+        var s = util.format.apply(null, arguments);
+        s = this._prefixString('warn') + s;
+        s = this._styleString(s, ['bold', 'yellow']);
+        return this._logger.warn(s);
     },
 
     /**
      * Alias for logging error messages
-     * @param {String} str (string) for logging
      * @returns {*}
      */
-    error: function (str) {
-        str = this._prefixString('error') + str;
-        str = this._styleString(str, ['bold', 'red']);
-        return this._logger.error(str);
+    error: function () {
+        var s = util.format.apply(null, arguments);
+        s = this._prefixString('error') + s;
+        s = this._styleString(s, ['bold', 'red']);
+        return this._logger.error(s);
     }
 };
 
