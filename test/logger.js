@@ -7,7 +7,7 @@ var path = require('path'),
 
 describe('logger', function () {
     it('should can be initialized without params in default mode', function () {
-        var loggerDefault = new Logger();
+        var loggerDefault = new Logger(module);
         loggerDefault._mode.should.equal('testing');
         loggerDefault._level.should.equal('info');
     });
@@ -18,7 +18,7 @@ describe('logger', function () {
         });
 
         it('should can be initialized in development mode', function () {
-            loggerD = new Logger('verbose');
+            loggerD = new Logger(module, 'verbose');
             loggerD._mode.should.equal('development');
             loggerD._level.should.equal('verbose');
         });
@@ -50,7 +50,7 @@ describe('logger', function () {
         });
 
         it('should can be initialized in testing mode', function () {
-            loggerT = new Logger('verbose');
+            loggerT = new Logger(module, 'verbose');
             loggerT._mode.should.equal('testing');
             loggerT._level.should.equal('verbose');
         });
@@ -82,7 +82,7 @@ describe('logger', function () {
         });
 
         it('should can be initialized in production mode', function () {
-            loggerP = new Logger('verbose');
+            loggerP = new Logger(module, 'verbose');
             loggerP._mode.should.equal('production');
             loggerP._level.should.equal('verbose');
         });

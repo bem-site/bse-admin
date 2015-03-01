@@ -3,8 +3,8 @@
 var util = require('util'),
     chalk = require('chalk'),
     moment = require('moment'),
-    Logger = function (mode, level) {
-        this._init(mode, level);
+    Logger = function (module, level) {
+        this._init(module, level);
     };
 
 Logger.prototype = {
@@ -21,10 +21,11 @@ Logger.prototype = {
 
     /**
      * Logger initialization function
+     * @param {Module} moduleForLog that uses this logger instance
      * @param {String} level - logger level (verbose|debug|info|warn|error)
      * @private
      */
-    _init: function (level) {
+    _init: function (moduleForLog, level) {
         this._mode = process.env.NODE_ENV || this._DEFAULT_LOG_MODE;
         this._level = level || this._DEFAULT_LOG_LEVEL;
         this._options = {};
@@ -57,7 +58,7 @@ Logger.prototype = {
                 prefix = '[' + moment().format('YYYY-MM-DD HH:mm:SS') + ']';
             }
             prefix += ' ' + level.toUpperCase() + ' ';
-            prefix += module.parent.filename.split('/').slice(-2).join('/') + ': ';
+            prefix += moduleForLog.parent.filename.split('/').slice(-2).join('/') + ': ';
             return prefix;
         };
 

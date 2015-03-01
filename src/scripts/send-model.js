@@ -7,14 +7,6 @@ var fs = require('fs'),
     constants = require('../constants'),
     Logger = require('../logger'),
 
-    SendModel = function (options) {
-        this._init(options);
-    };
-
-SendModel.prototype = {
-    _link: undefined,
-    _logger: undefined,
-
     /**
      * Initialize script for sending model file to remote build server
      * @param {Object} options object with fields:
@@ -22,8 +14,8 @@ SendModel.prototype = {
      * - {String} port - port of remote build server
      * @private
      */
-    _init: function (options) {
-        this._logger = new Logger('debug');
+    SendModel = function (options) {
+        this._logger = new Logger(module, 'debug');
 
         var errorMessage;
         if (!options) {
@@ -49,7 +41,11 @@ SendModel.prototype = {
             port: options.port,
             pathname: '/model'
         });
-    },
+    };
+
+SendModel.prototype = {
+    _link: undefined,
+    _logger: undefined,
 
     /**
      * Executes current script
