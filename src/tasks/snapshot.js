@@ -9,22 +9,6 @@ var util = require('util'),
     utility = require('../util'),
     logger = require('../logger');
 
-/**
- * Generates name of snapshot
- * @returns {String}
- */
-function getSnapshotName() {
-    var date = new Date();
-    return util.format('%s:%s:%s-%s:%s:%s',
-        date.getDate(),
-        date.getMonth() + 1,
-        date.getFullYear(),
-        date.getHours(),
-        date.getMinutes(),
-        date.getSeconds()
-    );
-}
-
 module.exports = function (target) {
     logger.info('Start to create database snapshot', module);
 
@@ -33,7 +17,7 @@ module.exports = function (target) {
         return vow.resolve(target);
     }
 
-    var snapshotName = getSnapshotName(),
+    var snapshotName = utility.getSnapshotName(),
         snapshotPath = path.join(target.SNAPSHOTS_DIR, snapshotName);
 
     target.setSnapshotName(snapshotName);
