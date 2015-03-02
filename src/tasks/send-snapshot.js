@@ -10,8 +10,7 @@ var fs = require('fs'),
     errors = require('../errors').TaskSendSnapshot,
     disk = require('../providers/yandex-disk'),
     logger = require('../logger'),
-    utility = require('../util'),
-    LEVEL_DB_DIR = 'leveldb';
+    utility = require('../util');
 
 /**
  * Creates database archive from database folder
@@ -26,10 +25,10 @@ function _createDbArchive (target) {
 
     logger.debug(util.format('create db archive for snapshot %s', snapshotName), module);
 
-    fstream.Reader({ path: path.join(snapshotPath, LEVEL_DB_DIR), type: 'Directory' })
+    fstream.Reader({ path: snapshotPath, type: 'Directory' })
         .pipe(tar.Pack())
         .pipe(zlib.Gzip())
-        .pipe(fs.createWriteStream(path.join(snapshotPath, (LEVEL_DB_DIR + '.tar.gz'))))
+        .pipe(fs.createWriteStream(path.join(snapshotPath, ('data.tar.gz'))))
         .on('error', function (err) {
             errors.createError(errors.CODES.COMMON, { err: err, snapshotName: snapshotName }).log();
             def.reject(err);
@@ -46,18 +45,6 @@ function _createDbArchive (target) {
 }
 
 /**
- * Remove database folder
- * @param {TargetBase} target object
- * @returns {*}
- * @private
- */
-function _removeDbFolder (target) {
-    var snapshotName = target.getSnapshotName(),
-        snapshotPath = path.join(target.SNAPSHOTS_DIR, snapshotName);
-    return utility.removeDir(path.join(snapshotPath, LEVEL_DB_DIR));
-}
-
-/**
  * Sends all files in snapshot folder to Yandex Disk
  * @param {TargetBase} target object
  * @returns {*}
@@ -69,7 +56,11 @@ function _sendToDisk (target) {
         destinationPath = path.join(target.getOptions()['yandex-disk']['namespace'], snapshotName);
 
     logger.debug(util.format('send folder %s to yandex disk %s', snapshotPath, destinationPath), module);
-    return disk.get().uploadDirectory(snapshotPath, destinationPath);
+    return disk.get().makeDir(destinationPath).then(function () {
+        return disk.get().uploadFile(
+            path.join(snapshotPath, 'data.tar.gz'),
+            path.join(destinationPath, 'data.tar.gz'));
+    });
 }
 
 module.exports = function (target) {
@@ -86,9 +77,6 @@ module.exports = function (target) {
     }
 
     return _createDbArchive(target)
-        .then(function () {
-            return _removeDbFolder(target);
-        })
         .then(function () {
             return _sendToDisk(target);
         })

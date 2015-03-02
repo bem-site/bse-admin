@@ -25,19 +25,20 @@ function exportPages (target, model, snapshotPath) {
             ]);
         })
         .spread(function (nodeRecords, docRecords) {
-            return nodeRecords.map(function (prev, nodeRecord) {
-                var node = nodeRecord.value,
-                    doc;
+            return nodeRecords
+                .map(function (nodeRecord) {
+                    var node = nodeRecord.value,
+                        doc;
 
-                utility.getLanguages().forEach(function (lang) {
-                    doc = getDocByNodeId(docRecords, node.id, lang);
-                    if (doc) {
-                        node.source = node.source || {};
-                        node.source[lang] = doc;
-                    }
-                });
-                return node;
-            }, {});
+                    utility.getLanguages().forEach(function (lang) {
+                        doc = getDocByNodeId(docRecords, node.id, lang);
+                        if (doc) {
+                            node.source = node.source || {};
+                            node.source[lang] = doc.value;
+                        }
+                    });
+                    return node;
+                }, {});
         })
         .then(function (nodes) {
             var portionSize = 20;
@@ -66,6 +67,19 @@ function exportPages (target, model, snapshotPath) {
         });
 }
 
+function _saveBlock(data, filePath, portionSize) {
+    return data.reduce(function (prev, item, index) {
+        prev = prev.then(function () {
+            logger.debug(util.format('save data files in range %s - %s',
+                index * portionSize, (index + 1) * portionSize), module);
+            return vow.all(item.map(function (_item) {
+                return vowFs.write(filePath + '/' + _item.key.split(':').pop(), _item.value, 'utf-8');
+            }));
+        });
+        return prev;
+    }, vow.resolve());
+}
+
 function exportBlocks (target, model, snapshotPath) {
     var blockDataPath = path.join(snapshotPath, 'blocks', 'data'),
         blockJSDocPath = path.join(snapshotPath, 'blocks', 'jsdoc');
@@ -82,56 +96,20 @@ function exportBlocks (target, model, snapshotPath) {
         })
         .spread(function (data, jsdoc) {
             var portionSize = 20;
-            data = utility.separateArrayOnChunks(data, portionSize);
-            jsdoc = utility.separateArrayOnChunks(jsdoc, portionSize);
-
-            var saveData = data.reduce(function (prev, item, index) {
-                    prev = prev.then(function () {
-                        logger.debug(util.format('save data files in range %s - %s',
-                            index * portionSize, (index + 1) * portionSize), module);
-                        return vow.all(item.map(function (_item) {
-                            return vowFs.write(blockDataPath + '/' + _item.key.split(':').pop(), _item.value, 'utf-8');
-                        }));
-                    });
-                    return prev;
-                }, vow.resolve()),
-                saveJSDoc = jsdoc.reduce(function (prev, item, index) {
-                    prev = prev.then(function () {
-                        logger.debug(util.format('save jsdoc files in range %s - %s',
-                            index * portionSize, (index + 1) * portionSize), module);
-                        return vow.all(item.map(function (_item) {
-                            return vowFs.write(blockJSDocPath + '/' + _item.key.split(':').pop(), _item.value, 'utf-8');
-                        }));
-                    });
-                    return prev;
-                }, vow.resolve());
-            return vow.all([saveData, saveJSDoc]);
+            return vow.all([
+                _saveBlock(utility.separateArrayOnChunks(data, portionSize), blockDataPath, portionSize),
+                _saveBlock(utility.separateArrayOnChunks(jsdoc, portionSize), blockJSDocPath, portionSize)
+            ]);
         })
         .then(function () {
             return model;
         });
 }
 
-function exportAuthors (target, model) {
-    logger.debug('Export authors', module);
-    return levelDb.get().get(target.KEY.AUTHORS).then(function (result) {
-        model.translators = result || [];
-        return model;
-    });
-}
-
-function exportTranslators (target, model) {
-    logger.debug('Export translators', module);
-    return levelDb.get().get(target.KEY.TRANSLATORS).then(function (result) {
-        model.translators = result || [];
-        return model;
-    });
-}
-
-function exportTags (target, model) {
-    logger.debug('Export tags', module);
-    return levelDb.get().get(target.KEY.TAGS).then(function (result) {
-        model.tags = result || [];
+function exportCollected(model, key) {
+    logger.debug(util.format('Export %s', key), module);
+    return levelDb.get().get(key).then(function (result) {
+        model[key] = result || [];
         return model;
     });
 }
@@ -139,35 +117,31 @@ function exportTags (target, model) {
 module.exports = function (target) {
     logger.info('Start to export database to files', module);
 
-    if (!target.getChanges().areModified()) {
-        logger.warn('No changes were made during this synchronization. This step will be skipped', module);
-        return vow.resolve(target);
-    }
-
-    var snapshotName = utility.getSnapshotName(),
-        snapshotPath = path.join(target.SNAPSHOTS_DIR, snapshotName),
+    var dataPath = target.DB_DIR,
         model = {};
 
-    target.setSnapshotName(snapshotName);
-
-    return vowFs.makeDir(snapshotPath)
+    return vowFs.makeDir(dataPath)
         .then(function () {
-            return exportPages(model);
+            return exportPages(target, model, dataPath);
         })
         .then(function (m) {
-            return exportBlocks(target, m, snapshotPath);
+            return exportBlocks(target, m, dataPath);
         })
         .then(function (m) {
-            return exportAuthors(target, m);
+            return vow
+                .all([
+                    exportCollected(m, target.KEY.AUTHORS),
+                    exportCollected(m, target.KEY.TRANSLATORS),
+                    exportCollected(m, target.KEY.TAGS)
+                ])
+                .then(function () {
+                    return model;
+                });
         })
         .then(function (m) {
-            return exportTranslators(target, m);
-        })
-        .then(function (m) {
-            return exportTags(target, m);
+            return vowFs.write(path.join(dataPath, 'db.json'), JSON.stringify(m), 'utf-8');
         })
         .then(function () {
-            logger.info(util.format('Files snapshot %s has been created successfully', snapshotName), module);
             return vow.resolve(target);
         });
 };

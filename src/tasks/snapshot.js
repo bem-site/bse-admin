@@ -5,7 +5,6 @@ var util = require('util'),
     vowFs = require('vow-fs'),
 
     errors = require('../errors').TaskSnapshot,
-    levelDb = require('../providers/level-db'),
     utility = require('../util'),
     logger = require('../logger');
 
@@ -24,7 +23,11 @@ module.exports = function (target) {
 
     return vowFs.makeDir(snapshotPath)
         .then(function () {
-            return levelDb.get().copy(snapshotPath);
+            return vow.all([
+                utility.copyDir(path.join(target.DB_DIR, 'docs'), path.join(snapshotPath, 'docs')),
+                utility.copyDir(path.join(target.DB_DIR, 'blocks'), path.join(snapshotPath, 'blocks')),
+                utility.copyDir(path.join(target.DB_DIR, 'db.json'), path.join(snapshotPath, 'db.json'))
+            ]);
         })
         .then(function () {
             var meta = {
@@ -41,7 +44,7 @@ module.exports = function (target) {
                 });
         })
         .then(function () {
-            logger.info(util.format('Database snapshot %s has been created successfully', snapshotName), module);
+            logger.info(util.format('Data snapshot %s has been created successfully', snapshotName), module);
             return vow.resolve(target);
         })
         .fail(function (err) {

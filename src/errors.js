@@ -138,7 +138,9 @@ module.exports = {
             NOT_INITIALIZED: [281, 'Yandex Disk was not initialized'],
             DISK_NOT_CONFIGURED: [282, 'Can\'t initialize Yandex Disk module. Configuration was not set'],
             WRITE_FILE: [283, 'Write file %filePath% on Yandex Disk failed with error %err%'],
-            UPLOAD_DIR: [284, 'Upload directory %localDir% to %remoteDir% on Yandex Disk failed with error %err%']
+            UPLOAD_DIR: [284, 'Upload directory %localDir% to %remoteDir% on Yandex Disk failed with error %err%'],
+            MAKE_FIR: [285, 'Make directory failed with error %err%'],
+            UPLOAD_FILE: [286, 'Upload file failed with error %err%']
         }).setLogger(log),
 
     Mailer: Terror
