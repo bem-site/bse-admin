@@ -57,16 +57,29 @@ VersionNode.prototype.setTitle = function (version) {
  */
 VersionNode.prototype.setSource = function (version) {
     var readme = version.docs ? version.docs.readme : {
-        title: { en: 'Readme', ru: 'Readme' },
-        content: version.readme
-    };
+            title: { en: 'Readme', ru: 'Readme' },
+            content: version.readme
+        },
+        regExp = /^https?:\/\/(.+?)\/(.+?)\/(.+?)/,
+        parsedRepo = version.url.match(regExp),
+        repo;
+
+    if (parsedRepo) {
+        repo = {
+            host: parsedRepo[1],
+            user: parsedRepo[2],
+            repo: parsedRepo[3],
+            ref:  version.ref
+        };
+    }
 
     this.source = utility.getLanguages().reduce(function (prev, lang) {
         prev[lang] = {
             title: version.repo,
             deps: version.deps,
             url: version.url,
-            content: (readme && readme.content) ? readme.content[lang] : null
+            content: (readme && readme.content) ? readme.content[lang] : null,
+            repo: repo
         };
         return prev;
     }, {});
