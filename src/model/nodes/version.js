@@ -61,8 +61,12 @@ VersionNode.prototype.setSource = function (version) {
             content: version.readme
         },
         regExp = /^https?:\/\/(.+?)\/(.+?)\/(.+?)/,
-        parsedRepo = version.url.match(regExp),
+        parsedRepo,
         repo;
+
+    if (version.url) {
+        parsedRepo = version.url.match(regExp);
+    }
 
     if (parsedRepo) {
         repo = {
