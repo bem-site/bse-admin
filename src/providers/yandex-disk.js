@@ -71,6 +71,42 @@ YD.prototype = {
         return def.promise();
     },
 
+    makeDirectory: function (dirPath) {
+        if (!this.isInitialized ()) {
+            errors.createError(errors.CODES.NOT_INITIALIZED).log('warn');
+            return vow.resolve();
+        }
+
+        var def = vow.defer();
+        this._disk.mkdir(dirPath, function (err) {
+            if (err) {
+                errors.createError(errors.CODES.MAKE_FIR).log();
+                def.reject(err);
+            } else {
+                def.resolve();
+            }
+        });
+        return def.promise();
+    },
+
+    uploadFile: function (srcFile, targetPath) {
+        if (!this.isInitialized ()) {
+            errors.createError(errors.CODES.NOT_INITIALIZED).log('warn');
+            return vow.resolve();
+        }
+
+        var def = vow.defer();
+        this._disk.uploadFile(srcFile, targetPath, function (err) {
+            if (err) {
+                errors.createError(errors.CODES.UPLOAD).log();
+                def.reject(err);
+            } else {
+                def.resolve();
+            }
+        });
+        return def.promise();
+    },
+
     /**
      * Uploads directory to Yandex Disk
      * @param {String} localDir - path to directory on local filesystem
