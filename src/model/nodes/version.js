@@ -79,7 +79,8 @@ VersionNode.prototype.setSource = function (version) {
             deps: version.deps,
             url: version.url,
             content: (readme && readme.content) ? readme.content[lang] : null,
-            repo: repo
+            repo: repo,
+            isLibraryDoc: true
         };
         return prev;
     }, {});

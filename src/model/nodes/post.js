@@ -46,7 +46,8 @@ PostNode.prototype.setSource = function (doc) {
     this.source = utility.getLanguages().reduce(function (prev, lang) {
         prev[lang] = {
             title: doc.title[lang],
-            content: doc.content[lang]
+            content: doc.content[lang],
+            isLibraryDoc: true
         };
         return prev;
     }, {});
