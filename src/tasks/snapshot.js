@@ -5,25 +5,8 @@ var util = require('util'),
     vowFs = require('vow-fs'),
 
     errors = require('../errors').TaskSnapshot,
-    levelDb = require('../providers/level-db'),
     utility = require('../util'),
     logger = require('../logger');
-
-/**
- * Generates name of snapshot
- * @returns {String}
- */
-function getSnapshotName() {
-    var date = new Date();
-    return util.format('%s:%s:%s-%s:%s:%s',
-        date.getDate(),
-        date.getMonth() + 1,
-        date.getFullYear(),
-        date.getHours(),
-        date.getMinutes(),
-        date.getSeconds()
-    );
-}
 
 module.exports = function (target) {
     logger.info('Start to create database snapshot', module);
@@ -33,14 +16,18 @@ module.exports = function (target) {
         return vow.resolve(target);
     }
 
-    var snapshotName = getSnapshotName(),
+    var snapshotName = utility.getSnapshotName(),
         snapshotPath = path.join(target.SNAPSHOTS_DIR, snapshotName);
 
     target.setSnapshotName(snapshotName);
 
     return vowFs.makeDir(snapshotPath)
         .then(function () {
-            return levelDb.get().copy(snapshotPath);
+            return vow.all([
+                utility.copyDir(path.join(target.DB_DIR, 'docs'), path.join(snapshotPath, 'docs')),
+                utility.copyDir(path.join(target.DB_DIR, 'blocks'), path.join(snapshotPath, 'blocks')),
+                utility.copyDir(path.join(target.DB_DIR, 'db.json'), path.join(snapshotPath, 'db.json'))
+            ]);
         })
         .then(function () {
             var meta = {
@@ -57,7 +44,7 @@ module.exports = function (target) {
                 });
         })
         .then(function () {
-            logger.info(util.format('Database snapshot %s has been created successfully', snapshotName), module);
+            logger.info(util.format('Data snapshot %s has been created successfully', snapshotName), module);
             return vow.resolve(target);
         })
         .fail(function (err) {

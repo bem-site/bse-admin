@@ -1,4 +1,5 @@
-var _ = require('lodash'),
+var u = require('util'),
+    _ = require('lodash'),
     vow = require('vow'),
     md = require('marked'),
     fsExtra = require('fs-extra'),
@@ -118,4 +119,20 @@ exports.separateArrayOnChunks = function (arr, chunkSize) {
     }
 
     return arrays;
+};
+
+/**
+ * Generates name of snapshot
+ * @returns {String}
+ */
+exports.getSnapshotName = function () {
+    var date = new Date();
+    return u.format('%s:%s:%s-%s:%s:%s',
+        date.getDate(),
+        date.getMonth() + 1,
+        date.getFullYear(),
+        date.getHours(),
+        date.getMinutes(),
+        date.getSeconds()
+    );
 };
