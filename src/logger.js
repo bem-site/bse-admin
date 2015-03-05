@@ -11,6 +11,13 @@ Logger.prototype = {
 
     _DEFAULT_LOG_MODE: 'testing',
     _DEFAULT_LOG_LEVEL: 'info',
+    _STYLES: {
+        verbose: ['magenta'],
+        debug: ['cyan'],
+        info: ['green'],
+        warn: ['bold', 'yellow'],
+        error: ['bold', 'red']
+    },
 
     _mode: undefined,
     _level: undefined,
@@ -52,16 +59,6 @@ Logger.prototype = {
             }
         }
 
-        this._prefixString = function (level) {
-            var prefix = '';
-            if (this._options.useDate) {
-                prefix = '[' + moment().format('YYYY-MM-DD HH:mm:SS') + ']';
-            }
-            prefix += ' ' + level.toUpperCase() + ' ';
-            prefix += moduleForLog.parent.filename.split('/').slice(-2).join('/') + ': ';
-            return prefix;
-        };
-
         this._styleString = function (s, styles) {
             if (!this._options.color) {
                 return s;
@@ -72,6 +69,28 @@ Logger.prototype = {
             }, chalk);
             return f(s);
         };
+
+        this._prefixString = function (level) {
+            var prefix = '';
+            if (this._options.useDate) {
+                prefix = '[' + moment().format('YYYY-MM-DD HH:mm:SS') + ']';
+            }
+            prefix += ' ' + level.toUpperCase() + ' ';
+            prefix = this._styleString(prefix, this._STYLES[level]);
+            prefix += moduleForLog.parent.filename.split('/').slice(-2).join('/') + ': ';
+            return prefix;
+        };
+    },
+
+    /**
+     * Logs given message args with given log level
+     * @param {String} level - log level
+     * @param {Argument} args - logger arguments
+     * @returns {*}
+     * @private
+     */
+    _log: function (level, args) {
+        return this._logger.verbose(this._prefixString(level) + util.format.apply(this, args));
     },
 
     /**
@@ -79,10 +98,7 @@ Logger.prototype = {
      * @returns {*}
      */
     verbose: function () {
-        var s = util.format.apply(null, arguments);
-        s = this._prefixString('verbose') + s;
-        s = this._styleString(s, ['magenta']);
-        return this._logger.verbose(s);
+        return this._log('verbose', arguments);
     },
 
     /**
@@ -90,10 +106,7 @@ Logger.prototype = {
      * @returns {*}
      */
     debug: function () {
-        var s = util.format.apply(null, arguments);
-        s = this._prefixString('debug') + s;
-        s = this._styleString(s, ['cyan']);
-        return this._logger.debug(s);
+        return this._log('debug', arguments);
     },
 
     /**
@@ -101,10 +114,7 @@ Logger.prototype = {
      * @returns {*}
      */
     info: function () {
-        var s = util.format.apply(null, arguments);
-        s = this._prefixString('info') + s;
-        s = this._styleString(s, ['green']);
-        return this._logger.info(s);
+        return this._log('info', arguments);
     },
 
     /**
@@ -112,10 +122,7 @@ Logger.prototype = {
      * @returns {*}
      */
     warn: function () {
-        var s = util.format.apply(null, arguments);
-        s = this._prefixString('warn') + s;
-        s = this._styleString(s, ['bold', 'yellow']);
-        return this._logger.warn(s);
+        return this._log('warn', arguments);
     },
 
     /**
@@ -123,10 +130,7 @@ Logger.prototype = {
      * @returns {*}
      */
     error: function () {
-        var s = util.format.apply(null, arguments);
-        s = this._prefixString('error') + s;
-        s = this._styleString(s, ['bold', 'red']);
-        return this._logger.error(s);
+        return this._log('error', arguments);
     }
 };
 

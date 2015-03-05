@@ -24,23 +24,23 @@ describe('logger', function () {
         });
 
         it('should can verbose in development mode', function () {
-            loggerD.verbose('test development verbose message');
+            loggerD.verbose('test development verbose message with param %s and %s', 1, 2);
         });
 
         it('should can debug in development mode', function () {
-            loggerD.debug('test development debug message');
+            loggerD.debug('test development debug message with param %s and %s', 1, 2);
         });
 
         it('should can info in development mode', function () {
-            loggerD.info('test development info message');
+            loggerD.info('test development info message with param %s and %s', 1, 2);
         });
 
         it('should can warn in development mode', function () {
-            loggerD.warn('test development warn message');
+            loggerD.warn('test development warn message with param %s and %s', 1, 2);
         });
 
         it('should can error in development mode', function () {
-            loggerD.error('test development error message');
+            loggerD.error('test development error message with param %s and %s', 1, 2);
         });
     });
 
