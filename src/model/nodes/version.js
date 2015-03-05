@@ -68,7 +68,7 @@ VersionNode.prototype.setSource = function (version) {
         repo = {
             host: parsedRepo[1],
             user: parsedRepo[2],
-            repo: parsedRepo[3],
+            repo: version.repo,
             ref:  version.ref
         };
     }
