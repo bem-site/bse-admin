@@ -1,3 +1,5 @@
+'use strict';
+
 var ChangeType = require('./type'),
     Changes = function () {
         this._docs = new ChangeType('docs');

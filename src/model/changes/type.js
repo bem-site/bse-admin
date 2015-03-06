@@ -1,3 +1,5 @@
+'use strict';
+
 var ChangeType = function (type) {
     this._type = type;
     this._added = [];

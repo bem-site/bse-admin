@@ -1,4 +1,4 @@
-'use sict';
+'use strict';
 
 var util = require('util'),
     chalk = require('chalk'),
