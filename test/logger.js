@@ -107,4 +107,8 @@ describe('logger', function () {
             loggerP.error('test production error message');
         });
     });
+
+    after(function () {
+        process.env.NODE_ENV = 'testing';
+    })
 });
