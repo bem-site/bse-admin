@@ -33,7 +33,7 @@
     "node": ">= 0.10.0"
   },
   "dependencies": {
-    "bem-md-renderer": "~0.0.1",
+    "bem-md-renderer": "~0.1.0",
     "deep-extend": "^0.3.x",
     "fs-extra": "^0.16.x",
     "fstream": "^1.0.x",
