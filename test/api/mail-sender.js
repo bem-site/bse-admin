@@ -106,11 +106,13 @@ describe('api/mail-sender', function () {
             });
         });
 
+        /*
         it('should send', function (done) {
             ms.sendHtml('from@bse-admin.yandex.net', ['to@bse-admin.yandex.net'], 'subject', 'body', function (error) {
                 should(error).not.be.ok;
                 done();
             });
         })
+        */
     });
 });

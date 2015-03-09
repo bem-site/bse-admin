@@ -1,0 +1,71 @@
+[
+  {
+    "title": "Привет Bem-Engine",
+    "url": "/",
+    "source": {
+      "ru": {
+        "title": "Bem-site-engine",
+        "createDate": "12-07-2014",
+        "authors": ["kuznetsov-andrey"],
+        "tags": ["readme"],
+        "content": "https://github.com/bem/bem-site-engine/blob/dev/README.md"
+      }
+    }
+  },
+  {
+    "title": "Документация",
+    "url": "/documentation"
+  },
+  {
+    "title": "Создание модели",
+    "url": "/documentation/model",
+    "source": {
+      "ru": {
+        "title": "Создание модели",
+        "createDate": "12-07-2014",
+        "authors": ["kuznetsov-andrey"],
+        "tags": ["documentation", "model"],
+        "content": "https://github.com/bem/bem-site-engine/blob/dev/docs/model.ru.md"
+      }
+    }
+  },
+  {
+    "title": "Конфигурация",
+    "url": "/documentation/config",
+    "source": {
+      "ru": {
+        "title": "Руководство по конфигурированию приложения",
+        "createDate": "12-07-2014",
+        "authors": ["kuznetsov-andrey"],
+        "tags": ["documentation", "config"],
+        "content": "https://github.com/bem/bem-site-engine/blob/dev/docs/config.ru.md"
+      }
+    }
+  },
+  {
+    "title": "Описание middleware модулей",
+    "url": "/documentation/middleware",
+    "source": {
+      "ru": {
+        "title": "Описание middleware модулей",
+        "createDate": "12-07-2014",
+        "authors": ["kuznetsov-andrey"],
+        "tags": ["documentation", "middleware"],
+        "content": "https://github.com/bem/bem-site-engine/blob/dev/docs/middleware.ru.md"
+      }
+    }
+  },
+  {
+    "title": "Процесс сборки данных",
+    "url": "/documentation/compile",
+    "source": {
+      "ru": {
+        "title": "Процесс сборки данных",
+        "createDate": "12-07-2014",
+        "authors": ["kuznetsov-andrey"],
+        "tags": ["documentation", "data-compile"],
+        "content": "https://github.com/bem/bem-site-engine/blob/dev/docs/data_compiling.ru.md"
+      }
+    }
+  }
+]

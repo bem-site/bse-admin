@@ -1,17 +1,19 @@
 'use strict';
 
-var ChangeType = function (type) {
-    this._type = type;
-    this._added = [];
-    this._modified = [];
-    this._removed = [];
-};
+var inherit = require('inherit');
 
-ChangeType.prototype = {
+module.exports = inherit({
     _type: undefined,
     _added: undefined,
     _modified: undefined,
     _removed: undefined,
+
+    __constructor: function (type) {
+        this._type = type;
+        this._added = [];
+        this._modified = [];
+        this._removed = [];
+    },
 
     /**
      * Verify if data of given type were modified
@@ -24,7 +26,7 @@ ChangeType.prototype = {
     /**
      * Add new items to added group
      * @param {Object} item
-     * @returns {ChangeType}
+     * @returns {*}
      */
     addAdded: function (item) {
         this._added.push(item);
@@ -34,7 +36,7 @@ ChangeType.prototype = {
     /**
      * Add new items to modified group
      * @param {Object} item
-     * @returns {ChangeType}
+     * @returns {*}
      */
     addModified: function (item) {
         this._modified.push(item);
@@ -44,7 +46,7 @@ ChangeType.prototype = {
     /**
      * Add new items to removed group
      * @param {Object} item
-     * @returns {ChangeType}
+     * @returns {*}
      */
     addRemoved: function (item) {
         this._removed.push(item);
@@ -74,6 +76,4 @@ ChangeType.prototype = {
     get removed() {
         return this._removed;
     }
-};
-
-module.exports = ChangeType;
+});

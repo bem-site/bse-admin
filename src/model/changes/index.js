@@ -1,16 +1,18 @@
 'use strict';
 
-var ChangeType = require('./type'),
-    Changes = function () {
-        this._docs = new ChangeType('docs');
-        this._pages = new ChangeType('pages');
-        this._libraries = new ChangeType('libraries');
-    };
+var inherit = require('inherit'),
+    ChangeType = require('./type');
 
-Changes.prototype = {
+module.exports = inherit({
     _docs: undefined,
     _pages: undefined,
     _libraries: undefined,
+
+    __constructor: function () {
+        this._docs = new ChangeType('docs');
+        this._pages = new ChangeType('pages');
+        this._libraries = new ChangeType('libraries');
+    },
 
     /**
      * Returns modified state of changes
@@ -43,6 +45,4 @@ Changes.prototype = {
     get libraries() {
         return this._libraries;
     }
-};
-
-module.exports = Changes;
+});

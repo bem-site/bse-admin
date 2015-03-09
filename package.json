@@ -39,6 +39,7 @@
     "fs-extra": "^0.16.x",
     "fstream": "^1.0.x",
     "github": "^0.2.x",
+    "inherit": "^2.2.x",
     "intel": "^1.0.x",
     "js2xmlparser": "^0.1.x",
     "level": "0.18.0",

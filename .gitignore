@@ -28,6 +28,4 @@ node_modules
 *.gz
 
 npm-debug.log
-
-db/*
 cache
