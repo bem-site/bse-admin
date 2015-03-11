@@ -285,6 +285,7 @@ function sortLibraryVersions(target, record) {
                     return compareVersions(a, b);
                 })
                 .map(function (record, index) {
+                    record.value.current = index === 0;
                     record.value.order = index;
                     return { type: 'put', key: record.key, value: record.value };
                 })
