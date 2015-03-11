@@ -25,7 +25,7 @@ var util = require('util'),
             .addItems(version)
             .createBreadcrumbs();
 
-        this.createMeta();
+        this.createMeta(version);
         this.cacheVersion = cacheVersion;
     };
 
@@ -105,7 +105,7 @@ VersionNode.prototype.setClass = function () {
  * Creates meta-information for search engines
  * @returns {VersionNode}
  */
-VersionNode.prototype.createMeta = function () {
+VersionNode.prototype.createMeta = function (version) {
     nodes.base.BaseNode.prototype.createMeta.apply(this);
     var conditions = this.route.conditions;
     this.meta.fields = utility.getLanguages().reduce(function (prev, item) {
@@ -125,7 +125,7 @@ VersionNode.prototype.createMeta = function () {
             library: {
                 name: conditions.lib,
                 version: conditions.version,
-                status: 'current',
+                status: version.isCurrent ? 'current' : 'default',
                 page: 'description'
             }
         };
