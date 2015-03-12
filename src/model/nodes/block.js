@@ -24,7 +24,7 @@ var util = require('util'),
             })
             .init(parent)
             .createBreadcrumbs();
-        this.createMeta();
+        this.createMeta(version);
     };
 
 BlockNode.prototype = Object.create(nodes.dynamic.DynamicNode.prototype);
@@ -84,7 +84,7 @@ BlockNode.prototype.setClass = function () {
  * Creates meta-information for search engines
  * @returns {BlockNode}
  */
-BlockNode.prototype.createMeta = function () {
+BlockNode.prototype.createMeta = function (version) {
     nodes.base.BaseNode.prototype.createMeta.apply(this);
     var _this = this,
         conditions = this.route.conditions;
@@ -107,7 +107,7 @@ BlockNode.prototype.createMeta = function () {
                 library: conditions.lib,
                 version: conditions.version,
                 level: conditions.level,
-                status: 'current'
+                status: version.isCurrent ? 'current' : 'default'
             }
         };
         return prev;

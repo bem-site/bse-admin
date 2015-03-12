@@ -167,9 +167,14 @@ function syncLibraryVersions(target, record, stateMap) {
                ]);
             }
 
+            newVersions = newVersions.sort(function (a, b) {
+                return compareVersions(a, b);
+            });
+
             var added = [],
                 modified = [],
-                removed = [];
+                removed = [],
+                current = newVersions[0];
 
             newVersions.forEach(function (cacheVersion) {
                 var dbRecord = _.find(oldVersions, function (record) {
@@ -184,6 +189,8 @@ function syncLibraryVersions(target, record, stateMap) {
                     added.push(cacheVersion);
                 } else if (stateMap[value.lib] &&
                     stateMap[value.lib][cacheVersion] !== dbRecord.value.cacheVersion) {
+                    modified.push(cacheVersion);
+                } else if (dbRecord.value.current && dbRecord.value.route.conditions.version !== current) {
                     modified.push(cacheVersion);
                 }
             });
@@ -207,6 +214,7 @@ function syncLibraryVersions(target, record, stateMap) {
                 logger.debug(util.format('add lib: %s version: %s to db', value.lib, item), module);
                 target.getChanges().getLibraries().addAdded({ lib: value.lib, version: item });
                 return loadVersionFile(target, value.lib, item).then(function (versionData) {
+                    versionData.isCurrent = item === current;
                     return (new nodes.version.VersionNode(value, versionData, stateMap[value.lib][item])).saveToDb();
                 });
             });
@@ -218,6 +226,7 @@ function syncLibraryVersions(target, record, stateMap) {
                 return removeLibraryVersionNodesFromDb(target, value.lib, item)
                     .then(function () {
                         return loadVersionFile(target, value.lib, item).then(function (versionData) {
+                            versionData.isCurrent = item === current;
                             return (new nodes.version.VersionNode(
                                 value, versionData, stateMap[value.lib][item])).saveToDb();
                         });
@@ -237,6 +246,28 @@ function syncLibraryVersions(target, record, stateMap) {
         });
 }
 
+function compareVersions(a, b) {
+    var BRANCHES = ['master', 'dev'],
+        VERSION_REGEXP = /^\d+\.\d+\.\d+$/;
+
+    if (BRANCHES.indexOf(a) !== -1) { return 1; }
+    if (BRANCHES.indexOf(b) !== -1) { return -1; }
+
+    a = semver.clean(a);
+    b = semver.clean(b);
+
+    if (VERSION_REGEXP.test(a) && VERSION_REGEXP.test(b)) { return semver.rcompare(a, b); }
+
+    if (VERSION_REGEXP.test(a)) { return -1; }
+    if (VERSION_REGEXP.test(b)) { return 1; }
+
+    if (semver.valid(a) && semver.valid(b)) { return semver.rcompare(a, b); }
+
+    if (semver.valid(a)) { return -1; }
+    if (semver.valid(b)) { return 1; }
+    return a - b;
+}
+
 /**
  * Method for sorting library versions in correct order
  * @param {TargetLibraries} target object
@@ -251,48 +282,10 @@ function sortLibraryVersions(target, record) {
                 .sort(function (a, b) {
                     a = a.value.route.conditions.version;
                     b = b.value.route.conditions.version;
-
-                    var BRANCHES = ['master', 'dev'],
-                        VERSION_REGEXP = /^\d+\.\d+\.\d+$/;
-
-                    if (BRANCHES.indexOf(a) !== -1) {
-                        return 1;
-                    }
-
-                    if (BRANCHES.indexOf(b) !== -1) {
-                        return -1;
-                    }
-
-                    a = semver.clean(a);
-                    b = semver.clean(b);
-
-                    if (VERSION_REGEXP.test(a) && VERSION_REGEXP.test(b)) {
-                        return semver.rcompare(a, b);
-                    }
-
-                    if (VERSION_REGEXP.test(a)) {
-                        return -1;
-                    }
-
-                    if (VERSION_REGEXP.test(b)) {
-                        return 1;
-                    }
-
-                    if (semver.valid(a) && semver.valid(b)) {
-                        return semver.rcompare(a, b);
-                    }
-
-                    if (semver.valid(a)) {
-                        return -1;
-                    }
-
-                    if (semver.valid(b)) {
-                        return 1;
-                    }
-
-                    return a - b;
+                    return compareVersions(a, b);
                 })
                 .map(function (record, index) {
+                    record.value.current = index === 0;
                     record.value.order = index;
                     return { type: 'put', key: record.key, value: record.value };
                 })

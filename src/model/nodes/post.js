@@ -22,7 +22,7 @@ var util = require('util'),
             })
             .init(parent)
             .createBreadcrumbs();
-        this.createMeta(id);
+        this.createMeta(id, version);
     };
 
 PostNode.prototype = Object.create(nodes.dynamic.DynamicNode.prototype);
@@ -69,7 +69,7 @@ PostNode.prototype.setClass = function () {
  * @param {String} docType - type of document
  * @returns {PostNode}
  */
-PostNode.prototype.createMeta = function (docType) {
+PostNode.prototype.createMeta = function (docType, version) {
     nodes.base.BaseNode.prototype.createMeta.apply(this);
     var conditions = this.route.conditions;
     this.meta.fields = utility.getLanguages().reduce(function (prev, item) {
@@ -87,7 +87,7 @@ PostNode.prototype.createMeta = function (docType) {
             library: {
                 name: conditions.lib,
                 version: conditions.version,
-                status: 'current',
+                status: version.isCurrent ? 'current' : 'default',
                 page: docType
             }
         };
