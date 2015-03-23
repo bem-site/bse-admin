@@ -6,3 +6,4 @@ exports.post = require('./post');
 exports.level = require('./level');
 exports.person = require('./person');
 exports.version = require('./version');
+exports.showcase = require('./showcase');

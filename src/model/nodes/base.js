@@ -35,7 +35,8 @@ BaseNode.prototype = {
         AUTHOR: 'author',
         AUTHORS: 'authors',
         TAGS: 'tags',
-        BLOCK: 'block'
+        BLOCK: 'block',
+        SHOWCASE: 'showcase'
     },
     TYPE: {
         SIMPLE: 'simple',

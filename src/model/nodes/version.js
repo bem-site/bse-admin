@@ -170,10 +170,14 @@ VersionNode.prototype.addItems = function (version) {
             this.items.push(new nodes.post.PostNode(this, version, docs[item], item));
         }, this);
 
-    // TODO implement it
+    if (version['showcase']) {
+        var showcaseItem = new nodes.showcase.ShowcaseNode(this, version, version['showcase']);
+        this.items.push(showcaseItem);
+    }
+
     // add custom nodes to library version
-    if (version.custom) {
-        version.custom.forEach(function (item) {
+    if (version['custom']) {
+        version['custom'].forEach(function (item) {
             item.url += '#';
             var cItem = new nodes.base.BaseNode(item, this);
             cItem.saveToDb = function () {
