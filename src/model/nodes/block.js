@@ -117,10 +117,18 @@ BlockNode.prototype.createMeta = function (version) {
 
 BlockNode.prototype.saveToDb = function () {
     var dataValue = this.source.data,
-        dataKey = util.format('blocks:data:%s', sha(JSON.stringify(dataValue))),
         jsdocValue = this.source.jsdoc,
-        jsdocKey = util.format('blocks:jsdoc:%s', sha(JSON.stringify(jsdocValue))),
+        dataKey,
+        jsdocKey,
         batchOperations = [];
+
+    if (dataValue) {
+        dataKey = util.format('blocks:data:%s', sha(JSON.stringify(dataValue)))
+    }
+
+    if (jsdocValue) {
+        jsdocKey = util.format('blocks:jsdoc:%s', sha(JSON.stringify(jsdocValue)))
+    }
 
     if (this.source.data) {
         batchOperations.push({
