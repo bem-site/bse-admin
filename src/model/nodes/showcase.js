@@ -33,7 +33,7 @@ ShowcaseNode.prototype = Object.create(nodes.dynamic.DynamicNode.prototype);
  */
 ShowcaseNode.prototype.setTitle = function (showcase) {
     this.title = utility.getLanguages().reduce(function (prev, lang) {
-        prev[lang] = showcase.title;
+        prev[lang] = _.isString(showcase.title) ? showcase.title : showcase.title[lang];
         return prev;
     }, {});
     return this;
