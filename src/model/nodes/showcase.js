@@ -17,7 +17,7 @@ var util = require('util'),
                 conditions: {
                     lib: version.repo,
                     version: version.ref,
-                    id: showcase.title
+                    id: 'showcase'
                 }
             })
             .init(parent)
