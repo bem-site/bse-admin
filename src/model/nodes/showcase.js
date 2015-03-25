@@ -1,4 +1,5 @@
 var util = require('util'),
+    _ = require('lodash'),
     utility = require('../../util'),
     nodes = require('./index'),
 
