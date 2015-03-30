@@ -9,7 +9,8 @@ var util = require('util'),
     logger = require('../logger'),
 
     REGEXP = {
-    HREF: /<a\s+(?:[^>]*?\s+)?href="([^"]*)"/g,
+    HREF: /<a\s+(?:[^>]*?\s+)?href="([^"]*)"/g, // <a href="...">
+    SRC: /<img\s+(?:[^>]*?\s+)?src="([^"]*)"/g, // <img src="...">
     RELATIVE: {
         DOC: /^\.?\/?([\w|-]+)\.?[md|html|ru\.md|en\.md]?/,
         VERSION_DOC: /^\.?\/?(\d+\.\d+\.\d+)\-([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
@@ -149,6 +150,18 @@ function recognizeRelativeLinkForLibraryDocs(str, node) {
 }
 
 /**
+ * Try to build full github link to image by relative github link
+ * @param {String} href link
+ * @param {BaseNode} doc node
+ * @returns {*}
+ */
+function buildSrcForImages(href, doc) {
+    var docParentUrl = doc.url.replace(/\/\w*\.md/, '/') || ''; // replace last url's part: repo/docs/a.md -> repo/docs
+
+    return href = docParentUrl + href + '?raw=true';
+}
+
+/**
  * Recognize links for blocks that are on the same level with current block
  * @param {String} str link
  * @param {BlockNode} node of library block
@@ -197,7 +210,13 @@ function overrideLinks(content, node, urlHash, lang, doc) {
         return content;
     }
 
-    return content.replace(REGEXP.HREF, function (str, href) {
+    content = content.replace(REGEXP.SRC, function(str, href){
+        //if href is absolute (src="http://..." ) return href
+        href = /^http/.test(href) ? href : buildSrcForImages(href, doc);
+        return '<img src="' + href + '"';
+    });
+
+    content = content.replace(REGEXP.HREF, function (str, href) {
         // decode html entities
         href = href.replace(/&#(x?)([0-9a-fA-F]+);?/g, function (str, bs, match) {
             return String.fromCharCode(parseInt(match, bs === 'x' ? 16 : 10));
@@ -267,6 +286,8 @@ function overrideLinks(content, node, urlHash, lang, doc) {
         // }
         return buildHref(href);
     });
+
+    return content;
 }
 
 function collectUrls(target) {
