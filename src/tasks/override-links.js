@@ -156,7 +156,7 @@ function recognizeRelativeLinkForLibraryDocs(str, node) {
  * @returns {*}
  */
 function buildSrcForImages(href, doc) {
-    var docParentUrl = doc.url.replace(/\/\w*\.md/, '/') || ''; // replace last url's part: repo/docs/a.md -> repo/docs
+    var docParentUrl = doc && doc.url.replace(/\/\w*\.md/, '/'); // replace last url's part: repo/docs/a.md -> repo/docs
 
     return href = docParentUrl + href + '?raw=true';
 }
