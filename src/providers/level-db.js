@@ -279,6 +279,7 @@ LevelDB.prototype = {
 
         if (!this._db.isOpen()) {
             this._log('database was already closed');
+            return vow.resolve();
         }
 
         this._db.close(function (err) {

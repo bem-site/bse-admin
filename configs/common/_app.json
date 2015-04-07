@@ -20,16 +20,5 @@
     },
     "auth": "",
     "timeout": 300000
-  },
-  "yandex-disk": {
-    "user": "",
-    "password": "",
-    "namespace": ""
-  },
-  "mailer": {
-    "host": "",
-    "port": 25,
-    "from": "",
-    "to": []
   }
 }

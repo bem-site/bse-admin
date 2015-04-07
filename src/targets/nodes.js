@@ -24,10 +24,6 @@ Target.prototype.init = function (options) {
         require('../tasks/urls-map'),
         require('../tasks/override-links'),
         require('../tasks/sitemap-xml'),
-        require('../tasks/snapshot'),
-        require('../tasks/send-snapshot'),
-        require('../tasks/switch-symlink'),
-        require('../tasks/send-email'),
         require('../tasks/finalize')
    ];
 
