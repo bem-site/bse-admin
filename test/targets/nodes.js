@@ -17,6 +17,6 @@ describe('describe task nodes', function () {
     });
 
     it('should have valid tasks number', function () {
-        target.getTasks().should.be.instanceof(Array).and.have.length(17);
+        target.getTasks().should.be.instanceof(Array).and.have.length(13);
     });
 });
