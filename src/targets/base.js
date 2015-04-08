@@ -3,6 +3,7 @@
 var path = require('path'),
     vow = require('vow'),
     Changes = require('../model/changes'),
+    failTask = require('../tasks/fail'),
     TargetBase = function (options) {
         this.init(options);
     };
@@ -90,7 +91,9 @@ TargetBase.prototype = {
             return prev.then(function () {
                 return item(_this);
             });
-        }, vow.resolve(_this));
+        }, vow.resolve(_this)).fail(function (err) {
+            return failTask(_this, err);
+        });
     },
 
     /**
