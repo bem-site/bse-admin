@@ -82,6 +82,25 @@ function setUpdateDate(value, isFirstLoad) {
         });
 }
 
+function checkForHasIssues(value, isFirstLoad) {
+    var repository = value.repo;
+
+    if (!repository) {
+        return vow.resolve(value);
+    }
+
+    return githubApi
+        .hasIssues({
+            repository: repository,
+            headers: !isFirstLoad ? { 'If-None-Match': value.etag } : null
+        })
+        .then(function (hasIssues) {
+            repository.hasIssues = hasIssues;
+            value.repo = repository;
+            return vow.resolve(value);
+        });
+}
+
 function checkForBranch(value, isFirstLoad) {
     var repository = value.repo;
 
@@ -203,6 +222,9 @@ function syncDoc(target, record) {
             }
 
             return setUpdateDate(value, !value.etag)
+                .then(function (value) {
+                    return checkForHasIssues(value, !value.etag);
+                })
                 .then(function (value) {
                     return checkForBranch(value, !value.etag);
                 })
