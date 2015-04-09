@@ -1,11 +1,13 @@
 'use strict';
 
-var util = require('util'),
+var fs = require('fs'),
+    util = require('util'),
     path = require('path'),
 
     _ = require('lodash'),
     vow = require('vow'),
-    vowFs = require('vow-fs'),
+    vowNode = require('vow-node'),
+    fsExtra = require('fs-extra'),
 
     constants = require('../constants'),
     logger = require('../logger'),
@@ -32,7 +34,7 @@ function loadRegistry() {
  * @returns {Array}
  */
 function getLocalLibraries(target) {
-    return vowFs.listDir(target.LIBRARIES_FILE_PATH);
+    return vowNode.promisify(fs.readdir)(target.LIBRARIES_FILE_PATH);
 }
 
 /**
@@ -41,7 +43,7 @@ function getLocalLibraries(target) {
  * @param {String} lib - name of library
  */
 function getLocalVersions(target, lib) {
-    return vowFs.listDir(path.join(target.LIBRARIES_FILE_PATH, lib));
+    return vowNode.promisify(fs.readdir)(path.join(target.LIBRARIES_FILE_PATH, lib));
 }
 
 /**
@@ -55,7 +57,7 @@ function addLibDirectories(target, libs) {
         return vow.resolve();
     }
     return vow.all(libs.map(function (item) {
-        return vowFs.makeDir(path.join(target.LIBRARIES_FILE_PATH, item));
+        return vowNode.promisify(fsExtra.mkdirp)(path.join(target.LIBRARIES_FILE_PATH, item));
     }));
 }
 
@@ -70,7 +72,7 @@ function removeLibDirectories(target, libs) {
         return vow.resolve();
     }
     return vow.all(libs.map(function (item) {
-        return vowFs.removeDir(path.join(target.LIBRARIES_FILE_PATH, item));
+        return vowNode.promisify(fsExtra.remove)(path.join(target.LIBRARIES_FILE_PATH, item));
     }));
 }
 
@@ -86,7 +88,7 @@ function addLibVersionDirectories(target, lib, versions) {
         return vow.resolve();
     }
     return vow.all(versions.map(function (item) {
-        return vowFs.makeDir(path.join(target.LIBRARIES_FILE_PATH, lib, item));
+        return vowNode.promisify(fsExtra.mkdirp)(path.join(target.LIBRARIES_FILE_PATH, lib, item));
     }));
 }
 
@@ -102,7 +104,7 @@ function removeLibVersionDirectories(target, lib, versions) {
         return vow.resolve();
     }
     return vow.all(versions.map(function (item) {
-        return vowFs.removeDir(path.join(target.LIBRARIES_FILE_PATH, lib, item));
+        return vowNode.promisify(fsExtra.remove)(path.join(target.LIBRARIES_FILE_PATH, lib, item));
     }));
 }
 
@@ -114,7 +116,8 @@ function removeLibVersionDirectories(target, lib, versions) {
  * @returns {*}
  */
 function getShaOfLocalDataFile(target, lib, version) {
-    return vowFs.read(path.join(target.LIBRARIES_FILE_PATH, lib, version, '_data.json'), 'utf-8')
+    return vowNode.promisify(fs.readFile)(
+        path.join(target.LIBRARIES_FILE_PATH, lib, version, '_data.json'), { encoding: 'utf-8' })
         .then(function (data) {
             return vow.fulfill(data);
         })
@@ -134,7 +137,7 @@ function downloadFile(target, lib, version) {
     var destinationPath = path.join(target.LIBRARIES_FILE_PATH, lib.name, version, 'data.json');
     return storage.get().readP(util.format('%s/%s/data.json', lib.name, version))
         .then(function (content) {
-            return vowFs.write(destinationPath, content, 'utf-8');
+            return vowNode.promisify(fs.writeFile)(destinationPath, content, { enconding: 'utf-8' });
         });
 }
 
@@ -169,15 +172,17 @@ function compareFiles(target, lib) {
                 // compare local and remote file versions
                 if (local && local !== remote) {
                     logger.warn(util.format('Library version %s %s was changed', lib.name, version), module);
-                    promise = vowFs.remove(path.join(target.LIBRARIES_FILE_PATH, lib.name, version, 'data.json'));
+                    promise = vowNode.promisify(fsExtra.remove)
+                        (path.join(target.LIBRARIES_FILE_PATH, lib.name, version, 'data.json'));
                 }
                 return promise
                     .then(function () {
                         return downloadFile(target, lib, version);
                     })
                     .then(function () {
-                        return vowFs.write(
-                            path.join(target.LIBRARIES_FILE_PATH, lib.name, version, '_data.json'), remote);
+                        return vowNode.promisify(fs.writeFile)
+                            (path.join(target.LIBRARIES_FILE_PATH, lib.name, version, '_data.json'), remote,
+                                { encoding: 'utf-8' });
                     });
             });
     }));
@@ -206,7 +211,7 @@ function syncLibVersion(target, lib) {
 }
 
 module.exports = function (target) {
-    return vowFs.makeDir(target.LIBRARIES_FILE_PATH)
+    return vowNode.promisify(fsExtra.mkdirp)(target.LIBRARIES_FILE_PATH)
         .then(function () {
             return vow.all([getLocalLibraries(target), loadRegistry()]);
         })

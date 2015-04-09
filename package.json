@@ -52,7 +52,8 @@
     "tar": "^1.0.x",
     "terror": "^1.1.x",
     "vow": "~0.4.x",
-    "vow-fs": "^0.3.x"
+    "vow-fs": "^0.3.x",
+    "vow-node": "^0.2.x"
   },
   "devDependencies": {
     "mocha": "~2.1.0",
