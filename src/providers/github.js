@@ -204,5 +204,33 @@ module.exports = {
             }
         });
         return def.promise();
+    },
+
+    /**
+     * Returns promisified true value if given repo has issues
+     * @param {Object} options - object with fields:
+     * - {Object} repository:
+     *    - type {String} type of repository privacy ('public' or 'private')
+     *    - user {String} name of user or organization which this repository is belong to
+     *    - repo {String} name of repository
+     * - {Object} headers - optional header params
+     * @returns {*}
+     */
+    hasIssues: function (options) {
+        var def = vow.defer(),
+            ch = options.headers,
+            cr = options.repository,
+            c = _.extend({}, cr, ch ? { headers: ch } : {});
+
+        this.getGit(cr).repos.get(c, function (err, res) {
+            if (err || !res) {
+                errors.createError(errors.CODES.GET_DEFAULT_BRANCH,
+                    { user: cr.user, repo: cr.repo, err: err }).log();
+                def.resolve(null);
+            }else {
+                def.resolve(res['has_issues']);
+            }
+        });
+        return def.promise();
     }
 };
