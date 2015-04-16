@@ -12,6 +12,7 @@ var util = require('util'),
     PersonNode = function (parent, key, person) {
         this
             .setTitle(person)
+            .setEmail(person)
             .processRoute(parent, {
                 conditions: {
                     id: key
@@ -30,6 +31,19 @@ PersonNode.prototype = Object.create(DynamicNode.prototype);
 PersonNode.prototype.setTitle = function (person) {
     this.title = utility.getLanguages().reduce(function (prev, lang) {
         prev[lang] = util.format('%s %s', person[lang]['firstName'], person[lang]['lastName']);
+        return prev;
+    }, {});
+    return this;
+};
+
+/**
+ * Gets email for node
+ * @param {Object} person - object data for person
+ * @returns {PersonNode}
+ */
+PersonNode.prototype.setEmail = function (person) {
+    this.email = utility.getLanguages().reduce(function (prev, lang) {
+        prev[lang] = person[lang].email[0] || '';
         return prev;
     }, {});
     return this;
