@@ -73,7 +73,8 @@ VersionNode.prototype.setSource = function (version) {
             host: parsedRepo[1],
             user: parsedRepo[2],
             repo: version.repo,
-            ref:  version.ref
+            ref:  version.ref,
+            hasIssues: version.hasIssues
         };
     }
 

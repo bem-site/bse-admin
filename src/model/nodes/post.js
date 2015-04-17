@@ -12,7 +12,7 @@ var util = require('util'),
      */
     PostNode = function (parent, version, doc, id) {
         this.setTitle(doc)
-            .setSource(doc)
+            .setSource(version, doc)
             .processRoute(parent, {
                 conditions: {
                     lib: version.repo,
@@ -39,16 +39,39 @@ PostNode.prototype.setTitle = function (doc) {
 
 /**
  * Sets source for node
+ * @param {Object} version - library version object
  * @param {Object} doc object
  * @returns {PostNode}
  */
-PostNode.prototype.setSource = function (doc) {
+PostNode.prototype.setSource = function (version, doc) {
     this.source = utility.getLanguages().reduce(function (prev, lang) {
+        var regExp = /^https?:\/\/(.+?)\/(.+?)\/(.+?)\/(tree|blob)\/(.+?)\/(.+)/,
+            parsedRepo,
+            repo;
+
         prev[lang] = {
             title: doc.title[lang],
             content: doc.content[lang],
             isLibraryDoc: true
         };
+
+        if (doc.url && doc.url[lang]) {
+            prev[lang].url = doc.url[lang];
+            parsedRepo = doc.url[lang].match(regExp);
+        }
+
+        if (parsedRepo) {
+            repo = {
+                host: parsedRepo[1],
+                user: parsedRepo[2],
+                repo: parsedRepo[3],
+                ref:  parsedRepo[5],
+                path: parsedRepo[6],
+                hasIssues: version.hasIssues
+            };
+            prev[lang].repo = repo;
+        }
+
         return prev;
     }, {});
 
