@@ -5,8 +5,7 @@ var util = require('util'),
 
 module.exports = function (target) {
     logger.info(util.format('FINAL: ||| %s ||| HAS BEEN FINISHED SUCCESSFULLY', target.getName()), module);
-    return levelDb.get().disconnect()
-        .then(function () {
-            return vow.resolve(target);
-        });
+    return levelDb.get() ?
+        levelDb.get().disconnect().then(function () { return vow.resolve(target); }) :
+        vow.resolve(target);
 };
