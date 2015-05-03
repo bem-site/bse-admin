@@ -116,38 +116,24 @@ BlockNode.prototype.createMeta = function (version) {
 };
 
 BlockNode.prototype.saveToDb = function () {
-    var dataValue = this.source.data,
-        jsdocValue = this.source.jsdoc,
-        dataKey,
-        jsdocKey,
-        batchOperations = [];
+    var batchOperations = [];
 
-    if (dataValue) {
-        dataKey = util.format('blocks:data:%s', sha(JSON.stringify(dataValue)))
-    }
+    ['data', 'jsdoc'].forEach(function(field) {
+        var val = this.source[field];
 
-    if (jsdocValue) {
-        jsdocKey = util.format('blocks:jsdoc:%s', sha(JSON.stringify(jsdocValue)))
-    }
+        if (!val) return;
 
-    if (this.source.data) {
+        var key = util.format('blocks:' + field + ':%s', sha(JSON.stringify(val)));
+
         batchOperations.push({
             type: 'put',
-            key: dataKey,
-            value: dataValue
+            key: key,
+            value: val
         });
-    }
 
-    if (this.source.jsdoc) {
-        batchOperations.push({
-            type: 'put',
-            key: jsdocKey,
-            value: jsdocValue
-        });
-    }
+        this.source[field] = key;
+    }, this);
 
-    this.source.data = dataKey;
-    this.source.jsdoc = jsdocKey;
     this.markAsHasSource();
 
     // var conditions = this.route.conditions;
