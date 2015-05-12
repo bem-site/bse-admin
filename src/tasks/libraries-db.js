@@ -214,6 +214,11 @@ function syncLibraryVersions(target, record, stateMap) {
                 logger.debug(util.format('add lib: %s version: %s to db', value.lib, item), module);
                 target.getChanges().getLibraries().addAdded({ lib: value.lib, version: item });
                 return loadVersionFile(target, value.lib, item).then(function (versionData) {
+                    if(!versionData) {
+                        logger.warn(util.format('version data is null for %s %s', value.lib, item), module);
+                        return vow.resolve();
+                    }
+
                     versionData.isCurrent = item === current;
                     return (new nodes.version.VersionNode(value, versionData, stateMap[value.lib][item])).saveToDb();
                 });
@@ -226,6 +231,10 @@ function syncLibraryVersions(target, record, stateMap) {
                 return removeLibraryVersionNodesFromDb(target, value.lib, item)
                     .then(function () {
                         return loadVersionFile(target, value.lib, item).then(function (versionData) {
+                            if(!versionData) {
+                                logger.warn(util.format('version data is null for %s %s', value.lib, item), module);
+                                return vow.resolve();
+                            }
                             versionData.isCurrent = item === current;
                             return (new nodes.version.VersionNode(
                                 value, versionData, stateMap[value.lib][item])).saveToDb();
