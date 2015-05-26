@@ -49,7 +49,10 @@ function getLibraryNodesFromDb(target) {
  * @returns {*}
  */
 function getLibraryVersionsFromCache(target, value) {
-    return vowFs.listDir(path.join(target.LIBRARIES_FILE_PATH, value.lib));
+    return vowFs.listDir(path.join(target.LIBRARIES_FILE_PATH, value.lib))
+        .fail(function () {
+            return vow.resolve([]);
+        });
 }
 
 /**
