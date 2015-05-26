@@ -10,6 +10,7 @@ var util = require('util'),
 
     errors = require('../errors').TaskLibrariesDb,
     logger = require('../logger'),
+    utility = require('../util'),
     levelDb = require('../providers/level-db'),
     nodes = require('../model/nodes/index.js');
 
@@ -161,7 +162,7 @@ function syncLibraryVersions(target, record, stateMap) {
         .spread(function (newVersions, oldVersions) {
             // hide library if there no  versions for it
             if (!newVersions.length) {
-                util.getLanguages().forEach(function (lang) {
+                    utility.getLanguages().forEach(function (lang) {
                     value.hidden[lang] = true;
                 });
                 return vow.all([
