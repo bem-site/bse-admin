@@ -82,7 +82,7 @@ VersionNode.prototype.setSource = function (version) {
         prev[lang] = {
             title: version.repo,
             deps: version.deps,
-            url: util.format('%s/%s', version.url, version.ref),
+            url: util.format('%s/tree/%s', version.url, version.ref),
             content: (readme && readme.content) ? readme.content[lang] : null,
             repo: repo,
             isLibraryDoc: true
