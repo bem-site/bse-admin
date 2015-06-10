@@ -8,11 +8,14 @@ var _ = require('lodash'),
 
 module.exports = function (target) {
     logger.info('Start to build "sitemap.xml" file', module);
-    var hosts = target.getOptions().hosts;
+    var options = target.getOptions(),
+        hosts = options.hosts || {},
+        isDev = options.NODE_ENV === 'development';
 
     // check if any changes were collected during current synchronization
     // otherwise we should skip this task
-    if (!target.getChanges().areModified()) {
+    // p.s. always rebuild sitemap in development
+    if (!isDev && !target.getChanges().areModified()) {
         logger.warn('No changes were made during this synchronization. This step will be skipped', module);
         return vow.resolve(target);
     }

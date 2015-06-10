@@ -13,6 +13,7 @@ Target.prototype.init = function (options) {
         require('../tasks/libraries-db'),
         require('../tasks/urls-map'),
         require('../tasks/override-links'),
+        require('../tasks/sitemap-xml'),
         require('../tasks/finalize')
     ];
 
