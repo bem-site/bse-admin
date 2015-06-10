@@ -17,6 +17,6 @@ describe('describe task libraries-dev', function () {
     });
 
     it('should have valid tasks number', function () {
-        target.getTasks().should.be.instanceof(Array).and.have.length(6);
+        target.getTasks().should.be.instanceof(Array).and.have.length(7);
     });
 });
