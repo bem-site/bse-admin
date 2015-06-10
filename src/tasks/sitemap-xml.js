@@ -8,7 +8,7 @@ var _ = require('lodash'),
 
 module.exports = function (target) {
     logger.info('Start to build "sitemap.xml" file', module);
-    var hosts = target.getOptions['hosts'] || {};
+    var hosts = target.getOptions().hosts;
 
     // check if any changes were collected during current synchronization
     // otherwise we should skip this task
@@ -25,16 +25,17 @@ module.exports = function (target) {
     }
 
     // get all nodes from db that have inner urls
-    return levelDb
-        .getByCriteria(function (record) {
-            var key = record.key,
-                value = record.value;
+    return levelDb.get().getByCriteria(function (record) {
+        var key = record.key,
+            value = record.value;
 
-            if (key.indexOf(target.KEY.NODE_PREFIX) < 0) {
-                return false;
-            }
-            return value.hidden && _.isString(value.url) && !/^(https?:)?\/\//.test(value.url);
-        }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true })
+        if (key.indexOf(target.KEY.NODE_PREFIX) < 0) {
+            return false;
+        }
+
+        return value.hidden && _.isString(value.url) && !/^(https?:)?\/\//.test(value.url);
+
+    }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true })
         .then(function (records) {
             // convert data set to sitemap format
             // left only data fields that are needed for sitemap.xml file
