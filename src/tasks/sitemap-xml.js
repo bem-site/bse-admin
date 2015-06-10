@@ -57,8 +57,13 @@ module.exports = function (target) {
             }, []);
         })
         .then(function (records) {
+            var urls = {
+                '@': { xmlns: 'http://www.sitemaps.org/schemas/sitemap/0.9' },
+                url: records
+            };
+
             // convert json model to xml format
-            return levelDb.get().put('sitemapXml', js2xml('urlset', { url: records }));
+            return levelDb.get().put('sitemapXml', js2xml('urlset', urls));
         })
         .then(function () {
             logger.info('Successfully create sitemap.xml file', module);
