@@ -17,6 +17,6 @@ describe('describe task docs-dev', function () {
     });
 
     it('should have valid tasks number', function () {
-        target.getTasks().should.be.instanceof(Array).and.have.length(8);
+        target.getTasks().should.be.instanceof(Array).and.have.length(9);
     });
 });

@@ -15,6 +15,7 @@ Target.prototype.init = function (options) {
         require('../tasks/dynamic-tags'),
         require('../tasks/urls-map'),
         require('../tasks/override-links'),
+        require('../tasks/sitemap-xml'),
         require('../tasks/finalize')
     ];
 
