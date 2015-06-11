@@ -63,7 +63,10 @@ module.exports = function (target) {
             };
 
             // convert json model to xml format
-            return levelDb.get().put('sitemapXml', js2xml('urlset', urls));
+            return vow.all([
+                levelDb.get().put('sitemapJson', JSON.stringify(urls)),
+                levelDb.get().put('sitemapXml', js2xml('urlset', urls))
+            ]);
         })
         .then(function () {
             logger.info('Successfully create sitemap.xml file', module);

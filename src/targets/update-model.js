@@ -13,7 +13,7 @@ Target.prototype.init = function (options) {
         require('../tasks/get-jsmodel'),
         require('../tasks/update-model'),
         require('../tasks/finalize')
-   ].forEach(function (task) {
+    ].forEach(function (task) {
             this.addTask(task);
         }, this);
 
