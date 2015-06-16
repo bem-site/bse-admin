@@ -15,7 +15,7 @@ var util = require('util'),
         DOC: /^\.?\/?([\w|-]+)\.?[md|html|ru\.md|en\.md]?/,
         VERSION_DOC: /^\.?\/?(\d+\.\d+\.\d+)\-([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
         BLOCK: /^\.\.?\/([\w|-]+)\/?([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
-        BLOCKS: /^\.?\/?([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
+        BLOCKS: /^\.?\/?(?:\.\.\/)?([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
         LEVEL: /^\.\.?\/\.\.\/([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/
     }
 };
@@ -254,8 +254,8 @@ function overrideLinks(content, node, urlHash, lang, doc) {
             links = links.concat(recognizeRelativeLinkForLibraryDocs(href, node));
             if (node.source && node.source.data) {
                 links.push(recognizeRelativeBlockLinkOnSameLevel(href, node));
-                links.push(recognizeRelativeBlockLinkOnDifferentLevels(href, node));
             }
+            links.push(recognizeRelativeBlockLinkOnDifferentLevels(href, node));
         }
 
         links.some(function (item) {
