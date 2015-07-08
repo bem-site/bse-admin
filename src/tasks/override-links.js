@@ -328,7 +328,38 @@ module.exports = function (target) {
         return vow.resolve(target);
     }
 
-    var languages = utility.getLanguages();
+    var languages = utility.getLanguages(),
+        changedLibVersions = []
+            .concat(target.getChanges().getLibraries().getAdded())
+            .concat(target.getChanges().getLibraries().getModified());
+
+    function isNeedToOverride(nodeValue) {
+        var route = nodeValue.route,
+            conditions,
+            lib,
+            version;
+
+        if(!route) {
+            return false;
+        }
+
+        conditions = route.conditions;
+        if(!conditions) {
+            return false;
+        }
+
+        lib = conditions.lib;
+        version = conditions.version;
+
+        if(!lib || !version) {
+            return false;
+        }
+
+        return changedLibVersions.some(function (item) {
+            return item.lib === lib && item.version === version;
+        });
+    }
+
     return vow.all([
             levelDb.get().getByKeyRange(target.KEY.NODE_PREFIX, target.KEY.PEOPLE_PREFIX),
             collectUrls(target)
@@ -338,6 +369,10 @@ module.exports = function (target) {
                 var nodeValue = nodeRecord.value;
 
                 if (nodeValue.source && nodeValue.source.data) {
+                    if(!isNeedToOverride(nodeValue)) {
+                        return vow.resolve();
+                    }
+
                     return levelDb.get().get(nodeValue.source.data).then(function (blockValue) {
                         if (!blockValue) {
                             return vow.resolve();
