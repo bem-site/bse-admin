@@ -8,3 +8,5 @@ require('./targets/update-model.js');
 
 require('./util.js');
 require('./providers/level-db.js');
+
+require('./tasks/libraries-files');

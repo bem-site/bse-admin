@@ -32,7 +32,7 @@ module.exports = {
      * @returns {String} path
      * @protected
      */
-    getLibVersionPath: function (target, lib, version) {
+    _getLibVersionPath: function (target, lib, version) {
         return path.join(target.LIBRARIES_FILE_PATH, lib, version);
     },
 
@@ -176,10 +176,10 @@ module.exports = {
         // сохраняется на файловую систему по пути:
         // {директория кеша}/{baseUrl|libs}/{lib}/{version}/mds.data.json
         return new vow.Promise(function (resolve, reject) {
-            fsExtra.ensureDir(this.getLibVersionPath(target, lib, version), function () {
+            fsExtra.ensureDir(this._getLibVersionPath(target, lib, version), function () {
                 storage.get().read(util.format('%s/%s/data.json', lib, version), function (error, content) {
                     if (!error) {
-                        fs.writeFile(path.join(this.getLibVersionPath(target, lib, version), 'data.json'),
+                        fs.writeFile(path.join(this._getLibVersionPath(target, lib, version), 'data.json'),
                             content, { encoding: 'utf-8' }, function (error) {
                             if (!error) {
                                 resolve(item);
@@ -193,7 +193,7 @@ module.exports = {
                         reject(error);
                     }
                 }.bind(this));
-            });
+            }.bind(this));
         }.bind(this));
     },
 
@@ -213,7 +213,7 @@ module.exports = {
         logger.debug(util.format('Remove "data.json" file for library: %s and version: %s', lib, version), module);
 
         return new vow.Promise(function (resolve, reject) {
-            fsExtra.remove(this.getLibVersionPath(target, lib, version), function (error) {
+            fsExtra.remove(this._getLibVersionPath(target, lib, version), function (error) {
                 if (!error) {
                     return resolve(item);
                 }
@@ -259,7 +259,7 @@ module.exports = {
                     });
             }.bind(this))
             .then(function (downloadQueue) {
-                // порциями по 10 штук загружаем обновленные data.json файлы
+                // порциями по 5 штук загружаем обновленные data.json файлы
                 // и складываем их на файловую систему
                 var portions = _.chunk(downloadQueue, 5);
                 return portions.reduce(function (prev, portion) {
@@ -267,9 +267,9 @@ module.exports = {
                         return vow.all(portion.map(function (item) {
                             return this._saveLibraryVersionFile(item, target);
                         }, this));
-                    });
-                }, vow.resolve());
-            })
+                    }, this);
+                }.bind(this), vow.resolve());
+            }, this)
             .then(function () {
                 return new vow.Promise(function (resolve) {
                     fsExtra.writeJSON(this._getMDSRegistryFilePath(target), _remote, function (error) {
@@ -277,17 +277,17 @@ module.exports = {
                             logger.error('Error occur on saving MDS registry file', module);
                             logger.error(util.format('Error: %s', error.message), module);
                         }
-                        this.logger.debug('MDS Registry file has been successfully replaced');
+                        logger.debug('MDS Registry file has been successfully replaced', module);
                         resolve();
                     });
-                });
-            })
+                }.bind(this));
+            }, this)
             .then(function () {
                 logger.info('Libraries were synchronized successfully with cache on local filesystem', module);
                 return vow.resolve(target);
             })
             .fail(function (err) {
-                errors.createError(errors.CODES.COMMON, { err: err }).log();
+                logger.error('Error occur: ' + err.message, module);
                 return vow.reject(err);
             });
     }

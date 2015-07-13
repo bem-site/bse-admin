@@ -12,7 +12,7 @@ var util = require('util'),
      * @param {Object} version of library
      * @constructor
      */
-    VersionNode = function (parent, version, cacheVersion) {
+    VersionNode = function (parent, version) {
         this.setTitle(version)
             .setSource(version)
             .processRoute(parent, {
@@ -26,7 +26,6 @@ var util = require('util'),
             .createBreadcrumbs();
 
         this.createMeta(version);
-        this.cacheVersion = cacheVersion;
     };
 
 VersionNode.prototype = Object.create(nodes.dynamic.DynamicNode.prototype);
