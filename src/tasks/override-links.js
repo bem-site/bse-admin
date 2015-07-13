@@ -329,31 +329,26 @@ module.exports = function (target) {
     }
 
     var languages = utility.getLanguages(),
+        librariesChanges = target.getChanges().getLibraries(),
         changedLibVersions = []
-            .concat(target.getChanges().getLibraries().getAdded())
-            .concat(target.getChanges().getLibraries().getModified());
+            .concat(librariesChanges.getAdded())
+            .concat(librariesChanges.getModified());
 
+    /**
+     * Decides that given nodeValue is needed for override links
+     * @param {Object} nodeValue
+     * @returns {boolean} flag which indicates that it is important to rescan given source
+     * and override or re-override links in it
+     */
     function isNeedToOverride(nodeValue) {
         var route = nodeValue.route,
             conditions,
             lib,
             version;
 
-        if(!route) {
-            return false;
-        }
-
         conditions = route.conditions;
-        if(!conditions) {
-            return false;
-        }
-
         lib = conditions.lib;
         version = conditions.version;
-
-        if(!lib || !version) {
-            return false;
-        }
 
         return changedLibVersions.some(function (item) {
             return item.lib === lib && item.version === version;
