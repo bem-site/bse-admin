@@ -25,6 +25,11 @@ var util = require('util'),
             .init(parent)
             .createBreadcrumbs();
         this.createMeta(version);
+
+      // get full github link on lib
+        if (version.url) {
+            this.ghLibVersionUrl = version.url;
+        }
     };
 
 BlockNode.prototype = Object.create(nodes.dynamic.DynamicNode.prototype);
