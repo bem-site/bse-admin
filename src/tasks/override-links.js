@@ -12,11 +12,12 @@ var util = require('util'),
     HREF: /<a\s+(?:[^>]*?\s+)?href="([^"]*)"/g, // <a href="...">
     SRC: /<img\s+(?:[^>]*?\s+)?src="([^"]*)"/g, // <img src="...">
     RELATIVE: {
-        DOC: /^\.?\/?([\w|-]+)\.?[md|html|ru\.md|en\.md]?/,
+        DOC: /^\.?\/?(?:\.\.\/)+?([\w|-]+)\.?[md|html|ru\.md|en\.md]?/,
         VERSION_DOC: /^\.?\/?(\d+\.\d+\.\d+)\-([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
         BLOCK: /^\.\.?\/([\w|-]+)\/?([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
         BLOCKS: /^\.?\/?(?:\.\.\/)?([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
-        LEVEL: /^\.\.?\/\.\.\/([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/
+        LEVEL: /^\.\.?\/\.\.\/([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
+        JSON: /\w+\.json/
     }
 };
 
@@ -87,18 +88,26 @@ function fixGithubLinks(str) {
 /**
  * Try to build full github link by relative github link
  * @param {String} str link
- * @param {BaseNode} node
- * @param {String} lang language
+ * @param {String} doc document
  * @param {String} treeOrBlob - 'tree' or 'blob'
+ * @param {BaseNode} node
  * @returns {*}
  */
 
-function buildFullGithubLinkForDocs(str, doc, lang, treeOrBlob) {
+function buildFullGithubLinkForDocs(str, doc, treeOrBlob, node) {
+    var jsonMatch = str.match(REGEXP.RELATIVE.JSON);
+
     if (doc && doc.repo) {
         var repo = doc.repo;
         return 'https://' + path.join(repo.host, repo.user, repo.repo, treeOrBlob, repo.ref,
                 str.indexOf('.') === 0 ? path.dirname(repo.path) : '', str.replace(/^\//, ''));
+    } else if (jsonMatch) {
+        var ghLibVersionUrl = node.ghLibVersionUrl,
+            version = node.route.conditions.version;
+
+        return [ghLibVersionUrl, treeOrBlob, version, jsonMatch[0]].join('/');
     }
+
     return str;
 }
 
@@ -146,6 +155,7 @@ function recognizeRelativeLinkForLibraryDocs(str, node) {
             [util.format('/libs/%s/%s', lib, version)] :
             [util.format('/libs/%s/%s/%s', lib, version, match[1])];
     }
+
     return [str];
 }
 
@@ -249,8 +259,8 @@ function overrideLinks(content, node, urlHash, lang, doc) {
             links.push(href.replace(/\/tree\//, '/blob/'));
             links.push(href.replace(/\/blob\//, '/tree/'));
         } else {
-            links.push(buildFullGithubLinkForDocs(href, doc, lang, 'tree'));
-            links.push(buildFullGithubLinkForDocs(href, doc, lang, 'blob'));
+            links.push(buildFullGithubLinkForDocs(href, doc, 'tree', node));
+            links.push(buildFullGithubLinkForDocs(href, doc, 'blob', node));
             links = links.concat(recognizeRelativeLinkForLibraryDocs(href, node));
             if (node.source && node.source.data) {
                 links.push(recognizeRelativeBlockLinkOnSameLevel(href, node));
