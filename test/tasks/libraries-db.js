@@ -237,9 +237,5 @@ describe('libraries-db', function () {
                 task._compareVersions('foo-bar', 'foo-bar1').should.equal(1);
             });
         });
-
-        describe('_addAllFromRegistry', function () {
-
-        });
     });
 });
