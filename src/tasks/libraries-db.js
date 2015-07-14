@@ -20,17 +20,33 @@ module.exports = {
      * Returns db hint object for improve db calls
      * @param {TargetNodes} target object
      * @returns {{gte: (TargetBase.KEY.NODE_PREFIX|*), lt: (TargetBase.KEY.PEOPLE_PREFIX|*), fillCache: boolean}}
+     * @private
      */
     _getDbHints: function (target) {
+        /*
+        * Возвращает объект: {
+        *   gte: 'nodes:',
+        *   lt: 'people:'
+        *   fillCache: true
+        * }
+        * Он необходим для того, чтобы выбирались только ключи имя которых "больше" nodes: и меньше "people:"
+        * Это позволяет ускорить процесс такой выборки так как ключи в базе отсортированы в алфавитном порядке
+        */
         return { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true };
     },
 
     /**
      * Returns array of library nodes from database
      * @param {TargetBase} target object
-     * @returns {*}
+     * @returns {Promise}
+     * @private
      */
     _getRootLibNodes: function (target) {
+        // возвращает записи в базе которые соответствуют корневым страницам библиотек к которым
+        // привязываются все страницы версий к которым в свою очередь привязываются страницы
+        // документов библиотеки, уровней переопределения и.т.д.
+        // Критерий выборки - наличие поля lib (прописывается в js модели).
+        // Значение поля lib - название библиотеки
         return levelDb
             .get().getByCriteria(function (record) {
                 // criteria - is existed field lib
@@ -42,33 +58,50 @@ module.exports = {
      * Returns array of library version nodes from database
      * @param {TargetNodes} target object
      * @param {Object} lib - database record of library node
-     * @returns {*}
+     * @returns {Promise}
+     * @private
      */
     _getLibVersionNodes: function (target, lib) {
+        // В этот метод передаются значения записей в базе данных
+        // которые соответствуют корневым страницам библиотек
+        // По критерию выбираются дочерние узлы библиотеки, которые являются ее версиями
         return levelDb.get().getByCriteria(function (record) {
-            var key = record.key,
-                value = record.value;
-
-            if (key.indexOf(target.KEY.NODE_PREFIX) < 0) {
-                return false;
-            }
+            var value = record.value;
 
             // criteria is equality of parent and id fields of version and library nodes
-            return value.parent === lib.id;
-        }, this.getDbHints(target));
+            return value.parent && value.parent === lib.id;
+        }, this._getDbHints(target));
     },
 
+    /**
+     * Removes all library version records
+     * @param {TargetNodes} target object
+     * @param {Array} libVersions - array of objects with fields: "lib" and "version"
+     * @returns {Promise}
+     * @private
+     */
     _removeLibVersionsFromDb: function (target, libVersions) {
         libVersions = libVersions.reduce(function (prev, item) {
             prev[item.lib] = prev[item.lib] || [];
             prev[item.lib].push(item.version);
+            return prev;
         }, {});
 
+        // Удаление всех записей из базы данных, которые относятся к определенной версии библиотеки:
+        // документов библиотеки, уровней переопределения и блоков
         return levelDb.get().removeByCriteria(function (dbRecord) {
             var value = dbRecord.value,
                 route,
                 conditions;
 
+            // здесь критерием является совпадение условий
+            // 1. наличие у записи поля route
+            // 2. наличие поля route.conditions
+            // 3. наличие поля route.conditions.lib
+            // 4. наличие поля route.conditions.version
+            // 5. отсутствие поля lib (не удаляем корневые страницы библиотек, хотя это условие лишнее)
+            // 6. наличие route.conditions.lib в списке библиотек на удаление и
+            // route.conditions.version в списке версий библиоки на удаление
             route = value.route;
             if (!route) {
                 return false;
@@ -83,12 +116,18 @@ module.exports = {
                 return false;
             }
 
+            if (!conditions.lib || !conditions.version) {
+                return false;
+            }
+
             if (libVersions[conditions.lib] &&
                 libVersions[conditions.lib].indexOf(conditions.version) > -1) {
                 logger.debug(
                     util.format('rm from db lib: => %s version: => %s', conditions.lib, conditions.version), module);
                 return true;
             }
+
+            // TODO не удаляются записи документации и jsdoc по блокам из-за чего база со временем раздувается Нужно решить это в рамках отдельной задачи
 
             return false;
         }, this._getDbHints(target));
@@ -149,8 +188,8 @@ module.exports = {
     },
 
     _compareVersions: function(a, b) {
-    var BRANCHES = ['master', 'dev'],
-        VERSION_REGEXP = /^\d+\.\d+\.\d+$/;
+        var BRANCHES = ['master', 'dev'],
+            VERSION_REGEXP = /^\d+\.\d+\.\d+$/;
 
         if (BRANCHES.indexOf(a) !== -1) { return 1; }
         if (BRANCHES.indexOf(b) !== -1) { return -1; }
@@ -198,6 +237,26 @@ module.exports = {
         }, this);
     },
 
+    /**
+     * Fill addLibVersions by all library versions from MDS registry.json file
+     * @returns {Array} array of objects with fields: "lib" and "version"
+     * @private
+     */
+    _addAllFromRegistry: function () {
+        var registry = fsExtra.readJSONFileSync(path.join(target.LIBRARIES_FILE_PATH, 'registry.json')),
+            result = [];
+        Object.keys(registry).forEach(function (lib) {
+            if(!registry[lib] || !registry[lib].versions) {
+                return;
+            }
+
+            Object.keys(registry[lib].versions).forEach(function (version) {
+                result.push({ lib: lib, version: version });
+            });
+        });
+        return result;
+    },
+
     run: function (target) {
         var libChanges = target.getChanges().getLibraries(),
             addLibVersions = [],
@@ -211,20 +270,7 @@ module.exports = {
                 .concat(libChanges.getRemoved())
                 .concat(libChanges.getModified())
         } else {
-            var registry = fsExtra.readJSONFileSync(path.join(target.LIBRARIES_FILE_PATH, 'registry.json'));
-            addLibVersions = (function (registry) {
-                var result = [];
-                Object.keys(registry).forEach(function (lib) {
-                    if(!registry[lib] || !registry[lib].versions) {
-                        return;
-                    }
-
-                    Object.keys(registry[lib].versions).forEach(function (version) {
-                       result.push({ lib: lib, version: version });
-                    });
-                });
-                return result;
-            })(registry);
+            addLibVersions = this._addAllFromRegistry();
         }
 
         return vow.when(true)
