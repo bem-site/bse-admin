@@ -5,7 +5,6 @@ var util = require('util'),
 
     _ = require('lodash'),
     vow = require('vow'),
-    vowFs = require('vow-fs'),
     fsExtra = require('fs-extra'),
     semver = require('semver'),
 
@@ -141,14 +140,17 @@ module.exports = {
      * @returns {*}
      */
     _loadVersionFile: function (target, lib, version) {
-        return vowFs.read(path.join(target.LIBRARIES_FILE_PATH, lib, version, 'data.json'), 'utf-8')
-            .then(function (content) {
-                try {
-                    return JSON.parse(content);
-                } catch (err) {
-                    return null;
+        var libVersionFilePath = path.join(target.LIBRARIES_FILE_PATH, lib, version, 'data.json');
+        return new vow.Promise(function (resolve, reject) {
+            return fsExtra.readJSONFile(libVersionFilePath, function (error, content) {
+                if (error || !content) {
+                    logger.error(util.format('Error occur while loading file %s', libVersionFilePath), module);
+                    logger.error(util.format('Error: %s', error.message), module);
+                    reject(error);
                 }
+                resolve(content);
             });
+        });
     },
 
     _addLibVersionToDb: function(target, lib, version, rootRecord) {
@@ -167,6 +169,10 @@ module.exports = {
                 }
 
                 return (new nodes.version.VersionNode(rootRecord, versionData)).saveToDb();
+            })
+            .fail(function (error) {
+                logger.error(util.format('Error occur on add lib: => %s version: => %s', lib, version), module);
+                logger.error(util.format('Error: %s', error.message), module);
             });
     },
 
@@ -187,26 +193,30 @@ module.exports = {
             }, this);
     },
 
+    /**
+     * Compare library versions for sorting
+     * @param {String} a - first version
+     * @param {String} b - second version
+     * @returns {Number} - sorting result
+     * @private
+     */
     _compareVersions: function(a, b) {
         var BRANCHES = ['master', 'dev'],
-            VERSION_REGEXP = /^\d+\.\d+\.\d+$/;
+            VERSION_REGEXP = /^v?\d+\.\d+\.\d+$/;
 
-        if (BRANCHES.indexOf(a) !== -1) { return 1; }
-        if (BRANCHES.indexOf(b) !== -1) { return -1; }
-
-        a = semver.clean(a);
-        b = semver.clean(b);
-
-        if (VERSION_REGEXP.test(a) && VERSION_REGEXP.test(b)) { return semver.rcompare(a, b); }
+        if (VERSION_REGEXP.test(a) && VERSION_REGEXP.test(b)) {
+            return semver.rcompare(a, b);
+        }
 
         if (VERSION_REGEXP.test(a)) { return -1; }
         if (VERSION_REGEXP.test(b)) { return 1; }
 
-        if (semver.valid(a) && semver.valid(b)) { return semver.rcompare(a, b); }
+        if (BRANCHES.indexOf(a) > -1) { return 1; }
+        if (BRANCHES.indexOf(b) > -1) { return -1; }
 
-        if (semver.valid(a)) { return -1; }
-        if (semver.valid(b)) { return 1; }
-        return a - b;
+        if (a > b) { return -1; }
+        if (a < b) { return 1; }
+        return 0;
     },
 
     /**

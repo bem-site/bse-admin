@@ -165,5 +165,81 @@ describe('libraries-db', function () {
                 ]);
             });
         });
+
+        describe('_loadVersionFile', function () {
+            beforeEach(function () {
+                fsExtra.ensureDirSync(path.join(cacheFolder, './libraries'));
+            });
+
+            it('should return rejected promise if version file does not exists for given library version', function () {
+                return task._loadVersionFile(target, 'bem-core', 'v2').fail(function (error) {
+                    error.message.indexOf('ENOENT').should.be.above(-1);
+                    error.message.indexOf('cache/libraries/bem-core/v2/data.json').should.be.above(-1);
+                });
+            });
+
+            it('should successfully open version file for given library version', function () {
+                var p1 = path.join(cacheFolder, './libraries/bem-core/v2'),
+                    p2 = path.join(process.cwd(), './test/fixtures/data.json');
+                fsExtra.ensureDirSync(p1);
+                fsExtra.copySync(p2, path.join(p1, 'data.json'));
+
+                return task._loadVersionFile(target, 'bem-core', 'v2').then(function (content) {
+                    content.should.be.instanceOf(Object);
+                    content.repo.should.equal('bem-core');
+                    content.ref.should.equal('v2');
+                });
+            });
+        });
+
+        describe('_compareVersions', function () {
+            it('should sort semver tags in correct order #1', function () {
+                task._compareVersions('0.0.2', '0.0.1').should.equal(-1);
+            });
+
+            it('should sort semver tags in correct order #2', function () {
+                task._compareVersions('0.0.1', '0.0.2').should.equal(1);
+            });
+
+            it('should sort semver tags in correct order #3', function () {
+                task._compareVersions('v0.0.1', '0.0.2').should.equal(1);
+            });
+
+            it('should sort semver tags in correct order #4', function () {
+                task._compareVersions('0.0.1', 'v0.0.2').should.equal(1);
+            });
+
+            it('should sort semver tags in correct order #5', function () {
+                task._compareVersions('v0.0.1', 'v0.0.2').should.equal(1);
+            });
+
+            it('should sort between semver tag and dev branch', function () {
+                task._compareVersions('v0.0.1', 'dev').should.equal(-1);
+            });
+
+            it('should sort between semver tag and master branch', function () {
+                task._compareVersions('v0.0.1', 'master').should.equal(-1);
+            });
+
+            it('should sort between semver tag and custom branch', function () {
+                task._compareVersions('v0.0.1', 'foo-bar').should.equal(-1);
+            });
+
+            it('should sort between dev branch and custom branch', function () {
+                task._compareVersions('dev', 'foo-bar').should.equal(1);
+            });
+
+            it('should sort between master branch and custom branch', function () {
+                task._compareVersions('master', 'foo-bar').should.equal(1);
+            });
+
+            it('should sort between custom branches', function () {
+                task._compareVersions('foo-bar', 'foo-bar1').should.equal(1);
+            });
+        });
+
+        describe('_addAllFromRegistry', function () {
+
+        });
     });
 });
