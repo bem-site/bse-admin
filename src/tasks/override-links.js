@@ -165,11 +165,13 @@ function recognizeRelativeLinkForLibraryDocs(str, node) {
  * @param {BaseNode} doc node
  * @returns {*}
  */
-function buildSrcForImages(str, href, doc) {
-    var docParentUrl = doc && doc.url.replace(/\/\w*\.md/, '/'); // replace last url's part: repo/docs/a.md -> repo/docs
+function buildSrcForImages(str, href, doc, node) {
+    var docParentUrl = doc && doc.url.replace(/\/\w*\.md/, '/'), // replace last url's part: repo/docs/a.md -> repo/docs
+        absoluteLink = node.ghLibVersionUrl + '/blob/' + node.route.conditions.version,
+        src = (doc ? docParentUrl : absoluteLink) + href;
 
     // change only src, save styles and attrs
-    return str = str.replace(/src=("|')?.+("|')?/g, 'src="' + docParentUrl + href + '?raw=true"')
+    return str = str.replace(/src=("|')?.+("|')?/g, 'src="' + src + '?raw=true"')
 }
 
 /**
@@ -223,7 +225,7 @@ function overrideLinks(content, node, urlHash, lang, doc) {
 
     content = content.replace(REGEXP.SRC, function(str, href){
         //if href is absolute (src="http://..." ) return href
-        return /^http/.test(href) ? str : buildSrcForImages(str, href, doc);
+        return /^http/.test(href) ? str : buildSrcForImages(str, href, doc, node);
     });
 
     content = content.replace(REGEXP.HREF, function (str, href) {
