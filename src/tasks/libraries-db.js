@@ -121,7 +121,7 @@ module.exports = {
 
             if (libVersions[conditions.lib] &&
                 libVersions[conditions.lib].indexOf(conditions.version) > -1) {
-                logger.debug(
+                logger.verbose(
                     util.format('rm from db lib: => %s version: => %s', conditions.lib, conditions.version), module);
                 return true;
             }
