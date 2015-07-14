@@ -291,33 +291,37 @@ function overrideLinks(content, node, urlHash, lang, doc) {
 }
 
 function collectUrls(target) {
-    function getDocByNodeId(arr, id, lang) {
-        return _.find(arr, function (item) {
-            return item.key === util.format('%s%s:%s', target.KEY.DOCS_PREFIX, id, lang);
-        });
-    }
+    return levelDb.get().getByKeyRange(target.KEY.DOCS_PREFIX, target.KEY.NODE_PREFIX)
+        .then(function (docRecords) {
+            return vow.all([
+                levelDb.get().getByKeyRange(target.KEY.NODE_PREFIX, target.KEY.PEOPLE_PREFIX),
+                docRecords
+                    .filter(function (record) {
+                        return record.value.url;
+                    })
+                    .reduce(function (prev, record) {
+                        prev[record.key] = record.value.url;
+                        return prev;
+                    }, {})
+            ]);
+        })
+        .spread(function (nodeRecords, docUrlsHash) {
+            return nodeRecords.reduce(function (prev, nodeRecord) {
+                var nodeValue = nodeRecord.value;
 
-    return vow.all([
-        levelDb.get().getByKeyRange(target.KEY.NODE_PREFIX, target.KEY.PEOPLE_PREFIX),
-        levelDb.get().getByKeyRange(target.KEY.DOCS_PREFIX, target.KEY.NODE_PREFIX)
-   ]).spread(function (nodeRecords, docRecords) {
-        return nodeRecords.reduce(function (prev, nodeRecord) {
-            var nodeValue = nodeRecord.value,
-                doc;
-
-            utility.getLanguages().forEach(function (lang) {
-                if (!nodeValue.hidden[lang]) {
-                    doc = getDocByNodeId(docRecords, nodeValue.id, lang);
-                    if (doc && doc.value.url) {
-                        prev[doc.value.url] = nodeValue.url;
-                    } else {
-                        prev[nodeValue.id] = nodeValue.url;
+                utility.getLanguages().forEach(function (lang) {
+                    if (!nodeValue.hidden[lang]) {
+                        var docUrl = docUrlsHash[util.format('%s%s:%s', target.KEY.DOCS_PREFIX, nodeValue.id, lang)];
+                        if (docUrl) {
+                            prev[docUrl] = nodeValue.url;
+                        } else {
+                            prev[nodeValue.id] = nodeValue.url;
+                        }
                     }
-                }
-            });
-            return prev;
-        }, {});
-    });
+                });
+                return prev;
+            }, {});
+        });
 }
 
 module.exports = function (target) {
