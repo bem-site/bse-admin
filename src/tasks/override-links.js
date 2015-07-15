@@ -15,8 +15,9 @@ var util = require('util'),
         DOC: /^\.?\/?(?:\.\.\/)+?([\w|-]+)\.?[md|html|ru\.md|en\.md]?/,
         VERSION_DOC: /^\.?\/?(\d+\.\d+\.\d+)\-([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
         BLOCK: /^\.\.?\/([\w|-]+)\/?([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
-        BLOCKS: /^\.?\/?(?:\.\.\/)?([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
+        BLOCKS: /^\.?\/?(?:\.\.\/)?([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.[md|html|ru\.md|en\.md]/,
         LEVEL: /^\.\.?\/\.\.\/([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
+        BLOCK_FILES: /^\.?\/?(?:\.\.\/)?([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.(?![md|html|ru\.md|en\.md])/,
         JSON: /\w+\.json/
     }
 };
@@ -156,6 +157,12 @@ function recognizeRelativeLinkForLibraryDocs(str, node) {
             [util.format('/libs/%s/%s/%s', lib, version, match[1])];
     }
 
+    // ../../popup/popup.js
+    match = str.match(REGEXP.RELATIVE.BLOCK_FILES);
+    if (match) {
+        return node.ghLibVersionUrl + '/blob/' + version + str;
+    }
+
     return [str];
 }
 
@@ -171,7 +178,7 @@ function buildSrcForImages(str, href, doc, node) {
         src = (doc ? docParentUrl : absoluteLink) + href;
 
     // change only src, save styles and attrs
-    return str = str.replace(/src=("|')?.+("|')?/g, 'src="' + src + '?raw=true"')
+    return str.replace(/src=("|')?.+("|')?/g, 'src="' + src + '?raw=true"')
 }
 
 /**
@@ -261,8 +268,10 @@ function overrideLinks(content, node, urlHash, lang, doc) {
             links.push(href.replace(/\/tree\//, '/blob/'));
             links.push(href.replace(/\/blob\//, '/tree/'));
         } else {
-            links.push(buildFullGithubLinkForDocs(href, doc, 'tree', node));
-            links.push(buildFullGithubLinkForDocs(href, doc, 'blob', node));
+            if(href.match(REGEXP.RELATIVE.JSON) || doc && doc.repo) {
+                links.push(buildFullGithubLinkForDocs(href, doc, 'tree', node));
+                links.push(buildFullGithubLinkForDocs(href, doc, 'blob', node));
+            }
             links = links.concat(recognizeRelativeLinkForLibraryDocs(href, node));
             if (node.source && node.source.data) {
                 links.push(recognizeRelativeBlockLinkOnSameLevel(href, node));
