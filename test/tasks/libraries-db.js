@@ -237,5 +237,100 @@ describe('libraries-db', function () {
                 task._compareVersions('foo-bar', 'foo-bar1').should.equal(1);
             });
         });
+
+        describe('_addAllFromRegistry', function () {
+            before(function () {
+                var p1 = path.join(cacheFolder, './libraries'),
+                    p2 = path.join(process.cwd(), './test/fixtures/registry.json');
+                fsExtra.ensureDirSync(p1);
+                fsExtra.copySync(p2, path.join(p1, 'registry.json'));
+            });
+
+            it('should return all changes items generated from registry.json file', function () {
+                var result = task._addAllFromRegistry(target);
+                result.should.be.instanceOf(Array);
+                result.should.have.length(15);
+            });
+        });
+
+        describe('_addLibVersionToDb', function () {
+            beforeEach(function () {
+                var p1 = path.join(cacheFolder, './libraries/bem-core/v2'),
+                    p2 = path.join(process.cwd(), './test/fixtures/data.json');
+                fsExtra.ensureDirSync(p1);
+                fsExtra.copySync(p2, path.join(p1, 'data.json'));
+            });
+
+            it('should skip if rootRecord is undefined', function () {
+                return task._addLibVersionToDb(target, 'bem-core', 'v2').then(function (result) {
+                    should(result).be.equal(undefined);
+                });
+            });
+
+            it('should add library version into database', function () {
+                var rootNode = {
+                    id: 'nodes:1',
+                    lib: 'bem-core',
+                    route: {
+                        name: 'libs',
+                        pattern: '/libs(/<lib>)(/<version>)(/<level>)(/<block>)(/<id>)(/docs|jsdoc|examples)(/)',
+                        conditions: {
+                            lib: 'bem-core'
+                        }
+                    }
+                };
+                return task._addLibVersionToDb(target, 'bem-core', 'v2', rootNode).then(function (result) {
+                    should(result).be.equal(undefined);
+                });
+            });
+        });
+
+        describe('_addLibVersionsToDb', function () {
+            beforeEach(function () {
+                var p1 = path.join(cacheFolder, './libraries/bem-core/v2'),
+                    p2 = path.join(process.cwd(), './test/fixtures/data.json');
+                fsExtra.ensureDirSync(p1);
+                fsExtra.copySync(p2, path.join(p1, 'data.json'));
+            });
+
+            it('should add library versions into database', function () {
+                levelDb.get()
+                    .put('nodes:1', {
+                        id: 'nodes:1',
+                        lib: 'bem-core',
+                        route: {
+                            name: 'libs',
+                            pattern: '/libs(/<lib>)(/<version>)(/<level>)(/<block>)(/<id>)(/docs|jsdoc|examples)(/)',
+                            conditions: {
+                                lib: 'bem-core'
+                            }
+                        }
+                    })
+                    .then(function () {
+                        return task._addLibVersionsToDb(target, [{ lib:'bem-core', version: 'v2' }]);
+                    })
+                    .then(function (result) {
+                        should(result).be.equal(undefined);
+                    });
+            });
+        });
+
+        describe('_sortLibraryVersions', function () {
+            it('should sort library version nodes', function () {
+                return task._sortLibraryVersions(target)
+                    .then(function () {
+                        return levelDb.get().getByCriteria(function (record) {
+                            var value = record.value;
+                            return value.route && value.route.conditions &&
+                                value.route.conditions.lib === 'bem-core' && value.route.conditions.version === 'v2' &&
+                                    value.class === 'version';
+                        }, task._getDbHints(target));
+                    })
+                    .then(function (result) {
+                        result[0].value.current.should.equal(true);
+                        result[0].value.order.should.equal(0);
+                    });
+            });
+        });
     });
 });

@@ -153,6 +153,15 @@ module.exports = {
         });
     },
 
+    /**
+     * Adds library version to db
+     * @param {TargetNodes} target object
+     * @param {String} lib - library name
+     * @param {String} version - library version name
+     * @param {Object} rootRecord - library root db record value
+     * @returns {Promise}
+     * @private
+     */
     _addLibVersionToDb: function(target, lib, version, rootRecord) {
         logger.debug(util.format('add lib: => %s version: => %s to database', lib, version), module);
 
@@ -161,6 +170,7 @@ module.exports = {
             return vow.resolve();
         }
 
+        // открываем data.json файл для версии библиотеки ./cache/libraries/{lib}/{version}/data.json
         return this._loadVersionFile(target, lib, version)
             .then(function (versionData) {
                 if(!versionData) {
@@ -168,6 +178,8 @@ module.exports = {
                     return vow.resolve();
                 }
 
+                // создаем новый объект класса VersionNode и сохраняем его в базу
+                // VersionNode внутри себя создает все дочерние сущности: документы, блоки и.т.д.
                 return (new nodes.version.VersionNode(rootRecord, versionData)).saveToDb();
             })
             .fail(function (error) {
@@ -176,6 +188,13 @@ module.exports = {
             });
     },
 
+    /**
+     * Adds library versions to database
+     * @param {TargetNodes} target object
+     * @param {Array} libVersions - array of objects with fields: lib, version
+     * @returns {Promise}
+     * @private
+     */
     _addLibVersionsToDb: function (target, libVersions) {
         return this._getRootLibNodes(target)
             .then(function (records) {
@@ -222,9 +241,15 @@ module.exports = {
     /**
      * Method for sorting library versions in correct order
      * @param {TargetLibraries} target object
-     * @returns {*}
+     * @returns {Promise}
      */
      _sortLibraryVersions: function(target) {
+        // здесь происходит сортировка версий внури каждой библиотеки
+        // 1. выбираются узлы которые соответствуют корневым страницам библиотек
+        // 2. выбираются узлы версий для каждой библиотеки
+        // 3. происходит сортировка по полям route.conditions.version
+        // 4. для каждого узла версии добавляются 2 дополнительных поля order и current
+        // 5. обновленное значение сохраняется в базу
         return this._getRootLibNodes(target).then(function (records) {
             return vow.all(records.map(function (record) {
                 var value = record.value;
@@ -249,10 +274,11 @@ module.exports = {
 
     /**
      * Fill addLibVersions by all library versions from MDS registry.json file
+     * @param {TargetLibraries} target object
      * @returns {Array} array of objects with fields: "lib" and "version"
      * @private
      */
-    _addAllFromRegistry: function () {
+    _addAllFromRegistry: function (target) {
         var registry = fsExtra.readJSONFileSync(path.join(target.LIBRARIES_FILE_PATH, 'registry.json')),
             result = [];
         Object.keys(registry).forEach(function (lib) {
@@ -280,7 +306,7 @@ module.exports = {
                 .concat(libChanges.getRemoved())
                 .concat(libChanges.getModified())
         } else {
-            addLibVersions = this._addAllFromRegistry();
+            addLibVersions = this._addAllFromRegistry(target);
         }
 
         return vow.when(true)
