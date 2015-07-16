@@ -48,9 +48,7 @@ describe('libraries-db', function () {
                 return levelDb.get().batch([
                         { type: 'put', key: 'nodes:1', value: { id: 'nodes:1', lib: 'bem-core' } },
                         { type: 'put', key: 'nodes:2', value: { id: 'nodes:2', name: 'non-library1' } },
-                        { type: 'put', key: 'nodes:3', value: { id: 'nodes:3', lib: 'bem-components' } },
-                        { type: 'put', key: 'nodes:4', value: { id: 'nodes:4', name: 'non-library2 '} },
-                        { type: 'put', key: 'nodes:5', value: { id: 'nodes:5', lib: 'bem-bl' } }
+                        { type: 'put', key: 'nodes:3', value: { id: 'nodes:3', lib: 'bem-components' } }
                     ])
                     .then(function () {
                         return task._getRootLibNodes(target);
@@ -58,8 +56,7 @@ describe('libraries-db', function () {
                     .then(function (result) {
                         should.deepEqual(result, [
                             { key: 'nodes:1', value: { id: 'nodes:1', lib: 'bem-core' } },
-                            { key: 'nodes:3', value: { id: 'nodes:3', lib: 'bem-components' } },
-                            { key: 'nodes:5', value: { id: 'nodes:5', lib: 'bem-bl' } }
+                            { key: 'nodes:3', value: { id: 'nodes:3', lib: 'bem-components' } }
                         ]);
                     });
             });
@@ -86,8 +83,7 @@ describe('libraries-db', function () {
                 return levelDb.get().batch([
                         { type: 'put', key: 'nodes:11', value: { parent: 'nodes:1' } },
                         { type: 'put', key: 'nodes:12', value: { parent: 'nodes:1' } },
-                        { type: 'put', key: 'nodes:13', value: { parent: 'nodes:2' } },
-                        { type: 'put', key: 'nodes:14', value: { parent: 'nodes:3' } }
+                        { type: 'put', key: 'nodes:13', value: { parent: 'nodes:2' } }
                     ])
                     .then(function () {
                         return task._getLibVersionNodes(target, { id: 'nodes:1' });
@@ -185,7 +181,6 @@ describe('libraries-db', function () {
                 fsExtra.copySync(p2, path.join(p1, 'data.json'));
 
                 return task._loadVersionFile(target, 'bem-core', 'v2').then(function (content) {
-                    content.should.be.instanceOf(Object);
                     content.repo.should.equal('bem-core');
                     content.ref.should.equal('v2');
                 });

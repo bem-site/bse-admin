@@ -98,13 +98,11 @@ describe('libraries-files', function () {
                     registry = fsExtra.readJSONSync(registryFilePath),
                     comparatorMap = task._createComparatorMap(registry);
 
-                comparatorMap['bem-core||v2'].should.be.instanceOf(Object);
                 should.deepEqual(comparatorMap['bem-core||v2'], {
                     sha: 'a25b147f254ee8e46c26031886f243221dc3d35f',
                     date: 1432047899246
                 });
 
-                comparatorMap['bem-bl||dev'].should.be.instanceOf(Object);
                 should.deepEqual(comparatorMap['bem-bl||dev'], {
                     sha: '3b7998cc3be75d7ef3235e5fce2f61c4637921bd',
                     date: 1423135691152
