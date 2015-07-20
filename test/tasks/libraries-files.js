@@ -123,8 +123,6 @@ describe('libraries-files', function () {
                 var local = JSON.parse(JSON.stringify(remote)),
                     result = task._compareRegistryFiles(target, local, remote);
 
-                result.should.be.instanceOf(Object);
-
                 result.should.have.property('added');
                 result.should.have.property('modified');
                 result.should.have.property('removed');
@@ -134,7 +132,7 @@ describe('libraries-files', function () {
                 result.removed.should.be.instanceOf(Array);
             });
 
-            it('nothing changed. registry files are equal', function () {
+            it('should detect nothing changed for equal registry files', function () {
                 var local = JSON.parse(JSON.stringify(remote)),
                     result = task._compareRegistryFiles(target, local, remote);
 
@@ -147,7 +145,7 @@ describe('libraries-files', function () {
                 target.getChanges().getLibraries().getRemoved().should.have.length(0);
             });
 
-            it('library was added', function () {
+            it('should detect library was added', function () {
                 var local = JSON.parse(JSON.stringify(remote));
                 delete local['bem-bl'];
 
@@ -162,7 +160,7 @@ describe('libraries-files', function () {
                 should.deepEqual(target.getChanges().getLibraries().getAdded(), [{ lib: 'bem-bl', version: 'dev' }]);
             });
 
-            it('library version was added', function () {
+            it('should detect library version was added', function () {
                 var local = JSON.parse(JSON.stringify(remote));
                 delete  local['bem-core' ].versions['v2'];
 
@@ -177,7 +175,7 @@ describe('libraries-files', function () {
                 should.deepEqual(target.getChanges().getLibraries().getAdded(), [{ lib: 'bem-core', version: 'v2' }]);
             });
 
-            it('library versions were added (several versions for one library)', function () {
+            it('should add multiple library versions added for one library', function () {
                 var local = JSON.parse(JSON.stringify(remote));
                 delete  local['bem-core' ].versions['v2'];
                 delete  local['bem-core' ].versions['v2.5.1'];
@@ -188,21 +186,18 @@ describe('libraries-files', function () {
                 result.modified.should.have.length(0);
                 result.removed.should.have.length(0);
                 result.added.should.have.length(3);
-                should.deepEqual(result.added, [
-                    { lib: 'bem-core', version: 'v2' },
-                    { lib: 'bem-core', version: 'v2.5.1' },
-                    { lib: 'bem-core', version: 'v2.6.0' }
-                ]);
+                should(result.added).containEql({ lib: 'bem-core', version: 'v2' })
+                    .and.containEql({ lib: 'bem-core', version: 'v2.5.1' })
+                    .and.containEql({ lib: 'bem-core', version: 'v2.6.0' });
 
                 target.getChanges().getLibraries().getAdded().should.have.length(3);
-                should.deepEqual(target.getChanges().getLibraries().getAdded(), [
-                    { lib: 'bem-core', version: 'v2' },
-                    { lib: 'bem-core', version: 'v2.5.1' },
-                    { lib: 'bem-core', version: 'v2.6.0' }
-                ]);
+                should(target.getChanges().getLibraries().getAdded())
+                    .containEql({ lib: 'bem-core', version: 'v2' })
+                    .and.containEql({ lib: 'bem-core', version: 'v2.5.1' })
+                    .and.containEql({ lib: 'bem-core', version: 'v2.6.0' });
             });
 
-            it('libraries versions were added (for different libraries)', function () {
+            it('should detect library versions added for multiple libraries', function () {
                 var local = JSON.parse(JSON.stringify(remote));
                 delete  local['bem-core'].versions['v2'];
                 delete  local['bem-components'].versions['v2'];
@@ -212,19 +207,16 @@ describe('libraries-files', function () {
                 result.modified.should.have.length(0);
                 result.removed.should.have.length(0);
                 result.added.should.have.length(2);
-                should.deepEqual(result.added, [
-                    { lib: 'bem-core', version: 'v2' },
-                    { lib: 'bem-components', version: 'v2' }
-                ]);
+                should(result.added).containEql({ lib: 'bem-core', version: 'v2' })
+                    .and.containEql({ lib: 'bem-components', version: 'v2' });
 
                 target.getChanges().getLibraries().getAdded().should.have.length(2);
-                should.deepEqual(target.getChanges().getLibraries().getAdded(), [
-                    { lib: 'bem-core', version: 'v2' },
-                    { lib: 'bem-components', version: 'v2' }
-                ]);
+                should(target.getChanges().getLibraries().getAdded())
+                    .containEql({ lib: 'bem-core', version: 'v2' })
+                    .and.containEql({ lib: 'bem-components', version: 'v2' });
             });
 
-            it('library was removed', function () {
+            it('should detect library removed', function () {
                 var local = JSON.parse(JSON.stringify(remote));
                 delete  remote['bem-bl'];
 
@@ -239,7 +231,7 @@ describe('libraries-files', function () {
                 should.deepEqual(target.getChanges().getLibraries().getRemoved(), [{ lib: 'bem-bl', version: 'dev' }]);
             });
 
-            it('library version was removed', function () {
+            it('should detect library version removed', function () {
                 var local = JSON.parse(JSON.stringify(remote));
                 delete remote['bem-core' ].versions['v2'];
 
@@ -254,7 +246,7 @@ describe('libraries-files', function () {
                 should.deepEqual(target.getChanges().getLibraries().getRemoved(), [{ lib: 'bem-core', version: 'v2' }]);
             });
 
-            it('library versions were removed (several versions for one library)', function () {
+            it('should detect for removed library versions (several versions for one library)', function () {
                 var local = JSON.parse(JSON.stringify(remote));
                 delete remote['bem-core' ].versions['v2'];
                 delete remote['bem-core' ].versions['v2.5.1'];
@@ -265,21 +257,18 @@ describe('libraries-files', function () {
                 result.modified.should.have.length(0);
                 result.removed.should.have.length(3);
                 result.added.should.have.length(0);
-                should.deepEqual(result.removed, [
-                    { lib: 'bem-core', version: 'v2' },
-                    { lib: 'bem-core', version: 'v2.5.1' },
-                    { lib: 'bem-core', version: 'v2.6.0' }
-                ]);
+                should(result.removed).containEql({ lib: 'bem-core', version: 'v2' })
+                    .and.containEql({ lib: 'bem-core', version: 'v2.5.1' })
+                    .and.containEql({ lib: 'bem-core', version: 'v2.6.0' });
 
                 target.getChanges().getLibraries().getRemoved().should.have.length(3);
-                should.deepEqual(target.getChanges().getLibraries().getRemoved(), [
-                    { lib: 'bem-core', version: 'v2' },
-                    { lib: 'bem-core', version: 'v2.5.1' },
-                    { lib: 'bem-core', version: 'v2.6.0' }
-                ]);
+                should(target.getChanges().getLibraries().getRemoved())
+                    .containEql({ lib: 'bem-core', version: 'v2' })
+                    .and.containEql({ lib: 'bem-core', version: 'v2.5.1' })
+                    .and.containEql({ lib: 'bem-core', version: 'v2.6.0' });
             });
 
-            it('libraries versions were removed (for different libraries)', function () {
+            it('should detect that libraries versions were removed for different libraries', function () {
                 var local = JSON.parse(JSON.stringify(remote));
                 delete remote['bem-core'].versions['v2'];
                 delete remote['bem-components'].versions['v2'];
@@ -289,19 +278,16 @@ describe('libraries-files', function () {
                 result.modified.should.have.length(0);
                 result.removed.should.have.length(2);
                 result.added.should.have.length(0);
-                should.deepEqual(result.removed, [
-                    { lib: 'bem-core', version: 'v2' },
-                    { lib: 'bem-components', version: 'v2' }
-                ]);
+                should(result.removed).containEql({ lib: 'bem-core', version: 'v2' })
+                    .and.containEql({ lib: 'bem-components', version: 'v2' });
 
                 target.getChanges().getLibraries().getRemoved().should.have.length(2);
-                should.deepEqual(target.getChanges().getLibraries().getRemoved(), [
-                    { lib: 'bem-core', version: 'v2' },
-                    { lib: 'bem-components', version: 'v2' }
-                ]);
+                should(target.getChanges().getLibraries().getRemoved())
+                    .containEql({ lib: 'bem-core', version: 'v2' })
+                    .and.containEql({ lib: 'bem-components', version: 'v2' });
             });
 
-            it('library version was modified (by sha sum)', function () {
+            it('should detect library version modification (by sha sum)', function () {
                 var local = JSON.parse(JSON.stringify(remote));
                 remote['bem-core'].versions['v2'].sha = 'a25b147f254ee8e46c26031886f243221dc3d35e';
 
@@ -316,7 +302,7 @@ describe('libraries-files', function () {
                 should.deepEqual(target.getChanges().getLibraries().getModified(), [{ lib: 'bem-core', version: 'v2' }]);
             });
 
-            it('library version was modified (by date)', function () {
+            it('should detect library version modification (by date)', function () {
                 var local = JSON.parse(JSON.stringify(remote));
                 remote['bem-core'].versions['v2'].date = 1432047899247;
 
@@ -331,7 +317,7 @@ describe('libraries-files', function () {
                 should.deepEqual(target.getChanges().getLibraries().getModified(), [{ lib: 'bem-core', version: 'v2' }]);
             });
 
-            it('library versions were modified (several versions for one library)', function () {
+            it('should detect library versions modifications (several versions for one library)', function () {
                 var local = JSON.parse(JSON.stringify(remote));
                 remote['bem-core'].versions['v2'].sha = 'a25b147f254ee8e46c26031886f243221dc3d35e';
                 remote['bem-core'].versions['v2.5.1'].date = 1423135728312;
@@ -342,18 +328,15 @@ describe('libraries-files', function () {
                 result.modified.should.have.length(3);
                 result.removed.should.have.length(0);
                 result.added.should.have.length(0);
-                should.deepEqual(result.modified, [
-                    { lib: 'bem-core', version: 'v2' },
-                    { lib: 'bem-core', version: 'v2.5.1' },
-                    { lib: 'bem-core', version: 'v2.6.0' }
-                ]);
+                should(result.modified).containEql({ lib: 'bem-core', version: 'v2' })
+                    .and.containEql({ lib: 'bem-core', version: 'v2.5.1' })
+                    .and.containEql({ lib: 'bem-core', version: 'v2.6.0' });
 
                 target.getChanges().getLibraries().getModified().should.have.length(3);
-                should.deepEqual(target.getChanges().getLibraries().getModified(), [
-                    { lib: 'bem-core', version: 'v2' },
-                    { lib: 'bem-core', version: 'v2.5.1' },
-                    { lib: 'bem-core', version: 'v2.6.0' }
-                ]);
+                should(target.getChanges().getLibraries().getModified())
+                    .containEql({ lib: 'bem-core', version: 'v2' })
+                    .and.containEql({ lib: 'bem-core', version: 'v2.5.1' })
+                    .and.containEql({ lib: 'bem-core', version: 'v2.6.0' });
             });
 
             it('libraries versions were modified (for different libraries)', function () {
@@ -366,16 +349,13 @@ describe('libraries-files', function () {
                 result.modified.should.have.length(2);
                 result.removed.should.have.length(0);
                 result.added.should.have.length(0);
-                should.deepEqual(result.modified, [
-                    { lib: 'bem-core', version: 'v2' },
-                    { lib: 'bem-components', version: 'v2' }
-                ]);
+                should(result.modified).containEql({ lib: 'bem-core', version: 'v2' })
+                    .and.containEql({ lib: 'bem-components', version: 'v2' });
 
                 target.getChanges().getLibraries().getModified().should.have.length(2);
-                should.deepEqual(target.getChanges().getLibraries().getModified(), [
-                    { lib: 'bem-core', version: 'v2' },
-                    { lib: 'bem-components', version: 'v2' }
-                ]);
+                should(target.getChanges().getLibraries().getModified())
+                    .containEql({ lib: 'bem-core', version: 'v2' })
+                    .and.containEql({ lib: 'bem-components', version: 'v2' });
             });
 
             it('complex case (added, removed and modified)', function () {
@@ -455,7 +435,7 @@ describe('libraries-files', function () {
                 fsExtra.outputFileSync(path.join(p, 'data.json'), 'Foo Bar', 'utf-8');
             });
 
-            it('should successfully remove library version folder in local cache', function () {
+            it('should successfully remove library version folder from local cache', function () {
                 return task._removeLibraryVersionFolder({ lib: 'bem-core', version: 'v2' }, target).then(function () {
                     fs.existsSync(task._getLibVersionPath(target, 'bem-core', 'v2')).should.equal(false);
                 });
