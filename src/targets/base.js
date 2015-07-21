@@ -89,7 +89,7 @@ TargetBase.prototype = {
         var _this = this;
         return this.getTasks().reduce(function (prev, item) {
             return prev.then(function () {
-                return item(_this);
+                return item.run ? item.run(_this) : item(_this);
             });
         }, vow.resolve(_this)).fail(function (err) {
             return failTask(_this, err);

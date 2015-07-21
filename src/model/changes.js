@@ -7,6 +7,7 @@ Changes.prototype = {
     _docs: undefined,
     _nodes: undefined,
     _libraries: undefined,
+    _modelChanged: false,
 
     init: function () {
         this._docs = new ChangeType('docs');
@@ -30,6 +31,14 @@ Changes.prototype = {
 
     getLibraries: function () {
         return this._libraries;
+    },
+
+    setModelChanged: function () {
+        this._modelChanged = true;
+    },
+
+    wasModelChanged: function () {
+        return this._modelChanged;
     }
 };
 

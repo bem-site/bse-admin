@@ -5,7 +5,7 @@ var util = require('util'),
 
     _ = require('lodash'),
     vow = require('vow'),
-    vowFs = require('vow-fs'),
+    fsExtra = require('fs-extra'),
     semver = require('semver'),
 
     errors = require('../errors').TaskLibrariesDb,
@@ -14,317 +14,318 @@ var util = require('util'),
     levelDb = require('../providers/level-db'),
     nodes = require('../model/nodes/index.js');
 
-/**
- * Returns db hint object for improve db calls
- * @param {TargetNodes} target object
- * @returns {{gte: (TargetBase.KEY.NODE_PREFIX|*), lt: (TargetBase.KEY.PEOPLE_PREFIX|*), fillCache: boolean}}
- */
-function getDbHints(target) {
-    return { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true };
-}
+module.exports = {
+    /**
+     * Returns db hint object for improve db calls
+     * @param {TargetNodes} target object
+     * @returns {{gte: (TargetBase.KEY.NODE_PREFIX|*), lt: (TargetBase.KEY.PEOPLE_PREFIX|*), fillCache: boolean}}
+     * @private
+     */
+    _getDbHints: function (target) {
+        /*
+        * Возвращает объект: {
+        *   gte: 'nodes:',
+        *   lt: 'people:'
+        *   fillCache: true
+        * }
+        * Он необходим для того, чтобы выбирались только ключи имя которых "больше" nodes: и меньше "people:"
+        * Это позволяет ускорить процесс такой выборки так как ключи в базе отсортированы в алфавитном порядке
+        */
+        return { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true };
+    },
 
-/**
- * Returns array of library nodes from database
- * @param {TargetBase} target object
- * @returns {*}
- */
-function getLibraryNodesFromDb(target) {
-    return levelDb
-        .get().getByCriteria(function (record) {
-            var key = record.key,
-                value = record.value;
+    /**
+     * Returns array of library nodes from database
+     * @param {TargetBase} target object
+     * @returns {Promise}
+     * @private
+     */
+    _getRootLibNodes: function (target) {
+        // возвращает записи в базе которые соответствуют корневым страницам библиотек к которым
+        // привязываются все страницы версий к которым в свою очередь привязываются страницы
+        // документов библиотеки, уровней переопределения и.т.д.
+        // Критерий выборки - наличие поля lib (прописывается в js модели).
+        // Значение поля lib - название библиотеки
+        return levelDb
+            .get().getByCriteria(function (record) {
+                // criteria - is existed field lib
+                return record.value.lib;
+            }, this._getDbHints(target));
+    },
 
-            if (key.indexOf(target.KEY.NODE_PREFIX) < 0) {
-                return false;
-            }
-
-            // criteria - is existed field lib
-            return value.lib;
-        }, getDbHints(target));
-}
-
-/**
- * Returns array of library version folders for current library
- * @param {TargetNodes} target object
- * @param {Object} value - database record of library node
- * @returns {*}
- */
-function getLibraryVersionsFromCache(target, value) {
-    return vowFs.listDir(path.join(target.LIBRARIES_FILE_PATH, value.lib))
-        .fail(function () {
-            return vow.resolve([]);
-        });
-}
-
-/**
- * Returns array of library version nodes from database
- * @param {TargetNodes} target object
- * @param {Object} lib - database record of library node
- * @returns {*}
- */
-function getLibraryVersionNodesFromDb(target, lib) {
-    return levelDb
-        .get().getByCriteria(function (record) {
-            var key = record.key,
-                value = record.value;
-
-            if (key.indexOf(target.KEY.NODE_PREFIX) < 0) {
-                return false;
-            }
+    /**
+     * Returns array of library version nodes from database
+     * @param {TargetNodes} target object
+     * @param {Object} lib - database record of library node
+     * @returns {Promise}
+     * @private
+     */
+    _getLibVersionNodes: function (target, lib) {
+        // В этот метод передаются значения записей в базе данных
+        // которые соответствуют корневым страницам библиотек
+        // По критерию выбираются дочерние узлы библиотеки, которые являются ее версиями
+        return levelDb.get().getByCriteria(function (record) {
+            var value = record.value;
 
             // criteria is equality of parent and id fields of version and library nodes
-            return value.parent === lib.id;
-        }, getDbHints(target));
-}
+            return value.parent && value.parent === lib.id;
+        }, this._getDbHints(target));
+    },
 
-/**
- * Collect map of contents of {lib}/{version}/_data.json files
- * @param {TargetNodes} target object
- * @returns {*}
- */
-function getPreviousStateMap(target) {
-    var result = {};
-    return vowFs.listDir(target.LIBRARIES_FILE_PATH).then(function (libraries) {
-        return vow.all(libraries.map(function (lib) {
-            return vowFs.listDir(path.join(target.LIBRARIES_FILE_PATH, lib)).then(function (versions) {
-                return vow.all(versions.map(function (version) {
-                    return vowFs.read(path.join(target.LIBRARIES_FILE_PATH, lib, version, '_data.json'), 'utf-8')
-                        .then(function (content) {
-                            result[lib] = result[lib] || {};
-                            result[lib][version] = content;
-                        });
-                }));
-            });
-        }));
-    }).then(function () {
-        return result;
-    });
-}
+    /**
+     * Removes all library version records
+     * @param {TargetNodes} target object
+     * @param {Array} libVersions - array of objects with fields: "lib" and "version"
+     * @returns {Promise}
+     * @private
+     */
+    _removeLibVersionsFromDb: function (target, libVersions) {
+        libVersions = libVersions.reduce(function (prev, item) {
+            prev[item.lib] = prev[item.lib] || [];
+            prev[item.lib].push(item.version);
+            return prev;
+        }, {});
 
-function removeLibraryVersionNodesFromDb(target, lib, version) {
-    return levelDb.get()
-        .getByCriteria(function (record) {
-            var key = record.key,
-                value = record.value,
-                route;
+        // Удаление всех записей из базы данных, которые относятся к определенной версии библиотеки:
+        // документов библиотеки, уровней переопределения и блоков
+        return levelDb.get().removeByCriteria(function (dbRecord) {
+            var value = dbRecord.value,
+                route,
+                conditions;
 
-            if (key.indexOf(target.KEY.NODE_PREFIX) < 0) {
-                return false;
-            }
-
+            // здесь критерием является совпадение условий
+            // 1. наличие у записи поля route
+            // 2. наличие поля route.conditions
+            // 3. наличие поля route.conditions.lib
+            // 4. наличие поля route.conditions.version
+            // 5. отсутствие поля lib (не удаляем корневые страницы библиотек, хотя это условие лишнее)
+            // 6. наличие route.conditions.lib в списке библиотек на удаление и
+            // route.conditions.version в списке версий библиоки на удаление
             route = value.route;
-            if (!route || !route.conditions) {
+            if (!route) {
                 return false;
             }
 
-            return route.conditions.lib === lib && !value.lib &&
-                (version ? route.conditions.version === version : true);
-        }, getDbHints(target))
-        .then(function (result) {
-            return levelDb.get().batch(result.map(function (record) {
-                return { type: 'del', key: record.key };
-            }));
-        });
-}
-
-/**
- * Loads data.json file from libraries cache {cache}/{lib}/{version}/data.json
- * @param {TargetLibraries} target object
- * @param {String} lib - library name
- * @param {String} version - library version name
- * @returns {*}
- */
-function loadVersionFile(target, lib, version) {
-    return vowFs.read(path.join(target.LIBRARIES_FILE_PATH, lib, version, 'data.json'), 'utf-8')
-        .then(function (content) {
-            try {
-                return JSON.parse(content);
-            } catch (err) {
-                return null;
-            }
-        });
-}
-
-/**
- * Synchronize versions of given library between file cache and database
- * @param {TargetNodes} target object
- * @param {Object} record - library node record
- * @param {Object} stateMap current cache state
- * @returns {*}
- */
-function syncLibraryVersions(target, record, stateMap) {
-    var key = record.key,
-        value = record.value;
-    return vow.all([
-            getLibraryVersionsFromCache(target, value),
-            getLibraryVersionNodesFromDb(target, value)
-       ])
-        .spread(function (newVersions, oldVersions) {
-            // hide library if there no  versions for it
-            if (!newVersions.length) {
-                    utility.getLanguages().forEach(function (lang) {
-                    value.hidden[lang] = true;
-                });
-                return vow.all([
-                    removeLibraryVersionNodesFromDb(target, value.lib),
-                    levelDb.get().put(key, value)
-               ]);
+            conditions = route.conditions;
+            if (!conditions) {
+                return false;
             }
 
-            newVersions = newVersions.sort(function (a, b) {
-                return compareVersions(a, b);
-            });
+            if(value.lib) {
+                return false;
+            }
 
-            var added = [],
-                modified = [],
-                removed = [],
-                current = newVersions[0];
+            if (!conditions.lib || !conditions.version) {
+                return false;
+            }
 
-            newVersions.forEach(function (cacheVersion) {
-                var dbRecord = _.find(oldVersions, function (record) {
-                    var route = record.value.route,
-                        conditions = route.conditions,
-                        dbVersion = conditions.version;
+            if (libVersions[conditions.lib] &&
+                libVersions[conditions.lib].indexOf(conditions.version) > -1) {
+                logger.verbose(
+                    util.format('rm from db lib: => %s version: => %s', conditions.lib, conditions.version), module);
+                return true;
+            }
 
-                    return cacheVersion === dbVersion;
-                });
+            // TODO не удаляются записи документации и jsdoc по блокам из-за чего база со временем раздувается Нужно решить это в рамках отдельной задачи
 
-                if (!dbRecord) {
-                    added.push(cacheVersion);
-                } else if (stateMap[value.lib] &&
-                    stateMap[value.lib][cacheVersion] !== dbRecord.value.cacheVersion) {
-                    modified.push(cacheVersion);
-                } else if (dbRecord.value.current && dbRecord.value.route.conditions.version !== current) {
-                    modified.push(cacheVersion);
+            return false;
+        }, this._getDbHints(target));
+    },
+
+    /**
+     * Loads data.json file from libraries cache {cache}/{lib}/{version}/data.json
+     * @param {TargetLibraries} target object
+     * @param {String} lib - library name
+     * @param {String} version - library version name
+     * @returns {*}
+     */
+    _loadVersionFile: function (target, lib, version) {
+        var libVersionFilePath = path.join(target.LIBRARIES_FILE_PATH, lib, version, 'data.json');
+        return new vow.Promise(function (resolve, reject) {
+            return fsExtra.readJSONFile(libVersionFilePath, function (error, content) {
+                if (error || !content) {
+                    logger.error(util.format('Error occur while loading file %s', libVersionFilePath), module);
+                    logger.error(util.format('Error: %s', error.message), module);
+                    reject(error);
                 }
+                resolve(content);
             });
+        });
+    },
 
-            oldVersions.forEach(function (record) {
-                var cacheRecord = _.find(newVersions, function (cacheVersion) {
-                    var route = record.value.route,
-                        conditions = route.conditions,
-                        dbVersion = conditions.version;
+    /**
+     * Adds library version to db
+     * @param {TargetNodes} target object
+     * @param {String} lib - library name
+     * @param {String} version - library version name
+     * @param {Object} rootRecord - library root db record value
+     * @returns {Promise}
+     * @private
+     */
+    _addLibVersionToDb: function(target, lib, version, rootRecord) {
+        logger.debug(util.format('add lib: => %s version: => %s to database', lib, version), module);
 
-                    return cacheVersion === dbVersion;
-                });
+        if(!rootRecord) {
+            logger.warn(util.format('Root db record for lib: => %s was not found. Skip', lib), module);
+            return vow.resolve();
+        }
 
-                if (!cacheRecord) {
-                    removed.push(record);
+        // открываем data.json файл для версии библиотеки ./cache/libraries/{lib}/{version}/data.json
+        return this._loadVersionFile(target, lib, version)
+            .then(function (versionData) {
+                if(!versionData) {
+                    logger.warn(util.format('version data is null for %s %s', value.lib, item), module);
+                    return vow.resolve();
                 }
+
+                // создаем новый объект класса VersionNode и сохраняем его в базу
+                // VersionNode внутри себя создает все дочерние сущности: документы, блоки и.т.д.
+                return (new nodes.version.VersionNode(rootRecord, versionData)).saveToDb();
+            })
+            .fail(function (error) {
+                logger.error(util.format('Error occur on add lib: => %s version: => %s', lib, version), module);
+                logger.error(util.format('Error: %s', error.message), module);
             });
+    },
 
-            // library versions that should be added to database
-            added = added.map(function (item) {
-                logger.debug(util.format('add lib: %s version: %s to db', value.lib, item), module);
-                target.getChanges().getLibraries().addAdded({ lib: value.lib, version: item });
-                return loadVersionFile(target, value.lib, item).then(function (versionData) {
-                    if(!versionData) {
-                        logger.warn(util.format('version data is null for %s %s', value.lib, item), module);
-                        return vow.resolve();
-                    }
+    /**
+     * Adds library versions to database
+     * @param {TargetNodes} target object
+     * @param {Array} libVersions - array of objects with fields: lib, version
+     * @returns {Promise}
+     * @private
+     */
+    _addLibVersionsToDb: function (target, libVersions) {
+        return this._getRootLibNodes(target)
+            .then(function (records) {
+                return records.reduce(function (prev, item) {
+                    prev[item.value.lib] = item.value;
+                    return prev;
+                }, {})
+            })
+            .then(function (libsRootsMap) {
+                return libVersions.reduce(function (prev, item) {
+                    return prev.then(function () {
+                        return this._addLibVersionToDb(target, item.lib, item.version, libsRootsMap[item.lib]);
+                    }, this);
+                }.bind(this), vow.resolve());
+            }, this);
+    },
 
-                    versionData.isCurrent = item === current;
-                    return (new nodes.version.VersionNode(value, versionData, stateMap[value.lib][item])).saveToDb();
-                });
-            });
+    /**
+     * Compare library versions for sorting
+     * @param {String} a - first version
+     * @param {String} b - second version
+     * @returns {Number} - sorting result
+     * @private
+     */
+    _compareVersions: function(a, b) {
+        var BRANCHES = ['master', 'dev'],
+            VERSION_REGEXP = /^v?\d+\.\d+\.\d+$/;
 
-            // library versions that should be rewrited
-            modified = modified.map(function (item) {
-                logger.debug(util.format('modify lib: %s version: %s into db', value.lib, item), module);
-                target.getChanges().getLibraries().addModified({ lib: value.lib, version: item });
-                return removeLibraryVersionNodesFromDb(target, value.lib, item)
-                    .then(function () {
-                        return loadVersionFile(target, value.lib, item).then(function (versionData) {
-                            if(!versionData) {
-                                logger.warn(util.format('version data is null for %s %s', value.lib, item), module);
-                                return vow.resolve();
-                            }
-                            versionData.isCurrent = item === current;
-                            return (new nodes.version.VersionNode(
-                                value, versionData, stateMap[value.lib][item])).saveToDb();
-                        });
-                    });
-            });
+        if (VERSION_REGEXP.test(a) && VERSION_REGEXP.test(b)) {
+            return semver.rcompare(a, b);
+        }
 
-            // library versions for remove from db
-            removed = removed.map(function (item) {
-                var _version = item.value.route.conditions.version;
-                logger.debug(util.format('remove lib: %s version: %s from db',
-                    value.lib, _version), module);
-                target.getChanges().getLibraries().addRemoved({ lib: value.lib, version: _version });
-                return removeLibraryVersionNodesFromDb(target, value.lib, _version);
-            });
+        if (VERSION_REGEXP.test(a)) { return -1; }
+        if (VERSION_REGEXP.test(b)) { return 1; }
 
-            return vow.all(added.concat(modified).concat(removed));
-        });
-}
+        if (BRANCHES.indexOf(a) > -1) { return 1; }
+        if (BRANCHES.indexOf(b) > -1) { return -1; }
 
-function compareVersions(a, b) {
-    var BRANCHES = ['master', 'dev'],
-        VERSION_REGEXP = /^\d+\.\d+\.\d+$/;
+        if (a > b) { return -1; }
+        if (a < b) { return 1; }
+        return 0;
+    },
 
-    if (BRANCHES.indexOf(a) !== -1) { return 1; }
-    if (BRANCHES.indexOf(b) !== -1) { return -1; }
-
-    a = semver.clean(a);
-    b = semver.clean(b);
-
-    if (VERSION_REGEXP.test(a) && VERSION_REGEXP.test(b)) { return semver.rcompare(a, b); }
-
-    if (VERSION_REGEXP.test(a)) { return -1; }
-    if (VERSION_REGEXP.test(b)) { return 1; }
-
-    if (semver.valid(a) && semver.valid(b)) { return semver.rcompare(a, b); }
-
-    if (semver.valid(a)) { return -1; }
-    if (semver.valid(b)) { return 1; }
-    return a - b;
-}
-
-/**
- * Method for sorting library versions in correct order
- * @param {TargetLibraries} target object
- * @param {Object} record - library record from database
- * @returns {*}
- */
-function sortLibraryVersions(target, record) {
-    var value = record.value;
-    return getLibraryVersionNodesFromDb(target, value)
-        .then(function (records) {
-            return levelDb.get().batch(records
-                .sort(function (a, b) {
-                    a = a.value.route.conditions.version;
-                    b = b.value.route.conditions.version;
-                    return compareVersions(a, b);
-                })
-                .map(function (record, index) {
-                    record.value.current = index === 0;
-                    record.value.order = index;
-                    return { type: 'put', key: record.key, value: record.value };
-                })
-            );
-        });
-}
-
-module.exports = function (target) {
-    return vow.all([
-            getLibraryNodesFromDb(target),
-            getPreviousStateMap(target)
-       ])
-        .spread(function (records, stateMap) {
+    /**
+     * Method for sorting library versions in correct order
+     * @param {TargetLibraries} target object
+     * @returns {Promise}
+     */
+     _sortLibraryVersions: function(target) {
+        // здесь происходит сортировка версий внури каждой библиотеки
+        // 1. выбираются узлы которые соответствуют корневым страницам библиотек
+        // 2. выбираются узлы версий для каждой библиотеки
+        // 3. происходит сортировка по полям route.conditions.version
+        // 4. для каждого узла версии добавляются 2 дополнительных поля order и current
+        // 5. обновленное значение сохраняется в базу
+        return this._getRootLibNodes(target).then(function (records) {
             return vow.all(records.map(function (record) {
-                return syncLibraryVersions(target, record, stateMap)
-                    .then(function () {
-                        return sortLibraryVersions(target, record);
-                    });
-            }));
-        })
-        .then(function () {
-            logger.info('Libraries were synchronized  successfully with database', module);
-            return vow.resolve(target);
-        })
-        .fail(function (err) {
-            errors.createError(errors.CODES.COMMON, { err: err }).log();
-            return vow.reject(err);
+                var value = record.value;
+                return this._getLibVersionNodes(target, value)
+                    .then(function (records) {
+                        return levelDb.get().batch(records
+                            .sort(function (a, b) {
+                                a = a.value.route.conditions.version;
+                                b = b.value.route.conditions.version;
+                                return this._compareVersions(a, b);
+                            }.bind(this))
+                            .map(function (record, index) {
+                                record.value.current = index === 0;
+                                record.value.order = index;
+                                return { type: 'put', key: record.key, value: record.value };
+                            })
+                        );
+                    }, this);
+            }, this));
+        }, this);
+    },
+
+    /**
+     * Fill addLibVersions by all library versions from MDS registry.json file
+     * @param {TargetLibraries} target object
+     * @returns {Array} array of objects with fields: "lib" and "version"
+     * @private
+     */
+    _addAllFromRegistry: function (target) {
+        var registry = fsExtra.readJSONFileSync(path.join(target.LIBRARIES_FILE_PATH, 'registry.json')),
+            result = [];
+        Object.keys(registry).forEach(function (lib) {
+            if(!registry[lib] || !registry[lib].versions) {
+                return;
+            }
+
+            Object.keys(registry[lib].versions).forEach(function (version) {
+                result.push({ lib: lib, version: version });
+            });
         });
+        return result;
+    },
+
+    run: function (target) {
+        var libChanges = target.getChanges().getLibraries(),
+            addLibVersions = [],
+            removeLibVersions = [];
+
+        if(!target.getChanges().wasModelChanged()) {
+            addLibVersions = addLibVersions
+                .concat(libChanges.getAdded())
+                .concat(libChanges.getModified());
+            removeLibVersions = removeLibVersions
+                .concat(libChanges.getRemoved())
+                .concat(libChanges.getModified())
+        } else {
+            addLibVersions = this._addAllFromRegistry(target);
+        }
+
+        return vow.when(true)
+            .then(function () {
+                return this._removeLibVersionsFromDb(target, removeLibVersions);
+            }, this)
+            .then(function () {
+                return this._addLibVersionsToDb(target, addLibVersions);
+            }, this)
+            .then(function () {
+                return this._sortLibraryVersions(target);
+            }, this)
+            .then(function () {
+                logger.info('Libraries were synchronized  successfully with database', module);
+                return vow.resolve(target);
+            }, this)
+            .fail(function (err) {
+                logger.error('Error occur: ' + err.message, module);
+                return vow.reject(err);
+            });
+    }
 };

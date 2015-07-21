@@ -312,33 +312,37 @@ function overrideLinks(content, node, urlHash, lang, doc) {
 }
 
 function collectUrls(target) {
-    function getDocByNodeId(arr, id, lang) {
-        return _.find(arr, function (item) {
-            return item.key === util.format('%s%s:%s', target.KEY.DOCS_PREFIX, id, lang);
-        });
-    }
+    return levelDb.get().getByKeyRange(target.KEY.DOCS_PREFIX, target.KEY.NODE_PREFIX)
+        .then(function (docRecords) {
+            return vow.all([
+                levelDb.get().getByKeyRange(target.KEY.NODE_PREFIX, target.KEY.PEOPLE_PREFIX),
+                docRecords
+                    .filter(function (record) {
+                        return record.value.url;
+                    })
+                    .reduce(function (prev, record) {
+                        prev[record.key] = record.value.url;
+                        return prev;
+                    }, {})
+            ]);
+        })
+        .spread(function (nodeRecords, docUrlsHash) {
+            return nodeRecords.reduce(function (prev, nodeRecord) {
+                var nodeValue = nodeRecord.value;
 
-    return vow.all([
-        levelDb.get().getByKeyRange(target.KEY.NODE_PREFIX, target.KEY.PEOPLE_PREFIX),
-        levelDb.get().getByKeyRange(target.KEY.DOCS_PREFIX, target.KEY.NODE_PREFIX)
-   ]).spread(function (nodeRecords, docRecords) {
-        return nodeRecords.reduce(function (prev, nodeRecord) {
-            var nodeValue = nodeRecord.value,
-                doc;
-
-            utility.getLanguages().forEach(function (lang) {
-                if (!nodeValue.hidden[lang]) {
-                    doc = getDocByNodeId(docRecords, nodeValue.id, lang);
-                    if (doc && doc.value.url) {
-                        prev[doc.value.url] = nodeValue.url;
-                    } else {
-                        prev[nodeValue.id] = nodeValue.url;
+                utility.getLanguages().forEach(function (lang) {
+                    if (!nodeValue.hidden[lang]) {
+                        var docUrl = docUrlsHash[util.format('%s%s:%s', target.KEY.DOCS_PREFIX, nodeValue.id, lang)];
+                        if (docUrl) {
+                            prev[docUrl] = nodeValue.url;
+                        } else {
+                            prev[nodeValue.id] = nodeValue.url;
+                        }
                     }
-                }
-            });
-            return prev;
-        }, {});
-    });
+                });
+                return prev;
+            }, {});
+        });
 }
 
 module.exports = function (target) {
@@ -355,40 +359,32 @@ module.exports = function (target) {
             .concat(librariesChanges.getAdded())
             .concat(librariesChanges.getModified());
 
-    /**
-     * Decides that given nodeValue is needed for override links
-     * @param {Object} nodeValue
-     * @returns {boolean} flag which indicates that it is important to rescan given source
-     * and override or re-override links in it
-     */
-    function isNeedToOverride(nodeValue) {
-        var route = nodeValue.route,
-            conditions,
-            lib,
-            version;
-
-        conditions = route.conditions;
-        lib = conditions.lib;
-        version = conditions.version;
-
-        return changedLibVersions.some(function (item) {
-            return item.lib === lib && item.version === version;
-        });
-    }
-
     return vow.all([
-            levelDb.get().getByKeyRange(target.KEY.NODE_PREFIX, target.KEY.PEOPLE_PREFIX),
+            levelDb.get().getByCriteria(function (record) {
+                var value = record.value,
+                    route = value.route,
+                    conditions, lib, version;
+
+                conditions = route.conditions;
+                if (conditions && conditions.lib && conditions.version) {
+                    lib = conditions.lib;
+                    version = conditions.version;
+
+                    return changedLibVersions.some(function (item) {
+                        return item.lib === lib && item.version === version;
+                    });
+                }
+
+                return true;
+            }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true }),
             collectUrls(target)
-       ])
+        ])
         .spread(function (nodeRecords, urlsHash) {
+            logger.debug('Urls were collected. Start to process pages ...', module);
             return vow.all(nodeRecords.map(function (nodeRecord) {
                 var nodeValue = nodeRecord.value;
 
                 if (nodeValue.source && nodeValue.source.data) {
-                    if(!isNeedToOverride(nodeValue)) {
-                        return vow.resolve();
-                    }
-
                     return levelDb.get().get(nodeValue.source.data).then(function (blockValue) {
                         if (!blockValue) {
                             return vow.resolve();

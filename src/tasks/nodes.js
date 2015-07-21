@@ -136,6 +136,8 @@ function processModel(target) {
             return vow.resolve(target);
         }
 
+        target.getChanges().setModelChanged();
+
         var nodes;
 
         return vowFs
