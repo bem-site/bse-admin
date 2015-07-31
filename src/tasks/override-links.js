@@ -345,46 +345,85 @@ function collectUrls(target) {
         });
 }
 
-module.exports = function (target) {
-    logger.info('Start overriding links', module);
+function getDocumentRecordsFromDb () {
+    return levelDb.get().getByCriteria(function (record) {
+        return record.value.view === 'post';
+    }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true });
+}
 
-    if (!target.getChanges().areModified()) {
-        logger.warn('No changes were made during this synchronization. This step will be skipped', module);
-        return vow.resolve(target);
-    }
+function getBlockRecordsFromDb(changedLibVersions) {
+    levelDb.get().getByCriteria(function (record) {
+        var value = record.value,
+            route = value.route,
+            conditions, lib, version;
 
-    var languages = utility.getLanguages(),
-        librariesChanges = target.getChanges().getLibraries(),
-        changedLibVersions = []
-            .concat(librariesChanges.getAdded())
-            .concat(librariesChanges.getModified());
+        conditions = route.conditions;
+        if (conditions && conditions.lib && conditions.version) {
+            lib = conditions.lib;
+            version = conditions.version;
 
-    return vow.all([
-            levelDb.get().getByCriteria(function (record) {
-                var value = record.value,
-                    route = value.route,
-                    conditions, lib, version;
+            return changedLibVersions.some(function (item) {
+                return item.lib === lib && item.version === version;
+            });
+        }
 
-                conditions = route.conditions;
-                if (conditions && conditions.lib && conditions.version) {
-                    lib = conditions.lib;
-                    version = conditions.version;
+        return false;
+    }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true })
+}
 
-                    return changedLibVersions.some(function (item) {
-                        return item.lib === lib && item.version === version;
-                    });
-                }
+function overrideLinksInDocuments (target, urlsHash, languages) {
+    logger.debug('Start to override links in documents', module);
+    return getDocumentRecordsFromDb().then(function (records) {
+        logger.debug(util.format('Document records count: %s', records.length), module);
+        var portionSize = 10,
+            portions = utility.separateArrayOnChunks(records, portionSize);
 
-                return true;
-            }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true }),
-            collectUrls(target)
-        ])
-        .spread(function (nodeRecords, urlsHash) {
-            logger.debug('Urls were collected. Start to process pages ...', module);
-            return vow.all(nodeRecords.map(function (nodeRecord) {
-                var nodeValue = nodeRecord.value;
+        logger.debug(util.format('Document records were divided into %s portions', portions.length), module);
 
-                if (nodeValue.source && nodeValue.source.data) {
+        return portions.reduce(function (prev, item, index) {
+            prev = prev.then(function () {
+                logger.debug(util.format('override document links in range %s - %s',
+                    index * portionSize, (index + 1) * portionSize), module);
+                return vow.allResolved(item.map(function (_item) {
+                    var nodeValue = _item.value;
+                    return vow.all(languages.map(function (lang) {
+                        var docKey = util.format('%s%s:%s', target.KEY.DOCS_PREFIX, nodeValue.id, lang);
+                        return levelDb.get().get(docKey)
+                            .then(function (docValue) {
+                                if (!docValue || !docValue.content) {
+                                    return vow.resolve();
+                                }
+                                docValue.content = overrideLinks(docValue.content, nodeValue, urlsHash, lang, docValue);
+                                return levelDb.get().put(docKey, docValue);
+                            });
+                    }));
+                }));
+            });
+            return prev;
+        }, vow.resolve());
+    });
+}
+
+function overrideLinksInBlocks(urlsHash, languages, changedLibVersions) {
+    logger.debug('Start to override links in blocks', module);
+    return getBlockRecordsFromDb(changedLibVersions).then(function (records) {
+        logger.debug(util.format('Block records count: %s', records.length), module);
+        var portionSize = 50,
+            portions = utility.separateArrayOnChunks(records, portionSize);
+
+        logger.debug(util.format('Block records were divided into %s portions', portions.length), module);
+
+        return portions.reduce(function (prev, item, index) {
+            prev = prev.then(function () {
+                logger.debug(util.format('override block links in range %s - %s',
+                    index * portionSize, (index + 1) * portionSize), module);
+                return vow.allResolved(item.map(function (_item) {
+                    var nodeValue = _item.value;
+
+                    if (!nodeValue.source || !nodeValue.source.data) {
+                        return vow.resolve();
+                    }
+
                     return levelDb.get().get(nodeValue.source.data).then(function (blockValue) {
                         if (!blockValue) {
                             return vow.resolve();
@@ -421,20 +460,39 @@ module.exports = function (target) {
 
                         return levelDb.get().put(nodeValue.source.data, blockValue);
                     });
-                }
-
-                return vow.all(languages.map(function (lang) {
-                    var docKey = util.format('%s%s:%s', target.KEY.DOCS_PREFIX, nodeValue.id, lang);
-                    return levelDb.get().get(docKey)
-                        .then(function (docValue) {
-                            if (!docValue || !docValue.content) {
-                                return vow.resolve();
-                            }
-                            docValue.content = overrideLinks(docValue.content, nodeValue, urlsHash, lang, docValue);
-                            return levelDb.get().put(docKey, docValue);
-                        });
                 }));
-            }));
+            });
+            return prev;
+        }, vow.resolve());
+    });
+}
+
+module.exports = function (target) {
+    logger.info('Start overriding links', module);
+
+    if (!target.getChanges().areModified()) {
+        logger.warn('No changes were made during this synchronization. This step will be skipped', module);
+        return vow.resolve(target);
+    }
+
+    var languages = utility.getLanguages(),
+        librariesChanges = target.getChanges().getLibraries(),
+        changedLibVersions = []
+            .concat(librariesChanges.getAdded())
+            .concat(librariesChanges.getModified()),
+        urlsHash;
+
+    return collectUrls(target)
+        .then(function (_urlsHash) {
+            logger.debug('Urls were collected. Start to process pages ...', module);
+            urlsHash = _urlsHash;
+            return urlsHash;
+        })
+        .then(function () {
+            return overrideLinksInDocuments(target, urlsHash, languages);
+        })
+        .then(function () {
+            return overrideLinksInBlocks(urlsHash, languages, changedLibVersions);
         })
         .then(function () {
             logger.info('Links were successfully overrided', module);

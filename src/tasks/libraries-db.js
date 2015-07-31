@@ -287,7 +287,9 @@ module.exports = {
             }
 
             Object.keys(registry[lib].versions).forEach(function (version) {
-                result.push({ lib: lib, version: version });
+                var item = { lib: lib, version: version };
+                target.getChanges().getLibraries().addAdded(item);
+                result.push(item);
             });
         });
         return result;
