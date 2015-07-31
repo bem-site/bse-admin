@@ -311,7 +311,21 @@ function overrideLinks(content, node, urlHash, lang, doc) {
     return content;
 }
 
+/**
+ * Creates url hash for resolve links
+ * @param {TargetBase} target object
+ * @returns {Promise}
+ */
 function collectUrls(target) {
+    /**
+     * Выбираем все записи документов (обычные посты и документация библиотек)
+     * Фильтруем записи документов по критерию наличия url - адреса документа на github
+     * и строим hash соответствия ключа записи - url
+     * Загружаем все записи из пространства ключей NODE
+     * строим итоговый хэш в котором значениями являются урлы страниц на сайте
+     * а ключами урлы на гитхабе или id записей в случае блоков или отсутствия соответствий
+     * url github -> site url
+     */
     return levelDb.get().getByKeyRange(target.KEY.DOCS_PREFIX, target.KEY.NODE_PREFIX)
         .then(function (docRecords) {
             return vow.all([
@@ -345,7 +359,20 @@ function collectUrls(target) {
         });
 }
 
+/**
+ * Reads document page records from db
+ * @param {TargetBase} target object
+ * @param {Object[]} changedLibVersions - array with changed library versions
+ * @returns {Promise}
+ */
 function getDocumentRecordsFromDb (target, changedLibVersions) {
+    /**
+     * Здесь происходит выборка из пространства ключей NODE
+     * по критериям:
+     *
+     * 1. view страницы должно быть 'post'
+     * 2. Если это документ версии библиотеки, то версия библиотеки должна быть в модели измененных
+     */
     return levelDb.get().getByCriteria(function (record) {
         var value = record.value,
             route = value.route,
@@ -369,7 +396,21 @@ function getDocumentRecordsFromDb (target, changedLibVersions) {
     }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true });
 }
 
+/**
+ * Reads block pages from database
+ * @param {TargetBase} target object
+ * @param {Object[]} changedLibVersions - array with changed library versions
+ * @returns {Promise}
+ */
 function getBlockRecordsFromDb(target, changedLibVersions) {
+  /**
+   * Здесь происходит выборка из пространства ключей NODE
+   * по критериям:
+   *
+   * 1. view страницы должно быть 'block'
+   * 2. Должен быть source.data - ссылка на запись с документацией блока
+   * 3. Версия библиотеки должна быть в модели измененных
+   */
     return levelDb.get().getByCriteria(function (record) {
         var value = record.value,
             route = value.route,
@@ -397,8 +438,26 @@ function getBlockRecordsFromDb(target, changedLibVersions) {
     }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true })
 }
 
+/**
+ * Overrides links for document page records
+ * @param {TargetBase} target object
+ * @param {Object} urlsHash - url comparison hash
+ * @param {String []} languages - array of language identifiers
+ * @param {Object[]} changedLibVersions - array with changed library versions
+ * @returns {Promise}
+ */
 function overrideLinksInDocuments (target, urlsHash, languages, changedLibVersions) {
     logger.debug('Start to override links in documents', module);
+
+    /**
+     * 1. Выбираем страницы документов из бд
+     * 2. Делим массив полученных записей на массивы по 100 штук
+     * 3. Последовательно выполняем переопределение ссылок для каждой порции записей
+     * 3.1 Внутри порции переопредление ссылок для записей происходит параллельно
+     * 3.2 Для каждой записи страницы выбираем связанную с ней запись документа
+     * 3.3 Еслитаковая присутствует, то скармливаем ее content в переопределятор
+     * 3.4 Сохраняем запись документа с измененным контентом
+     */
     return getDocumentRecordsFromDb(target, changedLibVersions).then(function (records) {
         logger.debug(util.format('Document records count: %s', records.length), module);
         var portionSize = 100,
@@ -430,8 +489,27 @@ function overrideLinksInDocuments (target, urlsHash, languages, changedLibVersio
     });
 }
 
+/**
+ * Overrides links for block page records
+ * @param {TargetBase} target object
+ * @param {Object} urlsHash - url comparison hash
+ * @param {String []} languages - array of language identifiers
+ * @param {Object[]} changedLibVersions - array with changed library versions
+ * @returns {Promise}
+ */
 function overrideLinksInBlocks(target, urlsHash, languages, changedLibVersions) {
     logger.debug('Start to override links in blocks', module);
+
+    /**
+     * 1. Выбираем страницы блоков из бд
+     * 2. Делим массив полученных записей на массивы по 100 штук
+     * 3. Последовательно выполняем переопределение ссылок для каждой порции записей
+     * 3.1 Внутри порции переопредление ссылок для записей происходит параллельно
+     * 3.2 Для каждой записи страницы выбираем связанную с ней запись докуметации блока
+     * 3.3 Еслитаковая присутствует, то скармливаем ее content в переопределятор
+     * с учетом различных форматов документации для разных библиотек и наличия нескольких языков
+     * 3.4 Сохраняем запись документации блока с измененным контентом
+     */
     return getBlockRecordsFromDb(target, changedLibVersions).then(function (records) {
         logger.debug(util.format('Block records count: %s', records.length), module);
         var portionSize = 100,
