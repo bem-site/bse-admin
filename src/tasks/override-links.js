@@ -9,18 +9,18 @@ var util = require('util'),
     logger = require('../logger'),
 
     REGEXP = {
-    HREF: /<a\s+(?:[^>]*?\s+)?href="([^"]*)"/g, // <a href="...">
-    SRC: /<img\s+(?:[^>]*?\s+)?src="([^"]*)"/g, // <img src="...">
-    RELATIVE: {
-        DOC: /^\.?\/?(?:\.\.\/)+?([\w|-]+)\.?[md|html|ru\.md|en\.md]?/,
-        VERSION_DOC: /^\.?\/?(\d+\.\d+\.\d+)\-([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
-        BLOCK: /^\.\.?\/([\w|-]+)\/?([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
-        BLOCKS: /^\.?\/?(?:\.\.\/)?([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.[md|html|ru\.md|en\.md]/,
-        LEVEL: /^\.\.?\/\.\.\/([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
-        BLOCK_FILES: /^\.?\/?(?:\.\.\/)?([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.(?![md|html|ru\.md|en\.md])/,
-        JSON: /\w+\.json/
-    }
-};
+        HREF: /<a\s+(?:[^>]*?\s+)?href="([^"]*)"/g, // <a href="...">
+        SRC: /<img\s+(?:[^>]*?\s+)?src="([^"]*)"/g, // <img src="...">
+        RELATIVE: {
+            DOC: /^\.?\/?(?:\.\.\/)+?([\w|-]+)\.?[md|html|ru\.md|en\.md]?/,
+            VERSION_DOC: /^\.?\/?(\d+\.\d+\.\d+)\-([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
+            BLOCK: /^\.\.?\/([\w|-]+)\/?([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
+            BLOCKS: /^\.?\/?(?:\.\.\/)?([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.[md|html|ru\.md|en\.md]/,
+            LEVEL: /^\.\.?\/\.\.\/([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
+            BLOCK_FILES: /^\.?\/?(?:\.\.\/)?([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.(?![md|html|ru\.md|en\.md])/,
+            JSON: /\w+\.json/
+        }
+    };
 
 function buildHref(a) {
     return util.format('<a href="%s"', a);
@@ -242,7 +242,7 @@ function overrideLinks(content, node, urlHash, lang, doc) {
         });
 
         var existedLinks = _.values(urlHash);
-            // nativeHref = href;
+        // nativeHref = href;
 
         if (isMailTo(href) || isAnchor(href)) {
             return buildHref(href);
@@ -345,17 +345,43 @@ function collectUrls(target) {
         });
 }
 
-function getDocumentRecordsFromDb () {
+function getDocumentRecordsFromDb (target, changedLibVersions) {
     return levelDb.get().getByCriteria(function (record) {
-        return record.value.view === 'post';
-    }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true });
-}
-
-function getBlockRecordsFromDb(changedLibVersions) {
-    levelDb.get().getByCriteria(function (record) {
         var value = record.value,
             route = value.route,
             conditions, lib, version;
+
+        if (value.view !== 'post') {
+            return false;
+        }
+
+        conditions = route.conditions;
+        if (conditions && conditions.lib && conditions.version) {
+            lib = conditions.lib;
+            version = conditions.version;
+
+            return changedLibVersions.some(function (item) {
+                return item.lib === lib && item.version === version;
+            });
+        }
+
+        return true;
+    }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true });
+}
+
+function getBlockRecordsFromDb(target, changedLibVersions) {
+    return levelDb.get().getByCriteria(function (record) {
+        var value = record.value,
+            route = value.route,
+            conditions, lib, version;
+
+        if (value.view !== 'block') {
+            return false;
+        }
+
+        if (!value.source || !value.source.data) {
+            return false;
+        }
 
         conditions = route.conditions;
         if (conditions && conditions.lib && conditions.version) {
@@ -371,11 +397,11 @@ function getBlockRecordsFromDb(changedLibVersions) {
     }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true })
 }
 
-function overrideLinksInDocuments (target, urlsHash, languages) {
+function overrideLinksInDocuments (target, urlsHash, languages, changedLibVersions) {
     logger.debug('Start to override links in documents', module);
-    return getDocumentRecordsFromDb().then(function (records) {
+    return getDocumentRecordsFromDb(target, changedLibVersions).then(function (records) {
         logger.debug(util.format('Document records count: %s', records.length), module);
-        var portionSize = 10,
+        var portionSize = 100,
             portions = utility.separateArrayOnChunks(records, portionSize);
 
         logger.debug(util.format('Document records were divided into %s portions', portions.length), module);
@@ -404,11 +430,11 @@ function overrideLinksInDocuments (target, urlsHash, languages) {
     });
 }
 
-function overrideLinksInBlocks(urlsHash, languages, changedLibVersions) {
+function overrideLinksInBlocks(target, urlsHash, languages, changedLibVersions) {
     logger.debug('Start to override links in blocks', module);
-    return getBlockRecordsFromDb(changedLibVersions).then(function (records) {
+    return getBlockRecordsFromDb(target, changedLibVersions).then(function (records) {
         logger.debug(util.format('Block records count: %s', records.length), module);
-        var portionSize = 50,
+        var portionSize = 100,
             portions = utility.separateArrayOnChunks(records, portionSize);
 
         logger.debug(util.format('Block records were divided into %s portions', portions.length), module);
@@ -419,10 +445,6 @@ function overrideLinksInBlocks(urlsHash, languages, changedLibVersions) {
                     index * portionSize, (index + 1) * portionSize), module);
                 return vow.allResolved(item.map(function (_item) {
                     var nodeValue = _item.value;
-
-                    if (!nodeValue.source || !nodeValue.source.data) {
-                        return vow.resolve();
-                    }
 
                     return levelDb.get().get(nodeValue.source.data).then(function (blockValue) {
                         if (!blockValue) {
@@ -489,10 +511,10 @@ module.exports = function (target) {
             return urlsHash;
         })
         .then(function () {
-            return overrideLinksInDocuments(target, urlsHash, languages);
+            return overrideLinksInDocuments(target, urlsHash, languages, changedLibVersions);
         })
         .then(function () {
-            return overrideLinksInBlocks(urlsHash, languages, changedLibVersions);
+            return overrideLinksInBlocks(target, urlsHash, languages, changedLibVersions);
         })
         .then(function () {
             logger.info('Links were successfully overrided', module);
