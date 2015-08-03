@@ -9,18 +9,19 @@ var util = require('util'),
     logger = require('../logger'),
 
     REGEXP = {
-    HREF: /<a\s+(?:[^>]*?\s+)?href="([^"]*)"/g, // <a href="...">
-    SRC: /<img\s+(?:[^>]*?\s+)?src="([^"]*)"/g, // <img src="...">
-    RELATIVE: {
-        DOC: /^\.?\/?(?:\.\.\/)+?([\w|-]+)\.?[md|html|ru\.md|en\.md]?/,
-        VERSION_DOC: /^\.?\/?(\d+\.\d+\.\d+)\-([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
-        BLOCK: /^\.\.?\/([\w|-]+)\/?([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
-        BLOCKS: /^\.?\/?(?:\.\.\/)?([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.[md|html|ru\.md|en\.md]/,
-        LEVEL: /^\.\.?\/\.\.\/([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
-        BLOCK_FILES: /^\.?\/?(?:\.\.\/)?([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.(?![md|html|ru\.md|en\.md])/,
-        JSON: /\w+\.json/
-    }
-};
+        HREF: /<a\s+(?:[^>]*?\s+)?href="([^"]*)"/g, // <a href="...">
+        SRC: /<img\s+(?:[^>]*?\s+)?src="([^"]*)"/g, // <img src="...">
+        RELATIVE: {
+            DOC: /^\.?\/?(?:\.\.\/)+?([\w|-]+)\.?[md|html|ru\.md|en\.md]?/,
+            VERSION_DOC: /^\.?\/?(\d+\.\d+\.\d+)\-([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
+            BLOCK: /^\.\.?\/([\w|-]+)\/?([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
+            BLOCKS: /^\.?\/?(?:\.\.\/)?([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.[md|html|ru\.md|en\.md]/,
+            LEVEL: /^\.\.?\/\.\.\/([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.?[md|html|ru\.md|en\.md]?/,
+            BLOCK_FILES: /^\.?\/?(?:\.\.\/)?([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.(?![md|html|ru\.md|en\.md])/,
+            JSON: /\w+\.json/
+        }
+    },
+    PORTION_SIZE = 100;
 
 function buildHref(a) {
     return util.format('<a href="%s"', a);
@@ -242,7 +243,7 @@ function overrideLinks(content, node, urlHash, lang, doc) {
         });
 
         var existedLinks = _.values(urlHash);
-            // nativeHref = href;
+        // nativeHref = href;
 
         if (isMailTo(href) || isAnchor(href)) {
             return buildHref(href);
@@ -311,7 +312,21 @@ function overrideLinks(content, node, urlHash, lang, doc) {
     return content;
 }
 
+/**
+ * Creates url hash for resolve links
+ * @param {TargetBase} target object
+ * @returns {Promise}
+ */
 function collectUrls(target) {
+    /**
+     * Выбираем все записи документов (обычные посты и документация библиотек)
+     * Фильтруем записи документов по критерию наличия url - адреса документа на github
+     * и строим hash соответствия ключа записи - url
+     * Загружаем все записи из пространства ключей NODE
+     * строим итоговый хэш в котором значениями являются урлы страниц на сайте
+     * а ключами урлы на гитхабе или id записей в случае блоков или отсутствия соответствий
+     * url github -> site url
+     */
     return levelDb.get().getByKeyRange(target.KEY.DOCS_PREFIX, target.KEY.NODE_PREFIX)
         .then(function (docRecords) {
             return vow.all([
@@ -345,46 +360,171 @@ function collectUrls(target) {
         });
 }
 
-module.exports = function (target) {
-    logger.info('Start overriding links', module);
+/**
+ * Reads document page records from db
+ * @param {TargetBase} target object
+ * @param {Object[]} changedLibVersions - array with changed library versions
+ * @returns {Promise}
+ */
+function getDocumentRecordsFromDb (target, changedLibVersions) {
+    /**
+     * Здесь происходит выборка из пространства ключей NODE
+     * по критериям:
+     *
+     * 1. view страницы должно быть 'post'
+     * 2. Если это документ версии библиотеки, то версия библиотеки должна быть в модели измененных
+     */
+    return levelDb.get().getByCriteria(function (record) {
+        var value = record.value,
+            route = value.route,
+            conditions, lib, version;
 
-    if (!target.getChanges().areModified()) {
-        logger.warn('No changes were made during this synchronization. This step will be skipped', module);
-        return vow.resolve(target);
-    }
+        if (value.view !== 'post') {
+            return false;
+        }
 
-    var languages = utility.getLanguages(),
-        librariesChanges = target.getChanges().getLibraries(),
-        changedLibVersions = []
-            .concat(librariesChanges.getAdded())
-            .concat(librariesChanges.getModified());
+        conditions = route.conditions;
+        if (conditions && conditions.lib && conditions.version) {
+            lib = conditions.lib;
+            version = conditions.version;
 
-    return vow.all([
-            levelDb.get().getByCriteria(function (record) {
-                var value = record.value,
-                    route = value.route,
-                    conditions, lib, version;
+            return changedLibVersions.some(function (item) {
+                return item.lib === lib && item.version === version;
+            });
+        }
 
-                conditions = route.conditions;
-                if (conditions && conditions.lib && conditions.version) {
-                    lib = conditions.lib;
-                    version = conditions.version;
+        return true;
+    }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true });
+}
 
-                    return changedLibVersions.some(function (item) {
-                        return item.lib === lib && item.version === version;
-                    });
-                }
+/**
+ * Reads block pages from database
+ * @param {TargetBase} target object
+ * @param {Object[]} changedLibVersions - array with changed library versions
+ * @returns {Promise}
+ */
+function getBlockRecordsFromDb(target, changedLibVersions) {
+  /**
+   * Здесь происходит выборка из пространства ключей NODE
+   * по критериям:
+   *
+   * 1. view страницы должно быть 'block'
+   * 2. Должен быть source.data - ссылка на запись с документацией блока
+   * 3. Версия библиотеки должна быть в модели измененных
+   */
+    return levelDb.get().getByCriteria(function (record) {
+        var value = record.value,
+            route = value.route,
+            conditions, lib, version;
 
-                return true;
-            }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true }),
-            collectUrls(target)
-        ])
-        .spread(function (nodeRecords, urlsHash) {
-            logger.debug('Urls were collected. Start to process pages ...', module);
-            return vow.all(nodeRecords.map(function (nodeRecord) {
-                var nodeValue = nodeRecord.value;
+        if (value.view !== 'block') {
+            return false;
+        }
 
-                if (nodeValue.source && nodeValue.source.data) {
+        if (!value.source || !value.source.data) {
+            return false;
+        }
+
+        conditions = route.conditions;
+        if (conditions && conditions.lib && conditions.version) {
+            lib = conditions.lib;
+            version = conditions.version;
+
+            return changedLibVersions.some(function (item) {
+                return item.lib === lib && item.version === version;
+            });
+        }
+
+        return false;
+    }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true });
+}
+
+/**
+ * Overrides links for document page records
+ * @param {TargetBase} target object
+ * @param {Object} urlsHash - url comparison hash
+ * @param {String []} languages - array of language identifiers
+ * @param {Object[]} changedLibVersions - array with changed library versions
+ * @returns {Promise}
+ */
+function overrideLinksInDocuments (target, urlsHash, languages, changedLibVersions) {
+    logger.debug('Start to override links in documents', module);
+
+    /**
+     * 1. Выбираем страницы документов из бд
+     * 2. Делим массив полученных записей на массивы по 100 штук
+     * 3. Последовательно выполняем переопределение ссылок для каждой порции записей
+     * 3.1 Внутри порции переопредление ссылок для записей происходит параллельно
+     * 3.2 Для каждой записи страницы выбираем связанную с ней запись документа
+     * 3.3 Еслитаковая присутствует, то скармливаем ее content в переопределятор
+     * 3.4 Сохраняем запись документа с измененным контентом
+     */
+    return getDocumentRecordsFromDb(target, changedLibVersions).then(function (records) {
+        logger.debug(util.format('Document records count: %s', records.length), module);
+        var portionSize = PORTION_SIZE,
+            portions = _.chunk(records, portionSize);
+
+        logger.debug(util.format('Document records were divided into %s portions', portions.length), module);
+
+        return portions.reduce(function (prev, item, index) {
+            prev = prev.then(function () {
+                logger.debug(util.format('override document links in range %s - %s',
+                    index * portionSize, (index + 1) * portionSize), module);
+                return vow.allResolved(item.map(function (_item) {
+                    var nodeValue = _item.value;
+                    return vow.all(languages.map(function (lang) {
+                        var docKey = util.format('%s%s:%s', target.KEY.DOCS_PREFIX, nodeValue.id, lang);
+                        return levelDb.get().get(docKey)
+                            .then(function (docValue) {
+                                if (!docValue || !docValue.content) {
+                                    return vow.resolve();
+                                }
+                                docValue.content = overrideLinks(docValue.content, nodeValue, urlsHash, lang, docValue);
+                                return levelDb.get().put(docKey, docValue);
+                            });
+                    }));
+                }));
+            });
+            return prev;
+        }, vow.resolve());
+    });
+}
+
+/**
+ * Overrides links for block page records
+ * @param {TargetBase} target object
+ * @param {Object} urlsHash - url comparison hash
+ * @param {String []} languages - array of language identifiers
+ * @param {Object[]} changedLibVersions - array with changed library versions
+ * @returns {Promise}
+ */
+function overrideLinksInBlocks(target, urlsHash, languages, changedLibVersions) {
+    logger.debug('Start to override links in blocks', module);
+
+    /**
+     * 1. Выбираем страницы блоков из бд
+     * 2. Делим массив полученных записей на массивы по 100 штук
+     * 3. Последовательно выполняем переопределение ссылок для каждой порции записей
+     * 3.1 Внутри порции переопредление ссылок для записей происходит параллельно
+     * 3.2 Для каждой записи страницы выбираем связанную с ней запись докуметации блока
+     * 3.3 Если таковая присутствует, то скармливаем ее content в переопределятор
+     * с учетом различных форматов документации для разных библиотек и наличия нескольких языков
+     * 3.4 Сохраняем запись документации блока с измененным контентом
+     */
+    return getBlockRecordsFromDb(target, changedLibVersions).then(function (records) {
+        logger.debug(util.format('Block records count: %s', records.length), module);
+        var portionSize = PORTION_SIZE,
+            portions = _.chunk(records, portionSize);
+
+        logger.debug(util.format('Block records were divided into %s portions', portions.length), module);
+
+        return portions.reduce(function (prev, item, index) {
+            prev = prev.then(function () {
+                logger.debug(util.format('override block links in range %s - %s',
+                    index * portionSize, (index + 1) * portionSize), module);
+                return vow.allResolved(item.map(function (_item) {
+                    var nodeValue = _item.value;
+
                     return levelDb.get().get(nodeValue.source.data).then(function (blockValue) {
                         if (!blockValue) {
                             return vow.resolve();
@@ -421,20 +561,39 @@ module.exports = function (target) {
 
                         return levelDb.get().put(nodeValue.source.data, blockValue);
                     });
-                }
-
-                return vow.all(languages.map(function (lang) {
-                    var docKey = util.format('%s%s:%s', target.KEY.DOCS_PREFIX, nodeValue.id, lang);
-                    return levelDb.get().get(docKey)
-                        .then(function (docValue) {
-                            if (!docValue || !docValue.content) {
-                                return vow.resolve();
-                            }
-                            docValue.content = overrideLinks(docValue.content, nodeValue, urlsHash, lang, docValue);
-                            return levelDb.get().put(docKey, docValue);
-                        });
                 }));
-            }));
+            });
+            return prev;
+        }, vow.resolve());
+    });
+}
+
+module.exports = function (target) {
+    logger.info('Start overriding links', module);
+
+    if (!target.getChanges().areModified()) {
+        logger.warn('No changes were made during this synchronization. This step will be skipped', module);
+        return vow.resolve(target);
+    }
+
+    var languages = utility.getLanguages(),
+        librariesChanges = target.getChanges().getLibraries(),
+        changedLibVersions = []
+            .concat(librariesChanges.getAdded())
+            .concat(librariesChanges.getModified()),
+        urlsHash;
+
+    return collectUrls(target)
+        .then(function (_urlsHash) {
+            logger.debug('Urls were collected. Start to process pages ...', module);
+            urlsHash = _urlsHash;
+            return urlsHash;
+        })
+        .then(function () {
+            return overrideLinksInDocuments(target, urlsHash, languages, changedLibVersions);
+        })
+        .then(function () {
+            return overrideLinksInBlocks(target, urlsHash, languages, changedLibVersions);
         })
         .then(function () {
             logger.info('Links were successfully overrided', module);
