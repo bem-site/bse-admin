@@ -20,7 +20,8 @@ var util = require('util'),
             BLOCK_FILES: /^\.?\/?(?:\.\.\/)?([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.(?![md|html|ru\.md|en\.md])/,
             JSON: /\w+\.json/
         }
-    };
+    },
+    PORTION_SIZE = 100;
 
 function buildHref(a) {
     return util.format('<a href="%s"', a);
@@ -435,7 +436,7 @@ function getBlockRecordsFromDb(target, changedLibVersions) {
         }
 
         return false;
-    }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true })
+    }, { gte: target.KEY.NODE_PREFIX, lt: target.KEY.PEOPLE_PREFIX, fillCache: true });
 }
 
 /**
@@ -460,8 +461,8 @@ function overrideLinksInDocuments (target, urlsHash, languages, changedLibVersio
      */
     return getDocumentRecordsFromDb(target, changedLibVersions).then(function (records) {
         logger.debug(util.format('Document records count: %s', records.length), module);
-        var portionSize = 100,
-            portions = utility.separateArrayOnChunks(records, portionSize);
+        var portionSize = PORTION_SIZE,
+            portions = _.chunk(records, portionSize);
 
         logger.debug(util.format('Document records were divided into %s portions', portions.length), module);
 
@@ -506,14 +507,14 @@ function overrideLinksInBlocks(target, urlsHash, languages, changedLibVersions) 
      * 3. Последовательно выполняем переопределение ссылок для каждой порции записей
      * 3.1 Внутри порции переопредление ссылок для записей происходит параллельно
      * 3.2 Для каждой записи страницы выбираем связанную с ней запись докуметации блока
-     * 3.3 Еслитаковая присутствует, то скармливаем ее content в переопределятор
+     * 3.3 Если таковая присутствует, то скармливаем ее content в переопределятор
      * с учетом различных форматов документации для разных библиотек и наличия нескольких языков
      * 3.4 Сохраняем запись документации блока с измененным контентом
      */
     return getBlockRecordsFromDb(target, changedLibVersions).then(function (records) {
         logger.debug(util.format('Block records count: %s', records.length), module);
-        var portionSize = 100,
-            portions = utility.separateArrayOnChunks(records, portionSize);
+        var portionSize = PORTION_SIZE,
+            portions = _.chunk(records, portionSize);
 
         logger.debug(util.format('Block records were divided into %s portions', portions.length), module);
 
