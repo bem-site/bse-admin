@@ -1,5 +1,6 @@
 var util = require('util'),
     path = require('path'),
+    url = require('url'),
 
     _ = require('lodash'),
     vow = require('vow'),
@@ -99,10 +100,8 @@ function fixGithubLinks(str) {
 function buildFullGithubLinkForDocs(str, doc, treeOrBlob, node) {
     var jsonMatch = str.match(REGEXP.RELATIVE.JSON);
 
-    if (doc && doc.repo) {
-        var repo = doc.repo;
-        return 'https://' + path.join(repo.host, repo.user, repo.repo, treeOrBlob, repo.ref,
-                str.indexOf('.') === 0 ? path.dirname(repo.path) : '', str.replace(/^\//, ''));
+    if (doc && doc.url) {
+        return url.resolve(doc.url, str);
     } else if (jsonMatch) {
         var ghLibVersionUrl = node.ghLibVersionUrl,
             version = node.route.conditions.version;
