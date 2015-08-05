@@ -100,8 +100,11 @@ function fixGithubLinks(str) {
 function buildFullGithubLinkForDocs(str, doc, treeOrBlob, node) {
     var jsonMatch = str.match(REGEXP.RELATIVE.JSON);
 
-    if (doc && doc.url) {
-        return url.resolve(doc.url, str);
+    if (doc && doc.repo) {
+        var repo = doc.repo,
+            baseUrl = 'https://' + path.join(repo.host, repo.user, repo.repo, treeOrBlob, repo.ref, repo.path);
+
+        return url.resolve(baseUrl, str);
     } else if (jsonMatch) {
         var ghLibVersionUrl = node.ghLibVersionUrl,
             version = node.route.conditions.version;
