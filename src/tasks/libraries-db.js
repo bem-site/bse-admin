@@ -144,9 +144,7 @@ module.exports = {
         return new vow.Promise(function (resolve, reject) {
             return fsExtra.readJSONFile(libVersionFilePath, function (error, content) {
                 if (error || !content) {
-                    logger.error(util.format('Error occur while loading file %s', libVersionFilePath), module);
-                    logger.error(util.format('Error: %s', error.message), module);
-                    reject(error);
+                    logger.warn(util.format('Error occur while loading file %s', libVersionFilePath), module);
                 }
                 resolve(content);
             });
