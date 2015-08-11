@@ -1,5 +1,4 @@
-var util = require('util'),
-    _ = require('lodash'),
+var _ = require('lodash'),
     utility = require('../../util'),
     nodes = require('./index'),
 
@@ -74,4 +73,3 @@ ShowcaseNode.prototype.saveToDb = function () {
 };
 
 exports.ShowcaseNode = ShowcaseNode;
-

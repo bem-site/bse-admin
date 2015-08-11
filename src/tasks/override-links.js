@@ -80,7 +80,7 @@ module.exports = {
         href = href.replace(/^&$/, '');
         href = href.replace(/^\(/, '');
         href = (/^github\.com/.test(href) ? 'https://' : '') + href;
-        return href.replace(/^\/\/github/, 'https://github')
+        return href.replace(/^\/\/github/, 'https://github');
     },
 
     /**
@@ -106,7 +106,7 @@ module.exports = {
      */
     buildFullGhUrlToRelativeDocument: function (href, doc, treeOrBlob) {
         if (!doc || !doc.repo) {
-            return href
+            return href;
         }
         var repo = doc.repo,
             baseUrl = 'https://' + Path.join(repo.host, repo.user, repo.repo, treeOrBlob, repo.ref, repo.path);
@@ -476,20 +476,20 @@ module.exports = {
          * 3.4 Сохраняем запись документа с измененным контентом
          */
         return this.getDocumentRecordsFromDb(target, changedLibVersions).then(function (records) {
-            logger.debug(util.format('Document records count: %s', records.length), module);
+            logger.debug(Util.format('Document records count: %s', records.length), module);
             var portionSize = PORTION_SIZE,
                 portions = _.chunk(records, portionSize);
 
-            logger.debug(util.format('Document records were divided into %s portions', portions.length), module);
+            logger.debug(Util.format('Document records were divided into %s portions', portions.length), module);
 
             return portions.reduce(function (prev, item, index) {
                 prev = prev.then(function () {
-                    logger.debug(util.format('override document links in range %s - %s',
+                    logger.debug(Util.format('override document links in range %s - %s',
                         index * portionSize, (index + 1) * portionSize), module);
                     return vow.allResolved(item.map(function (_item) {
                         var nodeValue = _item.value;
                         return vow.all(languages.map(function (lang) {
-                            var docKey = util.format('%s%s:%s', target.KEY.DOCS_PREFIX, nodeValue.id, lang);
+                            var docKey = Util.format('%s%s:%s', target.KEY.DOCS_PREFIX, nodeValue.id, lang);
                             return levelDb.get().get(docKey)
                                 .then(function (docValue) {
                                     if (!docValue || !docValue.content) {
@@ -528,16 +528,16 @@ module.exports = {
          * 3.4 Сохраняем запись документации блока с измененным контентом
          */
         return this.getBlockRecordsFromDb(target, changedLibVersions).then(function (records) {
-            logger.debug(util.format('Block records count: %s', records.length), module);
+            logger.debug(Util.format('Block records count: %s', records.length), module);
             var _this = this,
                 portionSize = PORTION_SIZE,
                 portions = _.chunk(records, portionSize);
 
-            logger.debug(util.format('Block records were divided into %s portions', portions.length), module);
+            logger.debug(Util.format('Block records were divided into %s portions', portions.length), module);
 
             return portions.reduce(function (prev, item, index) {
                 prev = prev.then(function () {
-                    logger.debug(util.format('override block links in range %s - %s',
+                    logger.debug(Util.format('override block links in range %s - %s',
                         index * portionSize, (index + 1) * portionSize), module);
                     return vow.allResolved(item.map(function (_item) {
                         var nodeValue = _item.value;
@@ -615,7 +615,7 @@ module.exports = {
             })
             .fail(function (err) {
                 logger.error(
-                    util.format('Overriding links failed with error %s', err.message), module);
+                    Util.format('Overriding links failed with error %s', err.message), module);
                 return vow.reject(err);
             });
     }
