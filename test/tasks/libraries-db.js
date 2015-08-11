@@ -28,6 +28,7 @@ describe('libraries-db', function () {
         });
 
         after(function () {
+            levelDb.get().disconnect();
             fsExtra.removeSync(dbFolder);
         });
 
