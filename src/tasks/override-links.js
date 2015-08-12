@@ -4,7 +4,6 @@ var Util = require('util'),
 
     _ = require('lodash'),
     vow = require('vow'),
-    cheerio = require('cheerio'),
 
     levelDb = require('../providers/level-db'),
     utility = require('../util'),
@@ -12,27 +11,27 @@ var Util = require('util'),
     PORTION_SIZE = 100;
 
 module.exports = {
-    replaceImageSources: function ($, node, doc) {
-        var baseVersionGhUrl = node.ghLibVersionUrl + '/blob/' + node.route.conditions.version;
-        $('img').each(function() {
-            var src = $(this).attr('src'),
-                imgUrl;
+    replaceImageSources: function (content, node, doc) {
+        var baseVersionGhUrl = node.ghLibVersionUrl + '/blob/' + node.route.conditions.version,
+            buildReplace = function (str, src) {
+                return str.replace(/src=("|')?.+("|')?/g, 'src="' + src + '?raw=true"');
+            };
+        return content.replace(/<img\s+(?:[^>]*?\s+)?src="([^"]*)"/g, function (str, src) {
+            var imgUrl;
 
             if (!src) {
-                return;
+                return str;
             }
 
             imgUrl = Url.parse(src);
 
             if (imgUrl.protocol && ['http:', 'https:'].indexOf(imgUrl.protocol) > -1) {
-                return;
+                return str;
             }
 
             //TODO ask for case with missed doc param
-            src = Url.resolve((doc ? doc.url : baseVersionGhUrl), src);
-            $(this).attr('src', src + '?raw=true');
+            return buildReplace(str, Url.resolve((doc ? doc.url : baseVersionGhUrl), src));        
         });
-        return $;
     },
 
     /**
@@ -265,12 +264,12 @@ module.exports = {
         return replacement;
     },
 
-    replaceLinkHrefs: function ($, node, doc, urlHash, existedUrls) {
+    replaceLinkHrefs: function (content, node, doc, urlHash, existedUrls) {
         var _this = this;
-        $('a').each(function() {
+        return content.replace(/<a\s+(?:[^>]*?\s+)?href="([^"]*)"/g, function (str, href) {
             var variants = [],
                 replacement,
-                href = $(this).attr('href'),
+                originalHref = href,
                 url;
 
             // decode html entities
@@ -285,7 +284,7 @@ module.exports = {
                 _this.hasUnsupportedProtocol(url) ||
                 _this.isNativeSiteLink(url, existedUrls) ||
                 (_this.isAbsolute(url) && !_this.isGithub(url))) {
-                return;
+                return str;
             }
 
             href = Url.format(_.omit(url, 'hash')); // отрезаем якорь
@@ -302,7 +301,7 @@ module.exports = {
                 variants.push(_this.buildSiteUrlsForRelativeBlockLinksOnSameLevel(href, node));
                 variants.push(_this.buildSiteUrlsForRelativeBlockLinksOnDifferentLevel(href, node));
             }
-            
+
             replacement = _this.findReplacement(variants, urlHash, existedUrls);
 
             if (replacement) {
@@ -319,10 +318,14 @@ module.exports = {
                 href = Url.format(_.merge(Url.parse(href), { hash: url.hash }));
             }
 
-            $(this).attr('href', href);
-        });
+            /*
+            if(originalHref !== href) {
+                console.log('from: ' + $(this).attr('href') + ' to: ' + href + ' on page: ' + node.url);
+            }
+            */
 
-        return $;
+            return '<a href="' + href + '"';
+        });
     },
 
     /**
@@ -333,18 +336,14 @@ module.exports = {
      * @param {Object} existed
      */
     overrideLinks: function(content, node, doc, existed) {
-        var $content;
-
         if (!_.isString(content)) {
             return content;
         }
 
-        $content = cheerio.load(content);
+        // content = this.replaceImageSources(content, node, doc);
+        content = this.replaceLinkHrefs(content, node, doc, existed.urlsHash, existed.existedUrls);
 
-        this.replaceImageSources($content, node, doc);
-        this.replaceLinkHrefs($content, node, doc, existed.urlsHash, existed.existedUrls);
-
-        return $content.html();
+        return content;
     },
 
     /**
@@ -485,7 +484,7 @@ module.exports = {
      */
     overrideLinksInDocuments: function (target, existed, languages, changedLibVersions) {
         logger.debug('Start to override links in documents', module);
-
+        var _this = this;
         /**
          * 1. Выбираем страницы документов из бд
          * 2. Делим массив полученных записей на массивы по 100 штук
@@ -515,7 +514,7 @@ module.exports = {
                                     if (!docValue || !docValue.content) {
                                         return vow.resolve();
                                     }
-                                    docValue.content = this.overrideLinks(docValue.content, nodeValue, docValue, existed);
+                                    docValue.content = _this.overrideLinks(docValue.content, nodeValue, docValue, existed);
                                     return levelDb.get().put(docKey, docValue);
                                 }, this);
                         }, this));
@@ -537,6 +536,7 @@ module.exports = {
     overrideLinksInBlocks: function (target, existed, languages, changedLibVersions) {
         logger.debug('Start to override links in blocks', module);
 
+        var _this = this;
         /**
          * 1. Выбираем страницы блоков из бд
          * 2. Делим массив полученных записей на массивы по 100 штук
@@ -549,7 +549,6 @@ module.exports = {
          */
         return this.getBlockRecordsFromDb(target, changedLibVersions).then(function (records) {
             logger.debug(Util.format('Block records count: %s', records.length), module);
-            var _this = this,
                 portionSize = PORTION_SIZE,
                 portions = _.chunk(records, portionSize);
 

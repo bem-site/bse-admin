@@ -2,7 +2,6 @@ var Url = require('url'),
     path = require('path'),
     vow = require('vow'),
     should = require('should'),
-    cheerio = require('cheerio'),
     fsExtra = require('fs-extra'),
     levelDb = require('../../src/providers/level-db'),
     Target = require('../../src/targets/nodes'),
@@ -22,23 +21,19 @@ describe('override-links', function () {
                 url: 'https://github.com/user/repo/foo/bar.md'
             };
 
-
         it('should not replace image sources with empty src attributes', function () {
             var html = '<img title="foo">';
-                $ = cheerio.load(html);
-            task.replaceImageSources($, node, null).html().should.equal(html);
+            task.replaceImageSources(html, node, null).should.equal(html);
         });
 
         it('should not replace image sources with absolute https links as src attributes', function () {
             var html = '<img src="https://my.site.com/image.png">';
-            $ = cheerio.load(html);
-            task.replaceImageSources($, node, null).html().should.equal(html);
+            task.replaceImageSources(html, node, null).should.equal(html);
         });
 
         it('should not replace image sources with absolute http links as src attributes', function () {
             var html = '<img src="http://my.site.com/image.png">';
-            $ = cheerio.load(html);
-            task.replaceImageSources($, node, null).html().should.equal(html);
+            task.replaceImageSources(html, node, null).should.equal(html);
         });
 
         /*
@@ -52,8 +47,7 @@ describe('override-links', function () {
 
         it('should replace image sources (in case of existed doc param)', function () {
             var html = '<img src="./image.png">';
-            $ = cheerio.load(html);
-            task.replaceImageSources($, node, doc).html()
+            task.replaceImageSources(html, node, doc)
                 .should.equal('<img src="https://github.com/user/repo/foo/image.png?raw=true">');
         });
     });
@@ -453,8 +447,7 @@ describe('override-links', function () {
     describe('replaceLinkHrefs', function () {
         var assert = function(html, expected, node, doc, urlHash, existedUrls) {
                 it('should replace: ' + html + ' to: ' + expected, function () {
-                    task.replaceLinkHrefs(cheerio.load(html), node, doc, urlHash, existedUrls).html()
-                        .should.equal(expected);
+                    task.replaceLinkHrefs(html, node, doc, urlHash, existedUrls).should.equal(expected);
                 });
             },
             node1 = {
@@ -751,6 +744,25 @@ describe('override-links', function () {
 
             assert('<a href="./../common.blocks/button/button.js">bla</a>',
                 '<a href="https://github.com/user/my-lib/blob/vx.y.z/common.blocks/button/button.js">bla</a>', node2, {}, {}, existedUrls1);
+        });
+    });
+
+    describe('real tests', function () {
+        var existedUrls, urlsHash;
+
+        before(function () {
+            urlsHash = fsExtra.readJSONSync('./test/fixtures/urlsHash.json');
+            existedUrls = fsExtra.readJSONSync('./test/fixtures/existedUrls.json');
+        });
+
+        it ('should override "../button/button.ru.md" on page "/libs/bem-components/v2.3.0/desktop/attach"', function () {
+            var node = {
+                route: {
+                    conditions: { lib: 'bem-components', version: 'v2.3.0', level: 'desktop', block: 'attach' }
+                }
+            };
+            task.replaceLinkHrefs('<a href="../button/button.ru.md">bla</a>', node, {}, urlsHash, existedUrls)
+                .should.equal('<a href="/libs/bem-components/v2.3.0/desktop/button">bla</a>');
         });
     });
 
