@@ -242,6 +242,35 @@ describe('override-links', function () {
         });
     });
 
+    describe('buildFullGHUrlToNonDocumentationFile', function () {
+        var node = {
+                route: {
+                    conditions: {
+                        lib: 'my-lib',
+                        version: 'vx.y.z'
+                    }
+                },
+                ghLibVersionUrl: 'https://github.com/user/repo/my-lib'
+            },
+            assert = function (href, expected) {
+                it('should build full site url for relative link ' + href, function () {
+                    task.buildFullGHUrlToNonDocumentationFile(href, node).should.equal(expected);
+                });
+            };
+
+        assert('common.blocks/button/button.js',
+            'https://github.com/user/repo/my-lib/blob/vx.y.z/common.blocks/button/button.js');
+
+        assert('./common.blocks/button/button.js',
+            'https://github.com/user/repo/my-lib/blob/vx.y.z/common.blocks/button/button.js');
+
+        assert('../common.blocks/button/button.js',
+            'https://github.com/user/repo/my-lib/blob/vx.y.z/common.blocks/button/button.js');
+
+        assert('./../common.blocks/button/button.js',
+            'https://github.com/user/repo/my-lib/blob/vx.y.z/common.blocks/button/button.js');
+    });
+
     describe('buildSiteUrlsForRelativeBlockLinksOnSameLevel', function () {
         var node = {
                 route: {
@@ -390,15 +419,6 @@ describe('override-links', function () {
         assert('./README.md', '/libs/my-lib/vx.y.z');
         assert('../README.md', '/libs/my-lib/vx.y.z');
         assert('./../README.md', '/libs/my-lib/vx.y.z');
-
-        assert('common.blocks/button/button.js',
-            'https://github.com/user/repo/my-lib/blob/vx.y.z/common.blocks/button/button.js');
-        assert('./common.blocks/button/button.js',
-            'https://github.com/user/repo/my-lib/blob/vx.y.z/common.blocks/button/button.js');
-        assert('../common.blocks/button/button.js',
-            'https://github.com/user/repo/my-lib/blob/vx.y.z/common.blocks/button/button.js');
-        assert('./../common.blocks/button/button.js',
-            'https://github.com/user/repo/my-lib/blob/vx.y.z/common.blocks/button/button.js');
     });
 
     describe('findReplacement', function () {
@@ -448,14 +468,26 @@ describe('override-links', function () {
             node2 = {
                 route: { conditions: { lib: 'my-lib', version: 'vx.y.z' }
                 },
-                ghLibVersionUrl: 'https://github.com/user/repo/my-lib'
+                ghLibVersionUrl: 'https://github.com/user/my-lib'
+            },
+            node3 = {
+                route: { conditions: { lib: 'my-lib', version: 'vx.y.z', level: 'desktop', block: 'input' } }
+            },
+            node4 = {
+                route: { conditions: { lib: 'my-lib', version: 'vx.y.z', id: 'migration' } }
             },
             urlHash1 = {
                 'https://github.com/user/repo/my-lib/README.md': '/libs/my-lib/vx.y.z',
                 'https://github.com/user/repo/tree/master/bar0.md': '/bar0',
                 'https://github.com/user/repo/tree/master/foo/bar1.md': '/foo/bar1',
                 'https://github.com/user/repo/blob/master/foo/bar2.md': '/foo/bar2'
-            };
+            },
+            existedUrls1 = [
+                '/libs/my-lib/vx.y.z/desktop/button',
+                '/libs/my-lib/vx.y.z/touch/button',
+                '/libs/my-lib/vx.y.z',
+                '/libs/my-lib/vx.y.z/changelog'
+            ];
 
         assert('<a href="mailto://john.smit">bla</a>', '<a href="mailto://john.smit">bla</a>', {}, {}, {}, []);
 
@@ -493,7 +525,233 @@ describe('override-links', function () {
             '<a href="https://github.com/user/repo/blob/master/bar00#anchor">bla</a>', node1, doc1, urlHash1, []);
 
         assert('<a href="package.json">bla</a>',
-            '<a href="https://github.com/user/repo/my-lib/blob/vx.y.z/package.json">bla</a>', node2, {}, urlHash1, []);
+            '<a href="https://github.com/user/my-lib/blob/vx.y.z/package.json">bla</a>', node2, {}, urlHash1, []);
+
+        describe('relative block links in same level', function () {
+            assert('<a href="button.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="button.ru.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="button.en.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="button.html">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="./button.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="./button.ru.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="./button.en.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="./button.html">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+        });
+
+        describe('relative block links on diferent levels', function () {
+            assert('<a href="../button/button.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="../button/button.ru.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="../button/button.en.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="../button/button.html">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="../touch.blocks/button.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/touch/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="../touch.blocks/button.ru.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/touch/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="../touch.blocks/button.enmd">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/touch/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="../touch.blocks/button.html">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/touch/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="./../touch.blocks/button.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/touch/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="./../touch.blocks/button.ru.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/touch/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="./../touch.blocks/button.enmd">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/touch/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="./../touch.blocks/button.html">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/touch/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="../../touch.blocks/button.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/touch/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="../../touch.blocks/button.ru.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/touch/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="../../touch.blocks/button.enmd">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/touch/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="../../touch.blocks/button.html">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/touch/button">bla</a>', node3, {}, {}, existedUrls1);
+        });
+
+        describe('relative links from lib docs to blocks', function () {
+            assert('<a href="common.blocks/button/button.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="./common.blocks/button/button.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="../common.blocks/button/button.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="./../common.blocks/button/button.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="common.blocks/button/button.ru.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="./common.blocks/button/button.ru.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="../common.blocks/button/button.ru.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="./../common.blocks/button/button.ru.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="common.blocks/button/button.en.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="./common.blocks/button/button.en.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="../common.blocks/button/button.en.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="./../common.blocks/button/button.en.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="common.blocks/button/button.html">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="./common.blocks/button/button.html">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="../common.blocks/button/button.html">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="./../common.blocks/button/button.html">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/desktop/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="touch.blocks/button/button.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/touch/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="./touch.blocks/button/button.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/touch/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="../touch.blocks/button/button.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/touch/button">bla</a>', node3, {}, {}, existedUrls1);
+
+            assert('<a href="./../touch.blocks/button/button.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/touch/button">bla</a>', node3, {}, {}, existedUrls1);
+        });
+
+        describe('relative links from lib docs to lib docs', function () {
+            assert('<a href="changelog">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/changelog">bla</a>', node4, {}, {}, existedUrls1);
+
+            assert('<a href="./changelog">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/changelog">bla</a>', node4, {}, {}, existedUrls1);
+
+            assert('<a href="../changelog">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/changelog">bla</a>', node4, {}, {}, existedUrls1);
+
+            assert('<a href="./../changelog">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/changelog">bla</a>', node4, {}, {}, existedUrls1);
+
+            assert('<a href="changelog.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/changelog">bla</a>', node4, {}, {}, existedUrls1);
+
+            assert('<a href="./changelog.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/changelog">bla</a>', node4, {}, {}, existedUrls1);
+
+            assert('<a href="../changelog.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/changelog">bla</a>', node4, {}, {}, existedUrls1);
+
+            assert('<a href="./../changelog.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/changelog">bla</a>', node4, {}, {}, existedUrls1);
+
+            assert('<a href="changelog.ru.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/changelog">bla</a>', node4, {}, {}, existedUrls1);
+
+            assert('<a href="./changelog.ru.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/changelog">bla</a>', node4, {}, {}, existedUrls1);
+
+            assert('<a href="../changelog.ru.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/changelog">bla</a>', node4, {}, {}, existedUrls1);
+
+            assert('<a href="./../changelog.ru.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/changelog">bla</a>', node4, {}, {}, existedUrls1);
+
+            assert('<a href="changelog.en.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/changelog">bla</a>', node4, {}, {}, existedUrls1);
+
+            assert('<a href="./changelog.en.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/changelog">bla</a>', node4, {}, {}, existedUrls1);
+
+            assert('<a href="../changelog.en.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/changelog">bla</a>', node4, {}, {}, existedUrls1);
+
+            assert('<a href="./../changelog.en.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/changelog">bla</a>', node4, {}, {}, existedUrls1);
+
+            assert('<a href="changelog.html">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/changelog">bla</a>', node4, {}, {}, existedUrls1);
+
+            assert('<a href="./changelog.html">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/changelog">bla</a>', node4, {}, {}, existedUrls1);
+
+            assert('<a href="../changelog.html">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/changelog">bla</a>', node4, {}, {}, existedUrls1);
+
+            assert('<a href="./../changelog.html">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z/changelog">bla</a>', node4, {}, {}, existedUrls1);
+
+            assert('<a href="./../readme">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z">bla</a>', node4, {}, {}, existedUrls1);
+
+            assert('<a href="readme.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z">bla</a>', node4, {}, {}, existedUrls1);
+
+            assert('<a href="./readme.ru.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z">bla</a>', node4, {}, {}, existedUrls1);
+
+            assert('<a href="../readme.en.md">bla</a>',
+                '<a href="/libs/my-lib/vx.y.z">bla</a>', node4, {}, {}, existedUrls1);
+        });
+
+        describe('relative links non-documentation files', function () {
+            assert('<a href="common.blocks/button/button.js">bla</a>',
+                '<a href="https://github.com/user/my-lib/blob/vx.y.z/common.blocks/button/button.js">bla</a>', node2, {}, {}, existedUrls1);
+
+            assert('<a href="./common.blocks/button/button.js">bla</a>',
+                '<a href="https://github.com/user/my-lib/blob/vx.y.z/common.blocks/button/button.js">bla</a>', node2, {}, {}, existedUrls1);
+
+            assert('<a href="../common.blocks/button/button.js">bla</a>',
+                '<a href="https://github.com/user/my-lib/blob/vx.y.z/common.blocks/button/button.js">bla</a>', node2, {}, {}, existedUrls1);
+
+            assert('<a href="./../common.blocks/button/button.js">bla</a>',
+                '<a href="https://github.com/user/my-lib/blob/vx.y.z/common.blocks/button/button.js">bla</a>', node2, {}, {}, existedUrls1);
+        });
     });
 
     describe('overrideLinks', function () {
@@ -677,7 +935,31 @@ describe('override-links', function () {
                 });
             });
 
+            it('should select only records for given library', function () {
+                return task.getBlockRecordsFromDb(target, [
+                    { lib: 'my-lib', version: 'v1.2.3' },
+                    { lib: 'my-lib', version: 'v3.4.5' }
+                ]).then(function (records) {
+                    records.should.be.instanceOf(Array).and.have.length(2);
+                    should.deepEqual(records[0].value, { view: 'block', route: {
+                        conditions: { lib: 'my-lib', version: 'v1.2.3' }
+                    }, source: { data: {} } });
+                    should.deepEqual(records[1].value, { view: 'block', route: {
+                        conditions: { lib: 'my-lib', version: 'v3.4.5' }
+                    }, source: { data: {} } });
+                });
+            });
 
+            it('should select only records for given library version', function () {
+                return task.getBlockRecordsFromDb(target, [
+                    { lib: 'my-lib', version: 'v3.4.5' }
+                ]).then(function (records) {
+                    records.should.be.instanceOf(Array).and.have.length(1);
+                    should.deepEqual(records[0].value, { view: 'block', route: {
+                        conditions: { lib: 'my-lib', version: 'v3.4.5' }
+                    }, source: { data: {} } });
+                });
+            });
 
             after(function () {
                 return levelDb.get().batch([

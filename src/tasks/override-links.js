@@ -130,6 +130,31 @@ module.exports = {
     },
 
     /**
+     * Builds full github links to non dociumentations files. For example to block source files
+     * @param {String} href - link href attribute value
+     * @param {Object} node - page record value object. Contains route info inside.
+     * @returns {String} - resolved url
+     */
+    buildFullGHUrlToNonDocumentationFile: function (href, node) {
+        var conditions = node.route.conditions,
+            lib, version, match;
+
+        if (!conditions || !conditions.lib || !conditions.version) {
+            return href;
+        }
+
+        lib = conditions.lib;
+        version = conditions.version;
+
+        match = href.match(/^\.?\/?(?:\.\.\/)?([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.(?![md|html|ru\.md|en\.md])/);
+        if (match) {
+            return [node.ghLibVersionUrl, 'blob', version,
+                href.replace(/^\.?\/?(?:\.\.\/)?/, '').replace(/^\.?\/?/, '')].join('/');
+        }
+        return href;
+    },
+
+    /**
      * Builds site urls from relative links from one block to another on the same block level
      * @param {String} href attribute value
      * @param {Object} node - page record value object. Contains route info inside.
@@ -191,13 +216,6 @@ module.exports = {
                 block = match[2];
 
             return '/' + ['libs', lib, version, level, block].join('/');
-        }
-
-        // ./popup/popup.js
-        match = href.match(/^\.?\/?(?:\.\.\/)?([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.(?![md|html|ru\.md|en\.md])/);
-        if (match) {
-            return [node.ghLibVersionUrl, 'blob', version,
-                href.replace(/^\.?\/?(?:\.\.\/)?/, '').replace(/^\.?\/?/, '')].join('/');
         }
 
         // 3.1.0-changelog.md
@@ -284,7 +302,7 @@ module.exports = {
                 variants.push(_this.buildSiteUrlsForRelativeBlockLinksOnSameLevel(href, node));
                 variants.push(_this.buildSiteUrlsForRelativeBlockLinksOnDifferentLevel(href, node));
             }
-
+            
             replacement = _this.findReplacement(variants, urlHash, existedUrls);
 
             if (replacement) {
@@ -293,6 +311,8 @@ module.exports = {
                 href = variants[0];
             } else if(_this.buildFullGhUrlToJSONConfigurationFile(href, node) !== href) {
                 href = _this.buildFullGhUrlToJSONConfigurationFile(href, node);
+            } else if (_this.buildFullGHUrlToNonDocumentationFile(href, node) !== href) {
+                href = _this.buildFullGHUrlToNonDocumentationFile(href, node);
             }
 
             if (url.hash) {
