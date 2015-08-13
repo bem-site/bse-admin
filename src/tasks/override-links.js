@@ -108,7 +108,7 @@ module.exports = {
             return href;
         }
         var repo = doc.repo,
-            baseUrl = 'https://' + Path.join(repo.host, repo.user, repo.repo, treeOrBlob, repo.ref, repo.path);
+            baseUrl = 'https://' + Path.join(repo.host, repo.user, repo.repo, treeOrBlob, repo.ref, repo.path || '');
         return Url.resolve(baseUrl, href);
     },
 
@@ -119,7 +119,7 @@ module.exports = {
      * @returns {String} - resolved url
      */
     buildFullGhUrlToJSONConfigurationFile: function (href, node) {
-        var match = href.match(/\w+\.json/);
+        var match = href.match(/(package\.json|bower\.json)/);
         if (!match) {
             return href;
         }
@@ -306,14 +306,14 @@ module.exports = {
 
             if (replacement) {
                 href = replacement;
-            } else if (_this.isAbsolute(Url.parse(href))) {
-                href = variants[0];
             } else if(_this.buildFullGhUrlToJSONConfigurationFile(href, node) !== href) {
                 href = _this.buildFullGhUrlToJSONConfigurationFile(href, node);
             } else if (_this.buildFullGHUrlToNonDocumentationFile(href, node) !== href) {
                 href = _this.buildFullGHUrlToNonDocumentationFile(href, node);
+            } else if (!_this.isAbsolute(Url.parse(href))) {
+                href = variants[0];
             }
-
+                
             if (url.hash) {
                 href = Url.format(_.merge(Url.parse(href), { hash: url.hash }));
             }

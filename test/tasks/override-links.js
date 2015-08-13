@@ -515,7 +515,7 @@ describe('override-links', function () {
             '<a href="/bar0#anchor">bla</a>', node1, doc1, urlHash1, []);
 
         assert('<a href="https://github.com/user/repo/tree/master/bar00#anchor">bla</a>',
-            '<a href="https://github.com/user/repo/blob/master/bar00#anchor">bla</a>', node1, doc1, urlHash1, []);
+            '<a href="https://github.com/user/repo/tree/master/bar00#anchor">bla</a>', node1, doc1, urlHash1, []);
 
         assert('<a href="package.json">bla</a>',
             '<a href="https://github.com/user/my-lib/blob/vx.y.z/package.json">bla</a>', node2, {}, urlHash1, []);
@@ -764,6 +764,19 @@ describe('override-links', function () {
             task.replaceLinkHrefs('<a href="../button/button.ru.md">bla</a>', node, {}, urlsHash, existedUrls)
                 .should.equal('<a href="/libs/bem-components/v2.3.0/desktop/button">bla</a>');
         });
+
+        it ('should override "https://github.com/bem/bem-components/blob/v2/.csscomb.json" on page "/talks/beminar-css-2015/"', function () {
+           var node = {
+                    route: {
+                        conditions: { category: 'talks', id: 'beminar-css-2015' }
+                    }
+                },
+                doc = {
+                    repo: { host: 'github.com', user: 'bem', repo: 'bem-method', ref: 'bem-info-data', path: 'video/beminar-css-2015/beminar-css-2015.ru.md'}   
+                };
+            task.replaceLinkHrefs('<a href="https://github.com/bem/bem-components/blob/v2/.csscomb.json">bla</a>', node, doc, urlsHash, existedUrls)
+                .should.equal('<a href="https://github.com/bem/bem-components/blob/v2/.csscomb.json">bla</a>'); 
+            });
     });
 
     describe('overrideLinks', function () {
