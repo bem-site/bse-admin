@@ -9,7 +9,6 @@ var fs = require('fs'),
     fsExtra = require('fs-extra'),
 
     logger = require('../logger'),
-    errors = require('../errors').TaskLibrariesFiles,
     storage = require('../providers/mds');
 
 module.exports = {

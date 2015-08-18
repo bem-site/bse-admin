@@ -11,3 +11,4 @@ require('./providers/level-db.js');
 
 require('./tasks/libraries-files');
 require('./tasks/libraries-db');
+require('./tasks/override-links');

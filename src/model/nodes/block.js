@@ -126,8 +126,10 @@ BlockNode.prototype.saveToDb = function () {
     ['data', 'jsdoc'].forEach(function(field) {
         var val = this.source[field];
 
-        if (!val) return;
-
+        if (!val) {
+            return;
+        }
+            
         var key = util.format('blocks:' + field + ':%s', sha(JSON.stringify(val)));
 
         batchOperations.push({
