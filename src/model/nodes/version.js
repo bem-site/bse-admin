@@ -65,6 +65,7 @@ VersionNode.prototype.setSource = function (version) {
 
     if (version.url) {
         parsedRepo = version.url.match(regExp);
+        this.ghLibVersionUrl = version.url;
     }
 
     if (parsedRepo) {

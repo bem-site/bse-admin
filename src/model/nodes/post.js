@@ -44,6 +44,10 @@ PostNode.prototype.setTitle = function (doc) {
  * @returns {PostNode}
  */
 PostNode.prototype.setSource = function (version, doc) {
+    if (version.url) {
+        this.ghLibVersionUrl = version.url;
+    }
+
     this.source = utility.getLanguages().reduce(function (prev, lang) {
         var regExp = /^https?:\/\/(.+?)\/(.+?)\/(.+?)\/(tree|blob)\/(.+?)\/(.+)/,
             parsedRepo,
