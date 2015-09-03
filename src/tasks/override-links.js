@@ -136,6 +136,8 @@ module.exports = {
      */
     buildFullGHUrlToNonDocumentationFile: function (href, node) {
         var conditions = node.route.conditions,
+            blockRegexp = /^\.?\/?(?:\.\.\/)?([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.(?![md|html|ru\.md|en\.md])/,
+            licenseRegexp = /^\.?\/?(?:\.\.\/)?LICENSE\.?(txt)?/,
             lib, version, match;
 
         if (!conditions || !conditions.lib || !conditions.version) {
@@ -145,7 +147,8 @@ module.exports = {
         lib = conditions.lib;
         version = conditions.version;
 
-        match = href.match(/^\.?\/?(?:\.\.\/)?([\w|-]+)\.blocks\/([\w|-]+)\/?([\w|-]+)?\.(?![md|html|ru\.md|en\.md])/);
+
+        match = href.match(blockRegexp) || href.match(licenseRegexp);
         if (match) {
             return [node.ghLibVersionUrl, 'blob', version,
                 href.replace(/^\.?\/?(?:\.\.\/)?/, '').replace(/^\.?\/?/, '')].join('/');

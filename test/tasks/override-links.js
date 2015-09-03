@@ -744,6 +744,12 @@ describe('override-links', function () {
 
             assert('<a href="./../common.blocks/button/button.js">bla</a>',
                 '<a href="https://github.com/user/my-lib/blob/vx.y.z/common.blocks/button/button.js">bla</a>', node2, {}, {}, existedUrls1);
+
+            assert('<a href="LICENSE.txt">bla</a>',
+                '<a href="https://github.com/user/my-lib/blob/vx.y.z/LICENSE.txt">bla</a>', node2, {}, {}, existedUrls1);
+
+            assert('<a href="LICENSE">bla</a>',
+                '<a href="https://github.com/user/my-lib/blob/vx.y.z/LICENSE">bla</a>', node2, {}, {}, existedUrls1);
         });
     });
 
