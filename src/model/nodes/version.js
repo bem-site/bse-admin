@@ -171,8 +171,8 @@ VersionNode.prototype.addItems = function (version) {
             this.items.push(new nodes.post.PostNode(this, version, docs[item], item));
         }, this);
 
-    if (version['showcase']) {
-        var showcaseItem = new nodes.showcase.ShowcaseNode(this, version, version['showcase']);
+    if (version.showcase) {
+        var showcaseItem = new nodes.showcase.ShowcaseNode(this, version, version.showcase);
         this.items.push(showcaseItem);
     }
 

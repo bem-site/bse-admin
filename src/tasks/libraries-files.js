@@ -243,8 +243,8 @@ module.exports = {
                 // формируем списки на удаление директорий версий библиотек
                 // и на скачивание обновленных data.json файлов версий библиотек с MDS хранилища
                 return vow.all([
-                    vow.resolve([].concat(diff.added).concat(diff.modified)),
-                    vow.resolve([].concat(diff.removed).concat(diff.modified))
+                    vow.resolve([].concat(diff.added, diff.modified)),
+                    vow.resolve([].concat(diff.removed, diff.modified))
                 ]);
             })
             .spread(function (downloadQueue, removeQueue) {
