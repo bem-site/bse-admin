@@ -30,6 +30,8 @@ var util = require('util'),
         if (version.url) {
             this.ghLibVersionUrl = version.url;
         }
+
+        this.sourceUrl = version.sourceUrl;
     };
 
 BlockNode.prototype = Object.create(nodes.dynamic.DynamicNode.prototype);
@@ -131,7 +133,7 @@ BlockNode.prototype.saveToDb = function () {
         if (!val) {
             return;
         }
-            
+
         var key = util.format('blocks:' + field + ':%s', sha(JSON.stringify(val)));
 
         batchOperations.push({
