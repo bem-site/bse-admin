@@ -30,6 +30,8 @@ var util = require('util'),
         if (version.url) {
             this.ghLibVersionUrl = version.url;
         }
+
+        this.sourceUrl = version.sourceUrl;
     };
 
 BlockNode.prototype = Object.create(nodes.dynamic.DynamicNode.prototype);
@@ -58,6 +60,8 @@ BlockNode.prototype.setSource = function (version, level, block) {
     this.source = {
         data: block.data,
         jsdoc: block.jsdoc,
+        blocksData: block.blocksData,
+        examplesData: block.examplesData,
         enb: version.enb,
         prefix: version.enb ?
             util.format('/__example/%s/%s', version.repo, version.ref) :
@@ -123,13 +127,13 @@ BlockNode.prototype.createMeta = function (version) {
 BlockNode.prototype.saveToDb = function () {
     var batchOperations = [];
 
-    ['data', 'jsdoc'].forEach(function(field) {
+    ['data', 'jsdoc', 'blocksData', 'examplesData'].forEach(function(field) {
         var val = this.source[field];
 
         if (!val) {
             return;
         }
-            
+
         var key = util.format('blocks:' + field + ':%s', sha(JSON.stringify(val)));
 
         batchOperations.push({
