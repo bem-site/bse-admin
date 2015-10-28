@@ -263,6 +263,42 @@ describe('override-links', function () {
 
         assert('./../common.blocks/button/button.js',
             'https://github.com/user/repo/my-lib/blob/vx.y.z/common.blocks/button/button.js');
+
+        assert('license.txt',
+            'https://github.com/user/repo/my-lib/blob/vx.y.z/license.txt');
+
+        assert('./license.txt',
+            'https://github.com/user/repo/my-lib/blob/vx.y.z/license.txt');
+
+        assert('/license.txt',
+            'https://github.com/user/repo/my-lib/blob/vx.y.z/license.txt');
+
+        assert('LICENSE.txt',
+            'https://github.com/user/repo/my-lib/blob/vx.y.z/LICENSE.txt');
+
+        assert('./LICENSE.txt',
+            'https://github.com/user/repo/my-lib/blob/vx.y.z/LICENSE.txt');
+
+        assert('/LICENSE.txt',
+            'https://github.com/user/repo/my-lib/blob/vx.y.z/LICENSE.txt');
+
+        assert('CONTRIBUTING.md', 'https://github.com/user/repo/my-lib/blob/vx.y.z/CONTRIBUTING.md');
+
+        assert('./CONTRIBUTING.md', 'https://github.com/user/repo/my-lib/blob/vx.y.z/CONTRIBUTING.md');
+
+        assert('/CONTRIBUTING.md', 'https://github.com/user/repo/my-lib/blob/vx.y.z/CONTRIBUTING.md');
+
+        assert('CONTRIBUTING.ru.md', 'https://github.com/user/repo/my-lib/blob/vx.y.z/CONTRIBUTING.ru.md');
+
+        assert('./CONTRIBUTING.ru.md', 'https://github.com/user/repo/my-lib/blob/vx.y.z/CONTRIBUTING.ru.md');
+
+        assert('/CONTRIBUTING.ru.md', 'https://github.com/user/repo/my-lib/blob/vx.y.z/CONTRIBUTING.ru.md');
+
+        assert('CONTRIBUTING.en.md', 'https://github.com/user/repo/my-lib/blob/vx.y.z/CONTRIBUTING.en.md');
+
+        assert('./CONTRIBUTING.en.md', 'https://github.com/user/repo/my-lib/blob/vx.y.z/CONTRIBUTING.en.md');
+
+        assert('/CONTRIBUTING.en.md', 'https://github.com/user/repo/my-lib/blob/vx.y.z/CONTRIBUTING.en.md');
     });
 
     describe('buildSiteUrlsForRelativeBlockLinksOnSameLevel', function () {
