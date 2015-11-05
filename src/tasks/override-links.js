@@ -30,7 +30,7 @@ module.exports = {
             }
 
             //TODO ask for case with missed doc param
-            return buildReplace(str, Url.resolve((doc ? doc.url : baseVersionGhUrl), src));        
+            return buildReplace(str, Url.resolve((doc ? doc.url : baseVersionGhUrl), src));
         });
     },
 
@@ -317,7 +317,7 @@ module.exports = {
             } else if (!_this.isAbsolute(Url.parse(href))) {
                 href = variants[0];
             }
-                
+
             if (url.hash) {
                 href = Url.format(_.merge(Url.parse(href), { hash: url.hash }));
             }
@@ -344,7 +344,7 @@ module.exports = {
             return content;
         }
 
-        // content = this.replaceImageSources(content, node, doc);
+        content = this.replaceImageSources(content, node, doc);
         content = this.replaceLinkHrefs(content, node, doc, existed.urlsHash, existed.existedUrls);
 
         return content;
